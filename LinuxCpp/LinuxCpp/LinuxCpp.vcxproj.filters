@@ -1,0 +1,100 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="Source files">
+      <UniqueIdentifier>{2690f7aa-a730-4c02-aff3-c48d4662ce36}</UniqueIdentifier>
+      <Extensions>cpp;c;cc;cxx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
+    </Filter>
+    <Filter Include="Header files">
+      <UniqueIdentifier>{07c4c3f5-abf5-4289-9ca0-136d967c402b}</UniqueIdentifier>
+      <Extensions>h;hpp;hxx;hm;inl;inc;xsd</Extensions>
+    </Filter>
+    <Filter Include="Resource files">
+      <UniqueIdentifier>{df803275-9304-4f8e-a28f-1a69b07335c0}</UniqueIdentifier>
+      <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav</Extensions>
+    </Filter>
+    <Filter Include="Make files">
+      <UniqueIdentifier>{961edfd5-2adc-4715-ad46-75d419f35d2f}</UniqueIdentifier>
+      <Extensions>*.mak</Extensions>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Makefile" />
+    <None Include="debug.mak">
+      <Filter>Make files</Filter>
+    </None>
+    <None Include="release.mak">
+      <Filter>Make files</Filter>
+    </None>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="main.cpp">
+      <Filter>Source files</Filter>
+    </ClCompile>
+    <ClCompile Include="BoostThread.cpp">
+      <Filter>Source files</Filter>
+    </ClCompile>
+    <ClCompile Include="ClockThread.cpp">
+      <Filter>Source files</Filter>
+    </ClCompile>
+    <ClCompile Include="CMD.cpp">
+      <Filter>Source files</Filter>
+    </ClCompile>
+    <ClCompile Include="CmdIfConfig.cpp">
+      <Filter>Source files</Filter>
+    </ClCompile>
+    <ClCompile Include="ConnectedClientThread.cpp">
+      <Filter>Source files</Filter>
+    </ClCompile>
+    <ClCompile Include="ConnectionThread.cpp">
+      <Filter>Source files</Filter>
+    </ClCompile>
+    <ClCompile Include="Parser.cpp">
+      <Filter>Source files</Filter>
+    </ClCompile>
+    <ClCompile Include="TCPServerThread.cpp">
+      <Filter>Source files</Filter>
+    </ClCompile>
+    <ClCompile Include="TheApp.cpp">
+      <Filter>Source files</Filter>
+    </ClCompile>
+    <ClCompile Include="Thread.cpp">
+      <Filter>Source files</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="ClockThread.h">
+      <Filter>Header files</Filter>
+    </ClInclude>
+    <ClInclude Include="CMD.h">
+      <Filter>Header files</Filter>
+    </ClInclude>
+    <ClInclude Include="CmdIfConfig.h">
+      <Filter>Header files</Filter>
+    </ClInclude>
+    <ClInclude Include="ConnectedClientThread.h">
+      <Filter>Header files</Filter>
+    </ClInclude>
+    <ClInclude Include="ConnectionThread.h">
+      <Filter>Header files</Filter>
+    </ClInclude>
+    <ClInclude Include="Parser.h">
+      <Filter>Header files</Filter>
+    </ClInclude>
+    <ClInclude Include="TCPServerThread.h">
+      <Filter>Header files</Filter>
+    </ClInclude>
+    <ClInclude Include="TheApp.h">
+      <Filter>Header files</Filter>
+    </ClInclude>
+    <ClInclude Include="Thread.h">
+      <Filter>Header files</Filter>
+    </ClInclude>
+    <ClInclude Include="UtilityFn.h">
+      <Filter>Header files</Filter>
+    </ClInclude>
+    <ClInclude Include="BoostThread.h">
+      <Filter>Header files</Filter>
+    </ClInclude>
+  </ItemGroup>
+</Project>
