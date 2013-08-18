@@ -29,6 +29,19 @@ inline std::string format(const char* fmt, ...){
 }
 
 
+inline long DurationMilliseconds(timeval tstart, timeval tend)
+{
+	long startSeconds, startUseconds;
+	long endSeconds, endUSeconds;
+
+	long seconds = tend.tv_sec - tstart.tv_sec;
+	long useconds = tend.tv_usec - tstart.tv_usec;
+
+	double duration = seconds*1000.0 + useconds/1000.0;
+	return (long)duration;
+}
+
+
 //  debug trace function
 inline void DEBUG_TRACE(std::string traceString)
 {

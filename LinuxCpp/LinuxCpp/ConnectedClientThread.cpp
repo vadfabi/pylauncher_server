@@ -11,15 +11,19 @@
 
 #include "ConnectedClientThread.h"
 #include "TheApp.h"
+#include "Parser.h"
+#include "UtilityFn.h"
 
-ConnectedClient::ConnectedClient(TheApp& theApp) :
+ConnectedClient::ConnectedClient(TheApp& theApp, std::string ipAddressOfClient) :
 	mTheApp(theApp)
 {
+	mIpAddressOfClient = ipAddressOfClient;
 }
 
 
 ConnectedClient::~ConnectedClient()
 {
+	printf("Deleting ConnectedClient %0x\n", (unsigned int)this);
 }
 
 
@@ -35,18 +39,43 @@ void ConnectedClient::RunFunction()
 	if ( acceptFileDescriptor < 0 )
 		return;
 	
-
 	char* addressOfSender = inet_ntoa(clientAddress.sin_addr);
+	std::string eventToLog = format("Received from %s: %s",addressOfSender, readFromSocket.c_str());
+	mTheApp.AddEvent(eventToLog);
+
+	Parser readParser(readFromSocket, ",");
+	std::string command = readParser.GetNextString();
+
+	//  Look for recognized commands
+	//
+	if ( command.compare("$TCP_BUTTON") == 0 )  
+	{
+		std::string argument = readParser.GetNextString();
+
+	}
 	
-	printf("Received from %s: %s\n",addressOfSender, readFromSocket.c_str());
+	
 
 
-	//  Echo behavior send return message
-	//std::string returnMessage;
-	//returnMessage = "I got this message ";
-	//returnMessage += (buffer+2);
-
-	//n = write(acceptFileDescriptor,returnMessage.c_str(), returnMessage.size());
 	
 	return;
 }
+
+
+void ConnectedClient::Cancel()
+{
+	//  make sure we shut down connection before we call cancel
+	ShutDown();
+}
+
+void ConnectedClient::ShutDown()
+{
+	//  if we are connected, send the disconnect command to the client
+
+	//  shut down the thread
+	TCPServerThread::Cancel();
+
+	return;
+}
+
+

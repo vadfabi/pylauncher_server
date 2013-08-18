@@ -18,7 +18,6 @@
 //
 TCPServerThread::TCPServerThread()
 {
-	mSleepDuration = 1;
 	mPortNumber = -1;
 
 	//  set the timeouts
@@ -29,6 +28,7 @@ TCPServerThread::TCPServerThread()
 
 
 //  Destructor
+//
 TCPServerThread::~TCPServerThread()
 {
 	mSocketFileDescriptor = -1;

@@ -38,6 +38,10 @@ void ConnectionThread::RunFunction()
 	std::string readFromSocket;
 	int acceptFileDescriptor =  ReadStringFromSocket(&clientAddress, readFromSocket);
 
+	char* addressOfSender = inet_ntoa(clientAddress.sin_addr);
+	std::string eventToLog = format("Received from %s: %s",addressOfSender, readFromSocket.c_str());
+	mTheApp.AddEvent(eventToLog);
+
 	//  parse the read string for known commands
 	//  command syntax is "$TCP_SOMECOMMAND,argument1,argument2,...
 	//
@@ -46,16 +50,15 @@ void ConnectionThread::RunFunction()
 
 	//  Look for recognized commands
 	//
-	if ( command.compare("$TPC_CONNECT") == 0 )  
+	if ( command.compare("$TCP_CONNECT") == 0 )  
 	{
 		//  $TCP_CONNECT,portNumberOfClientsServerPort
 
 		string argument1 = readParser.GetNextString();
-		string argument2 = readParser.GetNextString();		//  todo - port will be arg1
-
+		
 		//  make sure connect command specifies proper port
 		//  argument is port number that client is listenting on
-		int clientsListeningPort = atoi(argument2.c_str());
+		int clientsListeningPort = atoi(argument1.c_str());
 
 		//  check for valid range
 		if ( clientsListeningPort < 1024 || clientsListeningPort > 65535 )
@@ -66,19 +69,29 @@ void ConnectionThread::RunFunction()
 		}
 
 		//  create a client connection here
-		int serverPortForClientConnection = mTheApp.CreateClientConnection(&clientAddress, clientsListeningPort);
+		int serverPortForClientConnection = mTheApp.CreateClientConnection(clientAddress, clientsListeningPort);
 		if ( serverPortForClientConnection < 0 )
 		{
-			string returnMessage = "$TPC_CONNECT,NAK,failed to open socket connection.";
+			string returnMessage = "$TCP_CONNECT,NAK,failed to open socket connection.";
 			write(acceptFileDescriptor, returnMessage.c_str(), returnMessage.size());
 			return;
 		}
 		
 		//  we created a connection, tell client that we are listening on the new server port
-		string returnMessage = format("$TPC_CONNECT,ACK,%d", serverPortForClientConnection);
+		string returnMessage = format("$TCP_CONNECT,ACK,%d", serverPortForClientConnection);
 		WriteStringToSocket(acceptFileDescriptor, returnMessage);
 
 		return; 
+	}
+	else if ( command.compare("$TCP_DISCONNECT") == 0 )
+	{
+		//  we created a connection, tell client that we are listening on the new server port
+		string returnMessage = "$TCP_DISCONNECT,ACK";
+		WriteStringToSocket(acceptFileDescriptor, returnMessage);
+
+		//  disconnect function, instruct the app to disconnect us
+		//  this will happen in seperate thread, which will shut down the connected client thread
+		mTheApp.DisconnectClient(clientAddress);
 	}
 	else
 	{

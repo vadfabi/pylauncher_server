@@ -3,6 +3,7 @@
 #include <cstdio>		//  for printf
 #endif
 
+
 #include "Thread.h"
 
 
@@ -14,6 +15,8 @@ void Sleep(long millis)
 }
 
 
+
+
 //  Thread
 //  constructor
 Thread::Thread() 
@@ -22,8 +25,6 @@ Thread::Thread()
 	
 	mThreadStopped = false;
 	mThreadRunning = false;
-
-	mSleepDuration = 1;		//  set minimum pause
 }
 
 
@@ -55,7 +56,8 @@ void Run(Thread& thread)
 	{
 		thread.RunFunction();
 
-		thread.ThreadSleep();
+		//  yeild once per cycle to avoid race condition
+		//std::this_thread::yeild();
 	}
 
 	//  we are out of the run loop, set is stopped flag
@@ -122,23 +124,4 @@ void Thread::Cancel()
 
 	
 	return;
-}
-
-
-//  SetSleepDuration
-//  set the sleep duration (minimum is 1 millisecond)
-void Thread::SetSleepDuration(long milliSec)
-{
-	if ( milliSec < 1 )
-		mSleepDuration = 1;
-	else
-		mSleepDuration = milliSec;
-}
-
-
-//  ThreadSleep
-//  sleep for the set duration
-void Thread::ThreadSleep()
-{
-	Sleep(mSleepDuration);
 }

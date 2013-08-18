@@ -16,7 +16,8 @@ using namespace std;
 
 char *get_line (char *s, size_t n, FILE *f)
 {
-  char *p = fgets (s, n, f);
+
+	char *p = fgets (s, n, f);
 
   if (p != 0) {
     size_t last = strlen (s) - 1;

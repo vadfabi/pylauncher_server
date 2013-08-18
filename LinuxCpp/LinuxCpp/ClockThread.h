@@ -20,23 +20,14 @@ public:
 
 	ClockThread(TheApp& theApp);
 	virtual ~ClockThread();
-
-	
-	void SetUpdateMonitorDisplay();
 	
 	virtual void RunFunction();
 	
 
 protected:
-
 	TheApp& mTheApp;
 	
-	std::mutex mUpdateDisplayMutex;
 	
-	void WriteHeader();
-
-
-	bool mUpdateMonitorDisplay;
 };
 
 

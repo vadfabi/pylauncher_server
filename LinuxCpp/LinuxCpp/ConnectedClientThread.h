@@ -13,8 +13,10 @@ class ConnectedClient : public TCPServerThread
 {
 public:
 
-	ConnectedClient(TheApp& theApp);
+	ConnectedClient(TheApp& theApp, std::string ipAddressOfClient);
 	virtual ~ConnectedClient();
+
+	std::string GetIpAddressOfClient() { return mIpAddressOfClient; }
 
 	//  where is the client
 	struct sockaddr_in mClientsAddress;
@@ -22,14 +24,21 @@ public:
 	
 	virtual void RunFunction();
 
+	virtual void Cancel();
+
+	void ShutDown();
+
 protected:
 	
 	
-
+	std::string mIpAddressOfClient;
 
 	//  reference to the app
 	TheApp& mTheApp;
 };
+
+
+
 
 
 #endif  //  _CONNECTEDCLIENTTHREAD_H
