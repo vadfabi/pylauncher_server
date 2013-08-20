@@ -5,19 +5,60 @@ import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.ServiceConnection;
+import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.IBinder;
 import android.os.Message;
+import android.preference.PreferenceManager;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.View;
+import android.widget.Button;
+import android.widget.TextView;
+import android.widget.Toast;
 
 import com.littlebytesofpi.tcpconnect.TCPConnectService.LocalBinder;
 
 public class TcpConnect extends Activity {
 
 	
+
+	//  User Interface Items
+	TextView mTextViewNetStatus;
+	TextView mTextViewServerStatus;
+	
+	Button mButtonOne;
+	Button mButtonTwo;
+	Button mButtonThree;
+	
+	Button mEchoTestButton;
+	
+	
+	View.OnClickListener ButtonOnClickListener = new View.OnClickListener() {
+
+		@Override
+		public void onClick(View v) {
+			
+			if ( v.getId() == R.id.button1 )
+			{
+				mService.PressButton(1);
+			}
+			else if ( v.getId() == R.id.button2 )
+			{
+				mService.PressButton(2);
+			}
+			else if ( v.getId() == R.id.button3 )
+			{
+				mService.PressButton(3);
+			}
+			else if ( v.getId() == R.id.buttonEchoTest )
+			{
+				mService.EchoTest();
+			}
+		}
+	};
 
 	
 
@@ -29,9 +70,25 @@ public class TcpConnect extends Activity {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_tcp_connect);
 
-		
+			//  get the UI elements
+			mTextViewNetStatus = (TextView)findViewById(R.id.textViewNetworkStatus);
+			mTextViewServerStatus = (TextView)findViewById(R.id.textViewServerStatus);
+			
+			//  Buttons, set the click listener function here
+			mButtonOne = (Button)findViewById(R.id.button1);
+			mButtonOne.setOnClickListener(ButtonOnClickListener);
+			mButtonTwo = (Button)findViewById(R.id.button2);
+			mButtonTwo.setOnClickListener(ButtonOnClickListener);
+			mButtonThree = (Button)findViewById(R.id.button3);
+			mButtonThree.setOnClickListener(ButtonOnClickListener);
+			
+			mEchoTestButton = (Button)findViewById(R.id.buttonEchoTest);
+			mEchoTestButton.setOnClickListener(ButtonOnClickListener);
+			
+			PreferenceManager.setDefaultValues(this,  R.xml.preferences,  false);
 	}
 
+	
 	@Override
 	public void onStart() {
 		super.onStart();
@@ -92,12 +149,36 @@ public class TcpConnect extends Activity {
 			LocalBinder binder = (LocalBinder) service;
 			mService = binder.getService();
 			mService.AddHandler(mHandler);
-
-			SetNetworkStateUi();
-			SetConnectedStateUi();
-
+			
+			//  attempt automatic connection to the server
+			if ( ! mService.IsConnectedToServer() )
+			{
+				//  TODO:  this should be replaced with zero conf networking ip address discovery
+				SharedPreferences sharedPrefs = PreferenceManager.getDefaultSharedPreferences(TcpConnect.this);
+				String ipAddress = sharedPrefs.getString("pref_serveripaddress", "");
+				int serverPort = 0;
+				try{
+					serverPort =  Integer.parseInt(sharedPrefs.getString("pref_serverport", "48888"));
+					
+					if ( ipAddress != "" && serverPort > 1024 )
+					{
+						//  open connection with default
+						mService.openConnectionToServer(ipAddress, serverPort);
+					}
+					
+				} 
+				catch (NumberFormatException e){
+					
+				}
+				finally{
+				
+					SetNetworkStateUi();
+					SetConnectedStateUi();
+				}
+			}
 		}
 
+		
 		public void onServiceDisconnected(ComponentName className) {
 			// This is called when the connection with the service has been
 			// unexpectedly disconnected -- that is, its process crashed.
@@ -156,7 +237,7 @@ public class TcpConnect extends Activity {
 	 */
 	public void SetNetworkStateUi(){
 		if ( mService != null )
-		{/*
+		{
 			String status = "";
 			if ( mService.mIpWiFiInfo != null && mService.mIpWiFiInfo.isConnected() )
 			{
@@ -165,65 +246,41 @@ public class TcpConnect extends Activity {
 			else 
 				status = "Not connected to WiFi";
 
-			mTextViewNetStatus.setText(status);*/
+			mTextViewNetStatus.setText(status);
 		}
 
 	} 
 
 	public void SetConnectedStateUi(){
 
-		/*
 		if ( mService != null )
 		{
 			String status = "";
 			if ( mService.IsConnectedToServer() )
 			{
-			
-				status = "Connected to Server at " + mService.getConnectedToServerIp();
-				
-				//  hook status
-				status += mService.mPhoneState.getIsOffTheHook() ?  "\n- Phone is off the hook" : "\n- Phone is on the hook";
-			
-				//  line status
-				ArrayList<Integer> lineNumbers = mService.mPhoneState.getActiveLineNumbers();
-				for ( int lineNumber : lineNumbers )
-				{
-					ClientPhoneLine nextLine = mService.mPhoneState.getPhoneLine(lineNumber);
-					String connected = nextLine.getIsConnected() ? "connected to " : "not connected";
-					String callerId = nextLine.getIsConnected() ? nextLine.getCallerNumber() : "";
-					String onHold = nextLine.getIsConnected() ? (nextLine.getIsOnHold() ? " : on hold" : "") : "";
-					
-					status += "\n - Line " + lineNumber + ": " + connected + callerId + onHold;
-				}
-				
-				//  setup talk button
-				if ( mService.mPhoneState.getIsConnected() )
-					mButtonTalk.setText("Flash");
-				else 
-					mButtonTalk.setText("Talk");
-
-				
+				status = "Connected to Server at: " + mService.getConnectedToServerIp() + "\n   on port: " + mService.getConnectedToServerControlOnPort();
 			}
 			else
 				status = "Not connected to Server";
 
 			mTextViewServerStatus.setText(status);
-		}*/
+		}
 
 	}
 
+	
 
 
 	@Override
 	public boolean onCreateOptionsMenu(Menu menu) {
 		// Inflate the menu; this adds items to the action bar if it is present.
-		//getMenuInflater().inflate(R.menu.activity_connect_ip_main, menu);
+		getMenuInflater().inflate(R.menu.tcp_connect, menu);
 		return true;
 	}
 
 	@Override
 	public boolean onOptionsItemSelected(MenuItem item) {
-		/*
+
 		Intent serverIntent = null;
 		switch (item.getItemId()) {
 		case R.id.menu_connect:
@@ -231,13 +288,38 @@ public class TcpConnect extends Activity {
 			if ( mService == null )
 				return true;
 
-			mService.openConnectionToServer();
-
-			SharedPreferences sharedPrefs = PreferenceManager.getDefaultSharedPreferences(this);
-			String ipAddress = sharedPrefs.getString("pref_server_ip_address", "192.168.0.101");
-			Toast.makeText(this, "Connecting to to server at: " + ipAddress, Toast.LENGTH_SHORT).show();
-
+			//  get the IP address to connect to
+			//  TODO:  this should be replaced with zero conf networking ip address discovery
+			SharedPreferences sharedPrefs = PreferenceManager.getDefaultSharedPreferences(TcpConnect.this);
+			String ipAddress = sharedPrefs.getString("pref_serveripaddress", "");
+			
+			int serverPort = 0;
+			try{
+				serverPort =  Integer.parseInt(sharedPrefs.getString("pref_serverport", "48888"));
+				
+				if ( ipAddress != "" && serverPort > 1024 )
+				{
+					//  open connection with default
+				//  message the user that we have initiated a connection
+					Toast.makeText(this, "Connecting to to server at: " + ipAddress + " on port: " + serverPort, Toast.LENGTH_SHORT).show();
+					mService.openConnectionToServer(ipAddress, serverPort);
+				}
+				else
+				{
+					Toast.makeText(this,  "IP Address: '" + ipAddress + "' or port '" + serverPort + "' is invalid.", Toast.LENGTH_LONG).show();
+				}
+			} 
+			catch (NumberFormatException e){
+				
+			}
+			finally{
+			
+				SetNetworkStateUi();
+				SetConnectedStateUi();
+			}
+			
 			return true;
+
 		}
 
 		case R.id.menu_disconnect:
@@ -250,62 +332,18 @@ public class TcpConnect extends Activity {
 
 		case R.id.menu_settings:
 
-			Intent intent = new Intent(this, TPCSettingsActivity.class);
+			Intent intent = new Intent(this, SettingsActivity.class);
 			startActivity(intent);
 
 			return true;
 
-		}*/
+		}
 		return false;
 	}
 
+	
+	
 	protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-
-		/*
-		if (requestCode == ACTIVITYREQUEST_CONTACTS && resultCode == Activity.RESULT_OK)
-		{
-			Uri contactData = data.getData();
-			// Get the URI that points to the selected contact
-			Uri contactUri = data.getData();
-			// We only need the NUMBER column, because there will be only one row in the result
-			String[] phoneNumber = {Phone.NUMBER};
-			String[] normalizedNumber = {Phone.NORMALIZED_NUMBER};
-			String[] displayName = {Phone.DISPLAY_NAME_PRIMARY};
-
-			// Perform the query on the contact to get the NUMBER column
-			// We don't need a selection or sort order (there's only one result for the given URI)
-			// CAUTION: The query() method should be called from a separate thread to avoid blocking
-			// your app's UI thread. (For simplicity of the sample, this code doesn't do that.)
-			// Consider using CursorLoader to perform the query.
-			Cursor cursor = getContentResolver()
-					.query(contactUri, phoneNumber, null, null, null);
-			cursor.moveToFirst();
-
-			// Retrieve the phone number from the NUMBER column
-			int column = cursor.getColumnIndex(Phone.NUMBER);
-			String number = cursor.getString(column);
-
-			cursor = getContentResolver()
-					.query(contactUri, normalizedNumber, null, null, null);
-			cursor.moveToFirst();
-
-			// Retrieve the phone number from the NUMBER column
-			column = cursor.getColumnIndex(Phone.NORMALIZED_NUMBER);
-			String normalNumber = cursor.getString(column);
-
-			cursor = getContentResolver()
-					.query(contactUri, displayName, null, null, null);
-			cursor.moveToFirst();
-
-			// Retrieve the phone number from the NUMBER column
-			column = cursor.getColumnIndex(Phone.DISPLAY_NAME_PRIMARY);
-			String contactName = cursor.getString(column);
-
-			// Do something with the phone number...
-			mEditTextPhoneNumber.setText(number);
-
-		}*/
-
 
 
 	}
@@ -313,7 +351,7 @@ public class TcpConnect extends Activity {
 
 
 
-	private final String TAG = "TPC_CLientMain";
+	private final String TAG = "TcpConnect";
 	private final boolean D = true;
     
 }
