@@ -4,20 +4,21 @@
 #include <string>
 #include <list>
 #include <mutex>
+#include <map>
 
 #include "Thread.h"
 #include "ConnectionThread.h"
 #include "ConnectedClientThread.h"
-#include "ClockThread.h"
 #include "CmdIfConfig.h"
+#include "UtilityFn.h"
 
+using namespace std;
 
 
 //////////////
 //  Display Output 
 //  The display output runs on it own thread
-
-///
+//
 class DisplayThread : public Thread
 {
 public:
@@ -30,81 +31,130 @@ protected:
 };
 
 
+/////////////////
+//  LogEvent
+//  class to hold log events
+//
+
+
+class LogEvent
+{
+public:
+	LogEvent();
+	LogEvent(timeval eventTime, string eventAddress, string eventDescription)
+	{ 
+		mEventTime = eventTime;
+		mEventAddress = eventAddress;
+		mEvent = eventDescription;
+	}
+
+	void PrintLog( FILE* stream )
+	{
+		fprintf( stream, "%s,%s,%s\n", FormatTime(mEventTime).c_str(), mEventAddress.c_str(), mEvent.c_str() );
+	}
+
+	timeval mEventTime;
+	string mEventAddress;
+	string mEvent;
+};
+
+//  deletion helper function
+inline static bool deleteLogEvent( LogEvent* eventToDelete ) { delete eventToDelete; return true; } 
+
+
 // TheApp
 // This class is the main application
 // it is running on the main thead
-// application sub processes, such as socket connection are launched in their own threads
-
+// application sub processes, such as socket connection and display update are launched in their own threads
+//
 class TheApp
 {
 public:
+
 	TheApp();
 	virtual ~TheApp();
 
+	//  initialize app components for startup
 	bool InitializeInstance();
 
+	//  shut down applicatio components for exit
 	void ShutDown();
 
 	//  create a connection to a client
 	//  returns the port that this program is listening on for TCP from the client
 	//  if fail to create client, returns -1
-	int CreateClientConnection(struct sockaddr_in &clientAddress, int clientListeningOnPortNumber);
+	int CreateClientConnection(const struct sockaddr_in &clientAddress, int clientListeningOnPortNumber);
 
 	//  disconnect a client connection
 	void DisconnectClient(struct sockaddr_in &clientAddress);
 
 	//  add event to the event log
-	void AddEvent(std::string event);
+	void AddEvent(timeval eventTime,  string eventAddress, string eventDetails);
 
-	//  update display with current program state
-	void UpdateDisplay();
-	void DisplayUpdateClock();
+	//  pass along a broadcast message to all clients
+	void BroadcastClientsMessage(timeval eventTime, string eventAddress, string message);
 
-	void SuspendDisplayUpdates() { mDisplayUpdatesOn = false; }
-	void ResumeDisplayUpdates() { mDisplayUpdatesOn = true; }
 
+	//  Display Handling
+	//
+	//  set flag to update display
 	void SetUpdateDisplay();
+	//  set flag to suspend display updtes
+	void SuspendDisplayUpdates();
+	//  set flag to resume display updates
+	void ResumeDisplayUpdates();
 
+
+	//  command line functions
+	bool SaveLogs(string input);
+	void PrintLogs(FILE* stream);
+	void ClearLogs();
+
+	
 
 protected:
 
-	std::string mVersionString;
+	string mVersionString;
 
-	//  application properties
+	//  remember ifconfig properties
 	CMDifconfig mCMDifconfig;
 
+	//  connection server port, listening for connect / disconnect requests on this port
 	int mConnectionServerPort;
 
 	//  server connection thread
 	ConnectionThread mConnectionThread;
 
 	//  connected clients
-	std::map<std::string, ConnectedClient*> mConnectedClients;
+	map<string, ConnectedClient*> mConnectedClients;
 
-	std::mutex mConnectedClientsMutex;
+	mutex mConnectedClientsMutex;
 
 	//  the event log
-	std::list<std::string> mEventLog;
-	std::mutex mEventLogMutex;
+	list<LogEvent*> mEventLog;
+	mutex mEventLogMutex;
+	int mMaxEventsToLog = 99999;
 
 	//  The display output
 	//  this happens on its own thread
 	DisplayThread mDisplayThread;
-	std::mutex mDisplayUpdateMutex;
+	friend class DisplayThread;
+	mutex mDisplayUpdateMutex;
 	
 	bool mDisplayUpdatesOn = true;
 	bool mUpdateDisplay = false;
 
 	timeval mTimeOfLastClockUpdate;
-
+	
+	//  update display function, 
+	void DisplayUpdate();
 	void DisplayWriteHeader();
 	void DisplayWriteClientConnections();
 	void DisplayWriteLogs();
-	
-
-	//  the display output
-	ClockThread mClockThread;
-
+	void DisplayWriteTime();
+	void DisplayUpdateClock();
 };
+
+
 
 #endif // _THEAPP_H

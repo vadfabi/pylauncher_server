@@ -1,20 +1,24 @@
 #include <arpa/inet.h>
 #include <future>
 #include <string>
+#include <sys/time.h>
+#include <algorithm>
+#include <iostream>
 
 #include "TheApp.h"
 #include "Parser.h"
 #include "ConnectedClientThread.h"
 #include "UtilityFn.h"
 
+using namespace std;
 
 
-////////
 
 
-
+//  Constructor
+//
 TheApp::TheApp() :
-	mConnectionThread(*this), mClockThread(*this), mDisplayThread(*this)
+	mConnectionThread(*this),  mDisplayThread(*this)
 {
 	mVersionString = "1.0.0.1";
 
@@ -22,16 +26,17 @@ TheApp::TheApp() :
 }
 
 
-
+//  Destructor
+//
 TheApp::~TheApp()
 {
-
 	ShutDown();
-
 }
 
 
-
+//  InitializeInstance
+//  perform all the required steps for the application to start
+//
 bool TheApp::InitializeInstance()
 {
 	//  open the server socket
@@ -45,161 +50,270 @@ bool TheApp::InitializeInstance()
 	//  get and remember the ip info of the machine for display purposes
 	mCMDifconfig.Execute();
 
-	//  start the display
-	mClockThread.Start();
-
-
 	//  start the connection thread
 	mConnectionThread.Start();
 
+	//  start the display thread
 	mDisplayThread.Start();
-
+	//  flag for update on first pass
 	mUpdateDisplay = true;
 
+	//  initialization successful
 	return true;
 }
 
 
+
+//  ShutDown
+//  stops running threads, and cleans up memory allocated by TheApp object
+//
 void TheApp::ShutDown()
 {
 	//  disconnect all of our clients
-	std::map<std::string, ConnectedClient*>::iterator iter;
-
-	for ( iter = mConnectedClients.begin(); iter != mConnectedClients.end(); iter++ )
+	map<string, ConnectedClient*>::iterator nextClient;
+	for ( nextClient = mConnectedClients.begin(); nextClient != mConnectedClients.end(); nextClient++ )
 	{
-		iter->second->ShutDown();
-		delete iter->second;
-	}
-
+		nextClient->second->Cancel();
+		delete nextClient->second;
+	}	
+	//  done with clients
 	mConnectedClients.erase(mConnectedClients.begin(), mConnectedClients.end());
 
 	//  cancel the connection thread
-	mConnectionThread.Cancel();
+	if ( mConnectionThread.IsRunning() )
+		mConnectionThread.Cancel();
 
-	mDisplayThread.Cancel();
+	if ( mDisplayThread.IsRunning() )
+		mDisplayThread.Cancel();
 
-	//  cancel the clock thread
-	mClockThread.Cancel();
+	//  delete the log event objects in the mEventLog list
+	//  this method uses the helper function deleteLogEvent( )
+	mEventLog.remove_if(deleteLogEvent);
 }
 
 
-std::string IpAddressString(struct sockaddr_in &address)
+
+//  AddEvent
+//  add an event to the event log
+//
+void TheApp::AddEvent(timeval eventTime, string eventAddress, string eventDetails)
 {
-	//  create string from 
-	char* addressBuffer = inet_ntoa(address.sin_addr);
-	return std::string(addressBuffer);
+	//  we will be modifying the event log list, lock access to it
+	mEventLogMutex.lock();
+
+	LogEvent* newEvent = new LogEvent(eventTime, eventAddress, eventDetails);
+	mEventLog.push_front(newEvent);
+
+	if ( mEventLog.size() > mMaxEventsToLog )
+	{
+		delete mConnectedClients.end()->second;
+		mEventLog.pop_back();
+	}
+
+	//  we are done modifying the event log, release access
+	mEventLogMutex.unlock();
+
+	//  update display
+	SetUpdateDisplay();
 }
 
 
-int TheApp::CreateClientConnection(struct sockaddr_in &clientAddress, int clientListeningOnPortNumber)
+
+
+
+
+//  CreateClientConnection
+//  creates a new connection thread for an individual client
+//
+int TheApp::CreateClientConnection(const struct sockaddr_in &clientAddress, int clientListeningOnPortNumber)
 {
 	//  Thread safety on access to map of clients
 	mConnectedClientsMutex.lock();
 
 	//  get the dots and numbers string for client, this is used as the key in our clients map
-	std::string  addressOfSender = IpAddressString(clientAddress);
+	string  addressOfSender = IpAddressString(clientAddress);
 
 	//  see if this client exists already
-	std::map<std::string, ConnectedClient*>::iterator it = mConnectedClients.find(addressOfSender);
+	map<string, ConnectedClient*>::iterator it = mConnectedClients.find(addressOfSender);
 	if ( it != mConnectedClients.end() )
 	{
 		//  shut down old connection and delete this client
-		it->second->ShutDown();
+		it->second->Cancel();
 		mConnectedClients.erase(addressOfSender);
 		delete it->second;
 	}
 
 	//  create connection thread for the client
-	ConnectedClient* newClient = new ConnectedClient(*this, addressOfSender);
-	printf("Created Client: %0x\n", (unsigned int)newClient);
+	ConnectedClient* newClient = new ConnectedClient(*this, clientAddress, clientListeningOnPortNumber);
+	
+	//  open a port to serve this client
+	int servingClientOnPortNumber = newClient->OpenServerSocket(49000, false);
 
-	int portNumber = newClient->OpenServerSocket(50000, false);
-
-	if ( portNumber < 0 )
+	if ( servingClientOnPortNumber < 0 )
 	{
 		delete newClient;
 		mConnectedClientsMutex.unlock();
 		return -1;
 	}
-
-	newClient->mClientsAddress = clientAddress;
-	newClient->mClientsListeningPortNumber = clientListeningOnPortNumber;
+	
+	//  start this thread 
 	newClient->Start();
 
-	mConnectedClients[addressOfSender] =  newClient;
+	//  add the client to the map
+	mConnectedClients[newClient->GetIpAddressOfClient()] =  newClient;
 
+	//  unlock access to the client map
 	mConnectedClientsMutex.unlock();
 
-
-	return portNumber;
+	return servingClientOnPortNumber;
 }
 
 
 
-
+//  DisconnectClient
+//  closes client server port, stops client thread, and deletes memory allocated for client objects
+//
 void TheApp::DisconnectClient(struct sockaddr_in &clientAddress)
 {
+	//  we will be modifying the client map, lock access to it
 	mConnectedClientsMutex.lock();
 
-	std::string clientKey = IpAddressString(clientAddress);
+	//  our map uses dots and numbers address of client as a key
+	string clientKey = IpAddressString(clientAddress);
 
-	ConnectedClient *existingClient = 0;
+	//  see if this client exists already
+	map<string, ConnectedClient*>::iterator it = mConnectedClients.find(clientKey);
 
-	try{
-		//  see if existing client exists
-		existingClient = mConnectedClients.at(clientKey);
-		//  documentation says that if item is not in list, that at() will throw exception, 
-	}
-	catch(out_of_range const&e)
+	if ( it == mConnectedClients.end() )
 	{
 		//  this key does not exist, not expected here
 		DEBUG_TRACE("TheApp::DisconnectClient - client does not exist !!!\n");
 		return;
 	}
 
-	existingClient->Cancel();
+	//  stop client thread
+	it->second->Cancel();
 
+	//  delete memory
+	delete it->second;
+
+	//  remove client from map
 	mConnectedClients.erase(clientKey);
 
-	delete existingClient;
-
-
+	//  done with access to client map
 	mConnectedClientsMutex.unlock();
 
+	//  update display
 	SetUpdateDisplay();
 }
 
 
-void TheApp::AddEvent(std::string eventString)
+
+//  BroadcastClientsMessage
+//  takes a message in from one client, and broadcasts to all other connected clients
+//
+void  TheApp::BroadcastClientsMessage(timeval eventTime, string eventAddress, string message)
 {
+	//string broadcastMessage = format("$
+	//  add an event log for this
+	//mEventLogMutex.lock();
+
+	//LogEvent* newEvent = new LogEvent
+}
+
+
+
+
+//  Command Line Functions
+//  handlers for command arguments entered in main loop
+//
+
+//  SaveLogs
+//  save logs out to a log file
+//
+bool TheApp::SaveLogs(string input)
+{
+	Parser inputParser(input, " ");
+	string command = inputParser.GetNextString();
+	string filename = inputParser.GetNextString();
+	string clearArgument = inputParser.GetNextString();
+
+	FILE* outputFile = fopen ( filename.c_str(), "w" );
+	if ( outputFile == 0 )
+		return false;
+
+	//  accessing the event log list, lock it
 	mEventLogMutex.lock();
 
-	mEventLog.push_front(eventString);
+	//  print all the logs
+	for_each(  mEventLog.begin(), mEventLog.end(), bind2nd(mem_fun(&LogEvent::PrintLog), outputFile) );
+
+	if ( clearArgument.compare("-c") == 0 )
+		mEventLog.remove_if(deleteLogEvent);
 
 	mEventLogMutex.unlock();
 
-	mDisplayUpdateMutex.lock();
-	mUpdateDisplay = true;
-	mDisplayUpdateMutex.unlock();
+	fclose( outputFile );
+	
+	return true;
 }
 
 
 
-//////////////
-//  Display Output 
-//  The display output runs on it own thread
-DisplayThread::DisplayThread(TheApp& theApp) : mTheApp(theApp)
+//  PrintLogs
+//  print all events in the event log to the file stream you specify
+//
+void TheApp::PrintLogs(FILE* stream)
 {
+	//  lock access to event log list
+	mEventLogMutex.lock();
+
+	//  iterate through log list and print logs to stdout
+	//  this ta
+	for_each(  mEventLog.begin(), mEventLog.end(), bind2nd(mem_fun(&LogEvent::PrintLog),stream) );
+
+	//  unlock access to event log list
+	mEventLogMutex.unlock();
 }
 
-void DisplayThread::RunFunction()
+
+
+//  ClearLogs
+//  clears the event log
+void TheApp::ClearLogs()
 {
-	Sleep(10);
-	mTheApp.UpdateDisplay();
+	//  we will be modifying the event log list, so lock its access
+	mEventLogMutex.lock();
+
+	//  delete the log event objects in the mEventLog list
+	//  this method uses the helper function deleteLogEvent( )
+	mEventLog.remove_if(deleteLogEvent);
+
+	/*
+	//  this is instead of doing something more old fashioned such as
+	//  clean up the event log
+	list<LogEvent*>::iterator nextEvent;
+	for ( nextEvent = mEventLog.begin(); nextEvent != mEventLog.end(); nextEvent++ )
+	{
+		delete *nextEvent;
+	}
+	*/
+
+	//  unlock access to event log list
+	mEventLogMutex.unlock();
 }
 
 
 
+
+
+//  Display Output
+//
+
+
+//  SetUpdateDisplay
+//  set the flag that the display is to be updated on the next pass
+//
 void TheApp::SetUpdateDisplay()
 {
 	mDisplayUpdateMutex.lock();
@@ -207,33 +321,84 @@ void TheApp::SetUpdateDisplay()
 	mDisplayUpdateMutex.unlock();
 }
 
-void TheApp::UpdateDisplay()
+
+//  SuspendDisplayUpdates
+//  set flag to suspend display updtes, this is used when main( ) enters command mode for terminal input
+//
+void TheApp::SuspendDisplayUpdates() 
 {
+	mDisplayUpdateMutex.lock();
+	mDisplayUpdatesOn = false; 
+	mDisplayUpdateMutex.unlock();
+}
+
+
+//  ResumeDisplayUpdates
+//  set flag to resume display updates
+//
+void TheApp::ResumeDisplayUpdates()
+{
+	//  no need to lock the mutex here, since no display updates are running in this state
+
+	// force refresh
+	mUpdateDisplay = true;
+
+	//  turn updates back on
+	mDisplayUpdatesOn = true; 
+}
+
+
+
+//  The display output runs on it own thread, this class deffinition is here
+//  
+DisplayThread::DisplayThread(TheApp& theApp) : mTheApp(theApp)
+{
+}
+
+void DisplayThread::RunFunction()
+{
+	//  TODO:  refactor this from a timer wait to scheme where this thread waits for a signal that there is an update to process
+	Sleep(10);
+
+	//  update display
+	mTheApp.DisplayUpdate();
+}
+
+
+
+//  DisplayUpdate
+//  the master function to call all the display update parts
+//
+void TheApp::DisplayUpdate()
+{
+	//  if updates are suspended, then just return
 	if ( ! mDisplayUpdatesOn )
 		return;
 
+	//  time tag
 	timeval timeNow;
 	gettimeofday(&timeNow, 0);
 
 	if ( mUpdateDisplay )
 	{
+		//  lock the display update
 		mDisplayUpdateMutex.lock();
+
+		//  Redraw the whole display
+		system("clear");
 
 		DisplayWriteHeader();
 		//
 		DisplayWriteClientConnections();
 		//
 		DisplayWriteLogs();
-
-		//  put the time as last line of display
-		CMD date("date");
-		date.Execute();
-		printf("/***     Time:      %s\n", date.GetCommandResponseLine(0).c_str());
-	
+		// 
+		DisplayWriteTime();
 		mTimeOfLastClockUpdate = timeNow;
 
 		mUpdateDisplay = false;
 
+		//  unlock the display update
 		mDisplayUpdateMutex.unlock();
 	}
 	else
@@ -245,28 +410,22 @@ void TheApp::UpdateDisplay()
 			mTimeOfLastClockUpdate = timeNow;
 		}
 	}
-
-	
-
 }
 
 
 
 void TheApp::DisplayWriteHeader()
 {
-	system("clear");
-
-	printf("/*****************************************************************************\n");
-	printf("/******  Simple Linux Connect TCP/IP Program \n");
-	printf("/******  %s:\n", mVersionString.c_str());
-	printf("/******\n");
-	printf("/******      Connected on eth0: %s\n",mCMDifconfig.mEth0Info.mInet4Address.size() == 0 ? "not enabled " : mCMDifconfig.mEth0Info.mInet4Address.c_str());
-	printf("/******      Connected on wlan: %s\n",mCMDifconfig.mWlanInfo.mInet4Address.size() == 0 ? "not enabled " : mCMDifconfig.mWlanInfo.mInet4Address.c_str());
-	printf("/******      Server is listening on port: %d\n", mConnectionServerPort);	
+	printf("/***********************************************************************************\n");
+	printf("/***  Simple Linux Connect TCP/IP Program \n");
+	printf("/***  %s:\n", mVersionString.c_str());
+	printf("/***\n");
+	printf("/***      Connected on eth0: %s\n",mCMDifconfig.mEth0Info.mInet4Address.size() == 0 ? "not enabled " : mCMDifconfig.mEth0Info.mInet4Address.c_str());
+	printf("/***      Connected on wlan: %s\n",mCMDifconfig.mWlanInfo.mInet4Address.size() == 0 ? "not enabled " : mCMDifconfig.mWlanInfo.mInet4Address.c_str());
+	printf("/***      Server is listening on port: %d\n", mConnectionServerPort);	
 
 
 }
-
 
 
 void TheApp::DisplayWriteClientConnections()
@@ -274,11 +433,11 @@ void TheApp::DisplayWriteClientConnections()
 	mConnectedClientsMutex.lock();
 
 	//  write out client connection state
-	std::map<std::string, ConnectedClient*>::iterator iter;
+	map<string, ConnectedClient*>::iterator iter;
 
 	for ( iter = mConnectedClients.begin(); iter != mConnectedClients.end(); iter++ )
 	{
-		printf("/******      - Client at %s connected on port %d.\n", iter->second->GetIpAddressOfClient().c_str(), iter->second->mClientsListeningPortNumber);
+		printf("/***      - Client at %s connected on port %d.\n", iter->second->GetIpAddressOfClient().c_str(), iter->second->GetConnectedOnPortNumber() );
 	}
 
 	mConnectedClientsMutex.unlock();
@@ -287,8 +446,8 @@ void TheApp::DisplayWriteClientConnections()
 
 void TheApp::DisplayWriteLogs()
 {
-	printf("/******\n");
-	printf("/******      Event Logs:\n");
+	printf("/***\n");
+	printf("/***      Event Logs:\n");
 
 	mEventLogMutex.lock();
 
@@ -298,17 +457,27 @@ void TheApp::DisplayWriteLogs()
 	{
 		if ( i < logSize )
 		{
-			std::list<std::string>::iterator it = mEventLog.begin();
-			std::advance(it, i);
-			printf("/******        > %s\n", it->c_str());
+			list<LogEvent*>::iterator it = mEventLog.begin();
+			advance(it, i);
+			printf("/***        > %s : %s : %s\n", FormatTime((*it)->mEventTime).c_str(), (*it)->mEventAddress.c_str(), (*it)->mEvent.c_str());
 		}
 		else
-			printf("/******        >\n");
+			printf("/***        >\n");
 	}
 
-	printf("/******\n");
+	printf("/***\n");
 
 	mEventLogMutex.unlock();
+}
+
+
+void TheApp::DisplayWriteTime()
+{
+	//  put the time as last line of display
+	CMD dateCommand("date");
+	dateCommand.Execute();
+	printf("/***     Time:      %s\n", dateCommand.GetCommandResponseLine(0).c_str());
+	printf("/***     Press Enter to enable command mode:\n");
 }
 
 
@@ -319,15 +488,16 @@ void TheApp::DisplayUpdateClock()
 
 	mDisplayUpdateMutex.lock();
 
+	//  rewind stdout two lines to reset to start of date string output
+	fputs("\033[A\033[2K",stdout);
 	fputs("\033[A\033[2K",stdout);
 	rewind(stdout);
-	//  had to get rid of this next call, would not compile on openSuse
-	//  ftruncate(1,0); // you probably want this as well 
-	//  put the date as last line of display
-	CMD date("date");
-	date.Execute();
-	printf("/***     Time:      %s\n", date.GetCommandResponseLine(0).c_str());
+	
+	//  write the time
+	DisplayWriteTime();
 
 	mDisplayUpdateMutex.unlock();
 }
+
+
 

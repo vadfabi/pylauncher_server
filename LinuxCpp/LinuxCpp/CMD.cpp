@@ -1,14 +1,23 @@
-#include "CMD.h"
-
 #include <algorithm>
 
+#include "CMD.h"
 
+using namespace std;
+
+//  CMD
+//  a class to execute "system(yourCommand)" and store the response as a list of strings
+
+//  Constructor
+//
 CMD::CMD()
 {
 	Command = "";
 	
 }
 
+
+//  Constructor
+//
 CMD::CMD(std::string command)
 {
 	Command = command;
@@ -16,16 +25,17 @@ CMD::CMD(std::string command)
 }
 
 
+//  Destructor
+//
 CMD::~CMD()
 {
 	Command = "";
 }
 
 
-/// 
-///  Execute
-///  Calls system and parse
-///
+//  Execute
+//  Calls system and parse
+//
 bool CMD::Execute()
 {
 	CommandResponse.clear();
@@ -37,15 +47,15 @@ bool CMD::Execute()
 }
 
 
-///
-///  System
-///  calls system(yourCommand)
-///  puts response into a std::string list (with newlines stripped off)
-///
+
+//  System
+//  calls system(yourCommand)
+//  puts response into a std::string list (with newlines stripped off)
+//
 bool CMD::System()
 {
 	//  issue the ifconfig command
-	std::string commandLineString = GetCommandLineString();
+	string commandLineString = GetCommandLineString();
 	FILE *cmdResponse = popen(commandLineString.c_str(), "r");
 
 	if ( cmdResponse == 0 )
@@ -57,11 +67,11 @@ bool CMD::System()
 	while ( nextLine )
 	{
 		//  string object from char*
-		std::string nextResponse = nextLine;
+		string nextResponse = nextLine;
 
 		//  remove newlines and carriage returns
-		nextResponse.erase(std::remove(nextResponse.begin(), nextResponse.end(), '\n'), nextResponse.end());
-		nextResponse.erase(std::remove(nextResponse.begin(), nextResponse.end(), '\r'), nextResponse.end());
+		nextResponse.erase(remove(nextResponse.begin(), nextResponse.end(), '\n'), nextResponse.end());
+		nextResponse.erase(remove(nextResponse.begin(), nextResponse.end(), '\r'), nextResponse.end());
 
 		//  add to the end of the response list
 		CommandResponse.push_back(nextResponse);
@@ -75,9 +85,11 @@ bool CMD::System()
 }
 
 
-///
-/// Compare
-///
+
+// Compare
+// compares the latest response to your command with the previous response to your command
+// this is useful to know if the state that your command represents has changed
+//
 bool CMD::Compare()
 {
 	//  response same size
@@ -106,15 +118,18 @@ bool CMD::Compare()
 	return true;
 }
 
-///
-/// GetCommandLineString
-///
+
+
+// GetCommandLineString
+//
 std::string CMD::GetCommandLineString()
 {
 	return Command;
 }
 
 
+//  GetCommandResponseLine
+//
 std::string CMD::GetCommandResponseLine(int i)
 {
 	if ( i >= CommandResponse.size() )

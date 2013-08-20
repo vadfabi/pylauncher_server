@@ -4,7 +4,7 @@
 #Visit http://visualgdb.com/makefiles for more details
 
 #VisualGDB: AutoSourceFiles		#<--- remove this line to disable auto-updating of SOURCEFILES and EXTERNAL_LIBS
-SOURCEFILES := BoostThread.cpp ClockThread.cpp CMD.cpp CmdIfConfig.cpp ConnectedClientThread.cpp ConnectionThread.cpp main.cpp Parser.cpp TCPServerThread.cpp TheApp.cpp Thread.cpp
+SOURCEFILES := CMD.cpp CMDifconfig.cpp ConnectedClientThread.cpp ConnectionThread.cpp main.cpp Parser.cpp TCPServerThread.cpp TheApp.cpp Thread.cpp
 
 TARGETNAME := tcpServer
 #TARGETTYPE can be APP, STATIC or SHARED

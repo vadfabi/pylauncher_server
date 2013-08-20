@@ -66,10 +66,8 @@
     <None Include="release.mak" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="BoostThread.cpp" />
-    <ClCompile Include="ClockThread.cpp" />
     <ClCompile Include="CMD.cpp" />
-    <ClCompile Include="CmdIfConfig.cpp" />
+    <ClCompile Include="CMDifconfig.cpp" />
     <ClCompile Include="ConnectedClientThread.cpp" />
     <ClCompile Include="ConnectionThread.cpp" />
     <ClCompile Include="main.cpp" />
@@ -79,10 +77,8 @@
     <ClCompile Include="Thread.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="BoostThread.h" />
-    <ClInclude Include="ClockThread.h" />
     <ClInclude Include="CMD.h" />
-    <ClInclude Include="CmdIfConfig.h" />
+    <ClInclude Include="CMDifconfig.h" />
     <ClInclude Include="ConnectedClientThread.h" />
     <ClInclude Include="ConnectionThread.h" />
     <ClInclude Include="Parser.h" />

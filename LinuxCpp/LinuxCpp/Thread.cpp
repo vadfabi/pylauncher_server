@@ -8,7 +8,8 @@
 
 
 //  Sleep
-//  Standard thread sleep function
+//  sleep in milliseconds
+//
 void Sleep(long millis)
 {
 	std::this_thread::sleep_for(std::chrono::milliseconds(millis));
@@ -17,8 +18,8 @@ void Sleep(long millis)
 
 
 
-//  Thread
-//  constructor
+//  Constructor
+//  
 Thread::Thread() 
 {
 	mThread = 0;
@@ -28,8 +29,8 @@ Thread::Thread()
 }
 
 
-//  ~Thread
-//  destructor
+//  Destructor
+//  
 Thread::~Thread()
 {
 	//  stop running thread before destruction
@@ -49,13 +50,15 @@ Thread::~Thread()
 //  Run
 //  This is the thread run function
 //  it takes a reference to the Thread class, and calls the Thread::RunFunction() for each cycle
-//  then it calls sleep for every cycle (to prevent race condition)
+//  note, if you have a process that never quits, you should add a sleep in your RunFunction to prevent race condition
+//
 void Run(Thread& thread)
 {
 	while ( thread.IsRunning() )
 	{
 		thread.RunFunction();
 
+		//  TODO: this won't compile, there is some question if it is necessary ?
 		//  yeild once per cycle to avoid race condition
 		//std::this_thread::yeild();
 	}
@@ -68,7 +71,7 @@ void Run(Thread& thread)
 
 
 //  Start
-//  Start the thread running
+//  
 void Thread::Start()
 {
 	//  stop thread if it is running
@@ -93,6 +96,7 @@ void Thread::Start()
 //  Cancel
 //  Stop the thread
 //  this function will wait until the thread has exited before returning
+//
 void Thread::Cancel()
 {
 	mThreadRunning = false;
@@ -120,8 +124,5 @@ void Thread::Cancel()
 		mThread = 0;
 	}
 
-
-
-	
 	return;
 }

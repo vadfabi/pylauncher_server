@@ -1,15 +1,13 @@
 #ifndef _PARSER_H
 #define _PARSER_H
 
-//#include <stdlib.h>
 #include <iostream>
 #include <vector>
-//#include <string>
-//#include <cstring>
 
 using namespace std;
 
 
+//  TODO:  comment and refactor parser
 char *get_line (char *s, size_t n, FILE *f);
 
 

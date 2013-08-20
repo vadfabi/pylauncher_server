@@ -5,15 +5,18 @@
 
 #include "CMD.h"
 
-// CMDifconfig
-// 
+using namespace std;
 
+
+//  ConnectionInfo
+//  container class for internet information
+//  TODO:  expand this to support ipv6 addresses
 class ConnectionInfo
 {
 public:
 
-	std::string mType;
-	std::string mInet4Address;
+	string mType;
+	string mInet4Address;
 
 	ConnectionInfo()
 	{
@@ -22,20 +25,21 @@ public:
 	}
 };
 
-
+// CMDifconfig
+// 
 class CMDifconfig : public CMD
 {
 public:
 	CMDifconfig();
+
 	virtual ~CMDifconfig();
 
+	//  override base class CMD::Parse so we can parse internet address out of system response
 	virtual bool Parse();
-
 
 	ConnectionInfo mEth0Info;
 	ConnectionInfo mLoopbackInfo;
 	ConnectionInfo mWlanInfo;
-
 };
 
 

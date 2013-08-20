@@ -200,7 +200,7 @@ int TCPServerThread::OpenServerSocket(int portToOpen, bool exactPort)
 
 //  ReadStringFromSocket
 //
-int TCPServerThread::ReadStringFromSocket(struct sockaddr_in *clientAddress, std::string& readString)
+int TCPServerThread::ReadStringFromSocket(struct sockaddr_in *clientAddress, string& readString)
 {
 	//  init values
 	readString = "";
@@ -224,7 +224,7 @@ int TCPServerThread::ReadStringFromSocket(struct sockaddr_in *clientAddress, std
 	memset(buffer, 0, TCPSERVER_READBUFFERSIZE+1);
 
 	int bytesRead = read(acceptFileDescriptor,buffer,TCPSERVER_READBUFFERSIZE);
-	readString += std::string(buffer);		//  note:  this simple implementation will lose any bytes after first null, is designed for strings and not byte data
+	readString += string(buffer);		//  note:  this simple implementation will lose any bytes after first null, is designed for strings and not byte data
 
 	//  did we get all the bytes, check for more bytes if we read 1024
 	if ( bytesRead == TCPSERVER_READBUFFERSIZE )
@@ -234,7 +234,7 @@ int TCPServerThread::ReadStringFromSocket(struct sockaddr_in *clientAddress, std
 		{
 			memset(buffer, 0, TCPSERVER_READBUFFERSIZE);
 			bytesRead = read(acceptFileDescriptor,buffer,TCPSERVER_READBUFFERSIZE);
-			readString += std::string(buffer);
+			readString += string(buffer);
 		}
 	}
 
@@ -246,7 +246,7 @@ int TCPServerThread::ReadStringFromSocket(struct sockaddr_in *clientAddress, std
 
 //  WriteStringToSocket
 //
-int TCPServerThread::WriteStringToSocket(int socketFileDescriptor, std::string& writeString)
+int TCPServerThread::WriteStringToSocket(int socketFileDescriptor, string& writeString)
 {
 	//  size of string
 	int stringSize = writeString.size();

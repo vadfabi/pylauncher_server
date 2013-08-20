@@ -13,18 +13,24 @@
 
 using namespace std;
 
+//  TODO:  Comment parser
 
 char *get_line (char *s, size_t n, FILE *f)
 {
-
+	//  call fgets to read from file stream
 	char *p = fgets (s, n, f);
 
-  if (p != 0) {
-    size_t last = strlen (s) - 1;
+	//  if we read something
+	if (p != 0) 
+	{
+		//  force it to be null terminated
+		size_t last = strlen (s) - 1;
 
-    if (s[last] == '\n') s[last] = '\0';
-  }
-  return p;
+		if (s[last] == '\n') 
+			s[last] = '\0';
+	}
+
+	return p;
 }
 
 

@@ -1,6 +1,11 @@
 #include "CmdIfConfig.h"
 #include "Parser.h"
 
+using namespace std;
+
+
+//  Constructor
+//
 CMDifconfig::CMDifconfig()
 {
 	Command = "ifconfig";
@@ -9,10 +14,12 @@ CMDifconfig::CMDifconfig()
 
 CMDifconfig::~CMDifconfig()
 {
-
 }
 
 
+//  Parse
+//  override of base class CMD::Parse to extract specific bits of the ifconfig response
+//
 bool CMDifconfig::Parse()
 {
 	Parser parser("", "");
@@ -87,7 +94,6 @@ bool CMDifconfig::Parse()
 			{
 				break;
 			}
-
 		}
 	}
 
@@ -95,38 +101,3 @@ bool CMDifconfig::Parse()
 	return true;
 }
 
-
-
-//if ( lsofFile_p != 0 )
-//	{
-//		char buffer[1024];
-//		char *line_p = fgets(buffer, sizeof(buffer), lsofFile_p);
-//		while ( line_p )
-//		{
-//			printf(line_p);
-//			fflush(stdout);
-//
-//			string stringLine = line_p;
-//
-//			Parser parser(stringLine, " ");
-//
-//			string nextString = parser.GetNextString();
-//			while ( nextString.size() != 0 )
-//			{
-//				const char* stringBuffer = nextString.c_str();
-//				printf("%s ", stringBuffer);
-//				fflush(stdout);
-//				nextString = parser.GetNextString();
-//			}
-//
-//			line_p = fgets(buffer, sizeof(buffer), lsofFile_p);
-//		}
-//
-//		 pclose(lsofFile_p);
-//	}
-
-//
-//const char* stringBuffer = nextString.c_str();
-//			printf("%s ", stringBuffer);
-//			fflush(stdout);
-//			nextString = parser.GetNextString();

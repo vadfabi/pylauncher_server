@@ -3,10 +3,17 @@
 
 #include <thread>
 
+using namespace std;
+
+
 //  Thread
 //  a simple framework for using std::thread 
+//  to have a thread, derive your function from Thread
+//  and then define the RunFunction()
+//  if you want to do specific shutdown when the thread is canceled, also override Cancel()
+//
 
-//  Standard thread sleep function
+//  sleep in the current thread for millis milliseconds
 void Sleep(long millis);
 
 class Thread

@@ -1,4 +1,3 @@
-//#include <stdio.h>
 #include <sys/types.h> 
 #include <sys/socket.h>
 #include <cstdlib>
@@ -6,52 +5,99 @@
 #include <unistd.h>
 #include <string.h>
 #include <string>
-#include <arpa/inet.h>
-
+#include <sys/time.h>
 
 #include "ConnectedClientThread.h"
 #include "TheApp.h"
 #include "Parser.h"
 #include "UtilityFn.h"
 
-ConnectedClient::ConnectedClient(TheApp& theApp, std::string ipAddressOfClient) :
+using namespace std;
+
+
+
+//  Constructor
+//
+ConnectedClient::ConnectedClient(TheApp& theApp, const struct sockaddr_in &clientAddress, int clientsListeningOnPortNumber) :
 	mTheApp(theApp)
 {
-	mIpAddressOfClient = ipAddressOfClient;
+	mClientsAddress = clientAddress;
+	mPortNumberClientIsListeningOn = clientsListeningOnPortNumber;
+	mIpAddressOfClient = IpAddressString(mClientsAddress);
 }
 
 
+//  Destructor
+//
 ConnectedClient::~ConnectedClient()
 {
-	printf("Deleting ConnectedClient %0x\n", (unsigned int)this);
+	if ( mThreadRunning )
+	{
+		DEBUG_TRACE("Destroying ConnectedClient while thread still running !\n");
+		Cancel();
+	}
 }
 
 
-//--------------------------------
 //  RunFunction
-//  waits for a message from the client, responds to known messages
+//  waits for a message from the client, known messages get response and action taken
+//
 void ConnectedClient::RunFunction()
 {
 	struct sockaddr_in clientAddress;
-	std::string readFromSocket;
+	string readFromSocket;
+
+	//  this function blocks on the socket read
 	int acceptFileDescriptor = ReadStringFromSocket(&clientAddress, readFromSocket);
 
+	//  if nothing was read, bail out (this should be because you have stopped this thread and closed the socket
 	if ( acceptFileDescriptor < 0 )
 		return;
-	
-	char* addressOfSender = inet_ntoa(clientAddress.sin_addr);
-	std::string eventToLog = format("Received from %s: %s",addressOfSender, readFromSocket.c_str());
-	mTheApp.AddEvent(eventToLog);
 
+	//  we read something
+
+	//  log event time
+	timeval eventTime;
+	gettimeofday(&eventTime, 0);
+
+	//  log event sender
+	string eventSender = IpAddressString(clientAddress);
+	
+	//  parse what was read
 	Parser readParser(readFromSocket, ",");
-	std::string command = readParser.GetNextString();
+	string command = readParser.GetNextString();
 
 	//  Look for recognized commands
 	//
 	if ( command.compare("$TCP_BUTTON") == 0 )  
 	{
-		std::string argument = readParser.GetNextString();
+		//  button n command
+		string argument = readParser.GetNextString();
+		string returnMessage = format("$TCP_BUTTON,ACK,%s", argument.c_str());
 
+		write(acceptFileDescriptor, returnMessage.c_str(), returnMessage.size());
+
+		//  log the event
+		mTheApp.AddEvent(eventTime, eventSender, readFromSocket);
+	}
+	else if ( command.compare("$TPC_BROADCASTMESSAGE") )
+	{
+		//  broadcast message command
+		string returnMessage = "$TCP_BROADCASTMESSAGE,ACK";
+		write(acceptFileDescriptor, returnMessage.c_str(), returnMessage.size());
+
+		string message = readParser.GetNextString();
+		mTheApp.BroadcastClientsMessage(eventTime, eventSender, message);
+	}
+	else
+	{
+		//  unknown command
+		string returnMessage = format("$TCP_NAK,unknown command: %s", readFromSocket.c_str());
+		write(acceptFileDescriptor, returnMessage.c_str(), returnMessage.size());
+
+		//  log event
+		string eventToLog = format("  ! Unknown command received:  %s", readFromSocket.c_str());
+		mTheApp.AddEvent(eventTime, eventSender, eventToLog);
 	}
 	
 	
@@ -60,22 +106,4 @@ void ConnectedClient::RunFunction()
 	
 	return;
 }
-
-
-void ConnectedClient::Cancel()
-{
-	//  make sure we shut down connection before we call cancel
-	ShutDown();
-}
-
-void ConnectedClient::ShutDown()
-{
-	//  if we are connected, send the disconnect command to the client
-
-	//  shut down the thread
-	TCPServerThread::Cancel();
-
-	return;
-}
-
 

@@ -31,16 +31,7 @@
     <ClCompile Include="main.cpp">
       <Filter>Source files</Filter>
     </ClCompile>
-    <ClCompile Include="BoostThread.cpp">
-      <Filter>Source files</Filter>
-    </ClCompile>
-    <ClCompile Include="ClockThread.cpp">
-      <Filter>Source files</Filter>
-    </ClCompile>
     <ClCompile Include="CMD.cpp">
-      <Filter>Source files</Filter>
-    </ClCompile>
-    <ClCompile Include="CmdIfConfig.cpp">
       <Filter>Source files</Filter>
     </ClCompile>
     <ClCompile Include="ConnectedClientThread.cpp">
@@ -61,15 +52,12 @@
     <ClCompile Include="Thread.cpp">
       <Filter>Source files</Filter>
     </ClCompile>
+    <ClCompile Include="CMDifconfig.cpp">
+      <Filter>Source files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="ClockThread.h">
-      <Filter>Header files</Filter>
-    </ClInclude>
     <ClInclude Include="CMD.h">
-      <Filter>Header files</Filter>
-    </ClInclude>
-    <ClInclude Include="CmdIfConfig.h">
       <Filter>Header files</Filter>
     </ClInclude>
     <ClInclude Include="ConnectedClientThread.h">
@@ -93,7 +81,7 @@
     <ClInclude Include="UtilityFn.h">
       <Filter>Header files</Filter>
     </ClInclude>
-    <ClInclude Include="BoostThread.h">
+    <ClInclude Include="CMDifconfig.h">
       <Filter>Header files</Filter>
     </ClInclude>
   </ItemGroup>

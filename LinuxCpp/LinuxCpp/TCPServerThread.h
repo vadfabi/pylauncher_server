@@ -3,11 +3,12 @@
 
 #include "Thread.h"
 
+using namespace std;
 
 #define TCPSERVER_READBUFFERSIZE 1024
 
 
-//------------------------------------------------
+
 //  ServerThread
 //  Runs a TCP socket server thread
 //
@@ -59,11 +60,11 @@ protected:
 	//  read bytes from the socket and return the file descriptor of the sending client
 	//  bytes read are cast as a single character string into readString
 	//  returns file descriptor of accepted socket
-	int ReadStringFromSocket(struct sockaddr_in *clientAddress, std::string& readString);
+	int ReadStringFromSocket(struct sockaddr_in *clientAddress, string& readString);
 	
 	//  write a single char string to the socket
 	//  returns the number of bytes written, or -1 for error
-	int WriteStringToSocket(int socketFileDescriptor, std::string& writeString);
+	int WriteStringToSocket(int socketFileDescriptor, string& writeString);
 
 
 	//  TODO:  

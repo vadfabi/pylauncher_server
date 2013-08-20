@@ -8,6 +8,7 @@
 #include <string.h>
 #include <string>
 #include <arpa/inet.h>
+#include <sys/time.h>
 
 
 #include "ConnectionThread.h"
@@ -16,6 +17,12 @@
 #include "UtilityFn.h"
 
 using namespace std;
+
+
+//  ConnectionThread
+//  manages the main server connection thread, listens for connection requests from clients
+//
+
 
 ConnectionThread::ConnectionThread(TheApp& theApp) :
 	mTheApp(theApp)
@@ -28,6 +35,7 @@ ConnectionThread::~ConnectionThread()
 }
 
 
+
 //--------------------------------
 //  RunFunction
 //  this is the Thread base class override
@@ -35,12 +43,16 @@ ConnectionThread::~ConnectionThread()
 void ConnectionThread::RunFunction()
 {
 	struct sockaddr_in clientAddress;
-	std::string readFromSocket;
+	string readFromSocket;
 	int acceptFileDescriptor =  ReadStringFromSocket(&clientAddress, readFromSocket);
 
+	//  log event time
+	timeval eventTime;
+	gettimeofday(&eventTime, 0);
+
+	//  log event sender
 	char* addressOfSender = inet_ntoa(clientAddress.sin_addr);
-	std::string eventToLog = format("Received from %s: %s",addressOfSender, readFromSocket.c_str());
-	mTheApp.AddEvent(eventToLog);
+	string eventSender = string(addressOfSender);
 
 	//  parse the read string for known commands
 	//  command syntax is "$TCP_SOMECOMMAND,argument1,argument2,...
@@ -81,6 +93,9 @@ void ConnectionThread::RunFunction()
 		string returnMessage = format("$TCP_CONNECT,ACK,%d", serverPortForClientConnection);
 		WriteStringToSocket(acceptFileDescriptor, returnMessage);
 
+		//  log the event
+		mTheApp.AddEvent(eventTime, eventSender, readFromSocket);
+
 		return; 
 	}
 	else if ( command.compare("$TCP_DISCONNECT") == 0 )
@@ -90,23 +105,20 @@ void ConnectionThread::RunFunction()
 		WriteStringToSocket(acceptFileDescriptor, returnMessage);
 
 		//  disconnect function, instruct the app to disconnect us
-		//  this will happen in seperate thread, which will shut down the connected client thread
 		mTheApp.DisconnectClient(clientAddress);
+
+		//  log the event
+		mTheApp.AddEvent(eventTime, eventSender, readFromSocket);
 	}
 	else
 	{
-		//  no other commands recognized by this thread
-		return; 
+		//  unknown command
+		string returnMessage = format("$TCP_NAK,unknown command: %s", readFromSocket.c_str());
+		write(acceptFileDescriptor, returnMessage.c_str(), returnMessage.size());
+
+		//  log event
+		string eventToLog = format("  ! Unknown command received:  %s", readFromSocket.c_str());
+		mTheApp.AddEvent(eventTime, eventSender, eventToLog);
 	}
-	
 
-
-	//  Echo behavior send return message
-	//std::string returnMessage;
-	//returnMessage = "I got this message ";
-	//returnMessage += (buffer+2);
-
-	//n = write(acceptFileDescriptor,returnMessage.c_str(), returnMessage.size());
-	
-	
 }

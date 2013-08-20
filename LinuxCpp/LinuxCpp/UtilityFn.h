@@ -3,12 +3,17 @@
 
 #include <string>
 #include <cstdarg>
+#include <arpa/inet.h>
 
-//	string format function
+
+//  A Collection of Useful Utility Functions
+//
+
+
+//	std::string format()
 //  replaces missing string printf   (this is safe and convenient but not exactly efficient )
 //  can be used like:  std::string mystr = format("%s %d %10.5f", "omg", 1, 10.5);
 //  see http://stackoverflow.com/users/642882/piti-ongmongkolkul
-//
 inline std::string format(const char* fmt, ...){
     int size = 512;
     char* buffer = 0;
@@ -29,6 +34,28 @@ inline std::string format(const char* fmt, ...){
 }
 
 
+
+//  FormatTime
+//  as described here
+//   http://stackoverflow.com/questions/2408976/struct-timeval-to-printable-format
+inline std::string FormatTime(const struct timeval &timeToFormat)
+{
+
+	time_t nowtime;
+	struct tm *nowtm;
+	char tmbuf[64], buf[64];
+	nowtime = timeToFormat.tv_sec;
+	nowtm = localtime(&nowtime);
+	//strftime(tmbuf, sizeof tmbuf, "%Y-%m-%d %H:%M:%S", nowtm);
+	strftime(tmbuf, sizeof tmbuf, "%H:%M:%S", nowtm);
+	snprintf(buf, sizeof buf, "%s.%06d", tmbuf, (int)timeToFormat.tv_usec);
+
+	return std::string(buf);
+}
+
+
+//  DurationMilliseconds
+//  returns difference between tstart and tend in milliseconds
 inline long DurationMilliseconds(timeval tstart, timeval tend)
 {
 	long startSeconds, startUseconds;
@@ -40,6 +67,19 @@ inline long DurationMilliseconds(timeval tstart, timeval tend)
 	double duration = seconds*1000.0 + useconds/1000.0;
 	return (long)duration;
 }
+
+
+//  IpAddressString
+//  returns dots and numbers format IPv4 address
+inline std::string IpAddressString(const struct sockaddr_in &address)
+{
+	//  create string from 
+	char* addressBuffer = inet_ntoa(address.sin_addr);
+	return std::string(addressBuffer);
+}
+
+
+
 
 
 //  debug trace function
