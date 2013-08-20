@@ -22,6 +22,10 @@ TheApp::TheApp() :
 {
 	mVersionString = "1.0.0.1";
 
+	mMaxEventsToLog = 9999;
+
+	mDisplayUpdatesOn = true;
+	mUpdateDisplay = true;
 
 }
 
@@ -40,7 +44,7 @@ TheApp::~TheApp()
 bool TheApp::InitializeInstance()
 {
 	//  open the server socket
-	mConnectionServerPort = mConnectionThread.OpenServerSocket(48888, false);
+	mConnectionServerPort = mConnectionThread.OpenServerSocket(3000, false);
 	if ( mConnectionServerPort < 0 )
 	{
 		printf("Failed to open server socket!");

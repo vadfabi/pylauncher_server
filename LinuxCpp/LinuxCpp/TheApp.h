@@ -9,7 +9,7 @@
 #include "Thread.h"
 #include "ConnectionThread.h"
 #include "ConnectedClientThread.h"
-#include "CmdIfConfig.h"
+#include "CMDifconfig.h"
 #include "UtilityFn.h"
 
 using namespace std;
@@ -133,7 +133,7 @@ protected:
 	//  the event log
 	list<LogEvent*> mEventLog;
 	mutex mEventLogMutex;
-	int mMaxEventsToLog = 99999;
+	int mMaxEventsToLog;
 
 	//  The display output
 	//  this happens on its own thread
@@ -141,8 +141,8 @@ protected:
 	friend class DisplayThread;
 	mutex mDisplayUpdateMutex;
 	
-	bool mDisplayUpdatesOn = true;
-	bool mUpdateDisplay = false;
+	bool mDisplayUpdatesOn;
+	bool mUpdateDisplay;
 
 	timeval mTimeOfLastClockUpdate;
 	

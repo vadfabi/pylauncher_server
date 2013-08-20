@@ -144,7 +144,7 @@ int TCPServerThread::OpenServerSocket(int portToOpen, bool exactPort)
 	int bindReturn = -1;
 	while ( bindReturn < 0 )
 	{
-		bindReturn =  bind(mSocketFileDescriptor, (struct sockaddr *) &serverAddress, sizeof(serverAddress) );
+		bindReturn =  ::bind(mSocketFileDescriptor, (struct sockaddr *) &serverAddress, sizeof(serverAddress) );
 		if ( bindReturn == 0 )
 		{
 			//  success

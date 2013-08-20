@@ -46,6 +46,9 @@ void ConnectionThread::RunFunction()
 	string readFromSocket;
 	int acceptFileDescriptor =  ReadStringFromSocket(&clientAddress, readFromSocket);
 
+	if ( acceptFileDescriptor < 0 )
+		return;
+
 	//  log event time
 	timeval eventTime;
 	gettimeofday(&eventTime, 0);
@@ -106,6 +109,14 @@ void ConnectionThread::RunFunction()
 
 		//  disconnect function, instruct the app to disconnect us
 		mTheApp.DisconnectClient(clientAddress);
+
+		//  log the event
+		mTheApp.AddEvent(eventTime, eventSender, readFromSocket);
+	}
+	else if ( command.compare("$TCP_ECHOTEST") == 0 )
+	{
+		//  echo test
+		write(acceptFileDescriptor, readFromSocket.c_str(), readFromSocket.size());
 
 		//  log the event
 		mTheApp.AddEvent(eventTime, eventSender, readFromSocket);

@@ -79,6 +79,7 @@ int main(int argc, char *argv[])
 				theApp.ShutDown();
 				return 0;
 			}
+
 			else if ( input.compare("resume") == 0 )
 			{
 				//  'resume'  -  break out of command mode
@@ -88,6 +89,7 @@ int main(int argc, char *argv[])
 			{
 				//  'listlogs' - print all events from event log to terminal
 				printf("\n");
+
 				theApp.PrintLogs(stdout);
 				printf("/***      >");
 			}

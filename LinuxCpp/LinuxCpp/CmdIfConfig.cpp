@@ -1,4 +1,4 @@
-#include "CmdIfConfig.h"
+#include "CMDifconfig.h"
 #include "Parser.h"
 
 using namespace std;

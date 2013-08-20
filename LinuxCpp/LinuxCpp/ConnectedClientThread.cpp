@@ -89,6 +89,14 @@ void ConnectedClient::RunFunction()
 		string message = readParser.GetNextString();
 		mTheApp.BroadcastClientsMessage(eventTime, eventSender, message);
 	}
+	else if ( command.compare("$TCP_ECHOTEST") == 0 )
+	{
+		//  echo test
+		write(acceptFileDescriptor, readFromSocket.c_str(), readFromSocket.size());
+
+		//  log the event
+		mTheApp.AddEvent(eventTime, eventSender, readFromSocket);
+	}
 	else
 	{
 		//  unknown command
