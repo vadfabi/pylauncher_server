@@ -46,8 +46,10 @@ public class TCPConnectService extends Service {
 	 * Messages
 	 */
 	public static final int MESSAGE_NETSTATECHANGE = 0;
+	//
 	public static final int MESSAGE_CONNECTEDSTATECHANGE = 1;
-	
+	//
+	public static final int MESSAGE_EVENTRECEIVED = 2;
 
 
 
@@ -56,11 +58,11 @@ public class TCPConnectService extends Service {
 	/**
 	 * TCPConnectService 
 	 * 
-	 * Constructor
+	 * Constructor and Lifecycle
 	 */
 	public TCPConnectService() {
-
-		//  This service will monitor network status
+		
+		//  This service will monitor network status, so setup a network state broadcast receiver
 		mNetworkStateChangedFilter = new IntentFilter();
 		mNetworkStateChangedFilter.addAction(ConnectivityManager.CONNECTIVITY_ACTION);
 		//
@@ -72,14 +74,28 @@ public class TCPConnectService extends Service {
 				}
 			}
 		};
+	}
+	
+	
+	@Override
+	public void onDestroy() {
 
+		if ( mConnectedControlThread != null )
+			mConnectedControlThread.cancel();
+
+		super.onDestroy();
 	}
 
 
-	/*
+	
+
+	/**
 	 * Service Binding and Messaging Functions
 	 * 
 	 */
+	
+	//  we keep a list of message handlers registered with the service
+	//  all handlers will receive all messages that are sent out
 	private  ArrayList<Handler> mHandlerList = new ArrayList<Handler>(); 
 	public synchronized void AddHandler(Handler handler){
 		if ( mHandlerList.contains(handler) )
@@ -94,17 +110,26 @@ public class TCPConnectService extends Service {
 
 
 	//  for binding with the service
+	//  this is a simple intraprocess application, so we use the LocalBinder method
+	private LocalBinder mBinder = null;
+	
 	public class LocalBinder extends Binder {
 		TCPConnectService getService() {
 			return TCPConnectService.this;
 		}
 	}
 
-	private final LocalBinder mBinder = new LocalBinder();
-
+	
 	@Override
 	public IBinder onBind(Intent arg0) {
 
+		if ( mBinder == null )
+		{
+			//  create the binder object
+			mBinder = new LocalBinder();
+		}
+		
+		//  hook up the 
 		registerReceiver(mNetworkStateIntentReceiver, mNetworkStateChangedFilter);
 
 		SetNetworkStatus();
@@ -114,15 +139,15 @@ public class TCPConnectService extends Service {
 		return mBinder;
 	}
 
+	
+	
+	//  notification manager
 	private final int NOTIFICATION_ID = 99;
 	private NotificationManager mNM;
 
-
-
-
 	public void showNotification() {
 
-		CharSequence text = "Lithium Client";
+		CharSequence text = "TCP Client";
 
 		// Set the icon, scrolling text and timestamp
 		Notification notification = new Notification(R.drawable.ic_launcher, text,	System.currentTimeMillis());
@@ -131,10 +156,10 @@ public class TCPConnectService extends Service {
 		PendingIntent contentIntent = null;
 		String description;
 		
-		PendingIntent.getActivity(this, 0, new Intent(this, TcpConnect.class), 0);
+		contentIntent = PendingIntent.getActivity(this, 0, new Intent(this, TcpConnect.class), 0);
 
-		//  todo - specify the notification text based on current state
-		notification.setLatestEventInfo(this, text, "Notify", contentIntent);
+		//  set event info
+		notification.setLatestEventInfo(this, text, "Service Running", contentIntent);
 
 		//  set this as a persistent notification
 		notification.flags |= Notification.FLAG_ONGOING_EVENT | Notification.FLAG_NO_CLEAR;
@@ -143,6 +168,7 @@ public class TCPConnectService extends Service {
 		startForeground(NOTIFICATION_ID, notification);
 	}
 
+	
 	@Override
 	public int onStartCommand(Intent intent, int flags, int startId) {
 
@@ -156,6 +182,15 @@ public class TCPConnectService extends Service {
 		return START_STICKY;
 	}
 
+	
+	
+	/**
+	 * Message Handling
+	 * this is a simple intraprocess implementation, 
+	 * so you can pass objects to handlers
+	 * 
+	 */
+	
 	//  send message to registered handler
 	public synchronized void SendMessage(int message)
 	{
@@ -168,6 +203,7 @@ public class TCPConnectService extends Service {
 		}
 	}
 
+	//  send message to registered handler
 	public synchronized void SendMessage(int message, int arg1)
 	{
 		for ( Handler handler : mHandlerList )
@@ -179,18 +215,11 @@ public class TCPConnectService extends Service {
 		}
 	}
 
-	@Override
-	public void onDestroy() {
-
-		if ( mConnectedControlThread != null )
-			mConnectedControlThread.cancel();
-
-		super.onDestroy();
-	}
+	
+	
 
 
-
-	/*
+	/**
 	 *  IP Connection to the server
 	 *  
 	 *  
@@ -198,8 +227,12 @@ public class TCPConnectService extends Service {
 
 	//  server connect port is hard coded for now
 	//  TODO:  this is to be replaced with zero config networking or maybe something like RTP / SIP handling
-	private final int SERVER_CONNECT_PORT = 48888;
-
+	private int mServerPort = 48888;
+	public int getServerPort()
+	{
+		return mServerPort;
+	}
+	
 	//  ip address of the server we are connected to
 	private String mConnectedToServerIp = "";
 	public String getConnectedToServerIp(){
@@ -212,26 +245,13 @@ public class TCPConnectService extends Service {
 		return mConnectedToServerControlOnPort;
 	}
 
-	//  when off the hook, the server opens up a UDP connection on this port connection to receive PCM data for phone line out
-	private int mConnectedToServerLineOnPort = 0;
-	public int getConnectedToServerLineOnPort(){
-		return mConnectedToServerLineOnPort;
-	}
-
-	//  when connected we open a socket connection on this port for the server to send us control commands 
+	
+	//  when connected we open a socket connection on this port for the server to send to us
 	public int getClientControlPort(){  
 		if ( mConnectedControlServerSocket != null )
 			return mConnectedControlServerSocket.getLocalPort();
 		else
 			return -1;
-	}
-
-
-
-	//  when off the hook, the server will specify the length of UDP data blobs it will send us
-	private int mServerUdpDataLength;
-	public int getServerUdpDataLength(){
-		return mServerUdpDataLength;
 	}
 
 
@@ -243,27 +263,23 @@ public class TCPConnectService extends Service {
 	}
 
 
-
 	/**
 	 * OpenConnectionToServer
 	 * 
 	 * Launches task to open a connection to the server
 	 * 
 	 */
-	public void openConnectionToServer()
+	public void openConnectionToServer(String connectAddress, int connectPort)
 	{
 		//  close previous connection to the server if it is open
 		if ( mConnectedControlThread != null )
 			mConnectedControlThread.cancel();
 		mConnectedControlServerSocket = null;
 
-		//  get the ip address to connect to
-		//  TODO:  This is to be replaced with automatic connection
-		SharedPreferences sharedPrefs = PreferenceManager.getDefaultSharedPreferences(this);
-		String connectPort = sharedPrefs.getString("pref_server_ip_address", "192.168.0.101");
-
+		mServerPort = connectPort;
+		
 		//  launch the connection task
-		new OpenConnectionTask().execute(connectPort);
+		new OpenConnectionTask().execute(connectAddress);
 	}
 
 	//  open connection task
@@ -290,16 +306,16 @@ public class TCPConnectService extends Service {
 			}
 
 			//  connect to server command:
-			// $TPC_CONNECT,clientsIpAddress,clientsControlPort
+			// $TCP_CONNECT,clientsControlPort
 			mConnectedToServerIp = param[0];
-			readResponse = sendStringToPort(mConnectedToServerIp, SERVER_CONNECT_PORT, "$TPC_CONNECT," +mIpWiFiAddress + "," +getClientControlPort());
+			readResponse = sendStringToPort(mConnectedToServerIp, mServerPort, "$TCP_CONNECT," + getClientControlPort());
 			return 1;
 		}
 
 		//  Post Execute
 		protected void onPostExecute(Integer result ) {
 
-			if ( result == 1 && readResponse.contains("$TPC_CONNECT,ACK") )
+			if ( result == 1 && readResponse.contains("$TCP_CONNECT,ACK") )
 			{
 				//  parse response:  
 				//  $TPC_CONNECT,ACK,serversControlPort
@@ -333,7 +349,6 @@ public class TCPConnectService extends Service {
 
 				//  message success
 				TCPConnectService.this.SendMessage(MESSAGE_CONNECTEDSTATECHANGE);
-
 			}
 			else
 			{
@@ -366,7 +381,7 @@ public class TCPConnectService extends Service {
 		String readResponse = "";
 		protected Integer doInBackground(String... param ) {
 
-			readResponse = TCPConnectService.this.sendStringToConnectedOnCommandPort("$TPC_DISCONNECT");
+			readResponse = sendStringToPort(mConnectedToServerIp, mServerPort, "$TCP_DISCONNECT");
 
 			return 1;
 		}
@@ -380,7 +395,7 @@ public class TCPConnectService extends Service {
 			mConnectedControlThread = null;
 
 			
-			if ( readResponse.contains("$TPC_DISCONNECT,ACK") )
+			if ( readResponse.contains("$TCP_DISCONNECT,ACK") )
 				Toast.makeText(TCPConnectService.this, "Server closed connection.", Toast.LENGTH_SHORT).show();
 			else
 				Toast.makeText(TCPConnectService.this, "Error closing server connection", Toast.LENGTH_SHORT).show();
@@ -393,9 +408,55 @@ public class TCPConnectService extends Service {
 			TCPConnectService.this.SendMessage(MESSAGE_CONNECTEDSTATECHANGE);	
 		}
 	}
+	
+	
+	
+	public void PressButton(int buttonNumber){
+		
+		new PressButtonTask().execute(buttonNumber);
+		
+	}
+	
+//  close connection task
+	private class PressButtonTask extends AsyncTask<Integer, Void, Integer> {
+		
+		String readResponse = "";
+		
+		protected Integer doInBackground(Integer... param ) {
+
+			readResponse = TCPConnectService.this.sendStringToConnectedOnCommandPort("$TCP_BUTTON,"+param[0]);
+
+			return 1;
+		}
+
+		protected void onPostExecute(Integer result ) {
+
+			//  todo:  process read response
+			
+		
+		}
+	}
+	
+	
+	EchoTest echoTestThread = null;
+	
+	public void EchoTest()
+	{
+		if ( echoTestThread == null )
+		{
+			echoTestThread = new EchoTest(this);
+			echoTestThread.start();
+		}
+		else
+		{
+			echoTestThread.cancel();
+			echoTestThread = null;
+		}
+		
+	}
 
 
-	/*
+	/**
 	 * Connected control thread 
 	 * 
 	 * This thread is running while we are connected
@@ -419,18 +480,20 @@ public class TCPConnectService extends Service {
 			while (mThreadRunning) {
 
 				try {
-					//  read from the socket, we will block here
+					
+					//  wait to accept something on this socket
+					//  this will block until we have something to read
 					mControlSocket = null;
 					mControlSocket = mConnectedControlServerSocket.accept();
 
-					//  process the input
-					ProcessControlInput();
+					//  we got something, process it
+					ProcessSocketAccept();
 
 				} 
 				catch (IOException e) {
 					break;	//  thread was stopped on socket close
 				} 
-				finally{
+				finally{ 
 
 					try{
 						if (mControlSocket != null)
@@ -471,12 +534,12 @@ public class TCPConnectService extends Service {
 
 
 	/**
-	 * ProcessControlInput
+	 * ProcessSocketAccept
 	 * 
 	 * Gets the input stream from the socket and does something with the command
 	 * Sends response to the output stream
 	 */
-	private void ProcessControlInput(){
+	private void ProcessSocketAccept(){
 
 		DataInputStream dataInputStream = null;
 		DataOutputStream dataOutputStream = null;
@@ -517,14 +580,6 @@ public class TCPConnectService extends Service {
 
 
 
-	/*
-	 *   Telephone Control
-	 *   
-	 *   
-	 */
-
-	
-
 	/* 
 	 * Device State Management 
 	 * 
@@ -551,7 +606,7 @@ public class TCPConnectService extends Service {
 		return sendStringToPort(mConnectedToServerIp, mConnectedToServerControlOnPort, message);
 	}
 
-	private String sendStringToPort(String ipAddress, int portNumber, String message){
+	public String sendStringToPort(String ipAddress, int portNumber, String message){
 
 		String response = "";
 
@@ -571,7 +626,7 @@ public class TCPConnectService extends Service {
 				dataInputStream = new DataInputStream(socket.getInputStream());
 				dataOutputStream.writeBytes(message);
 				dataOutputStream.flush();
-
+				
 				byte[] buffer = new byte[1024];
 				
 				int readCount  = dataInputStream.read(buffer);
@@ -608,6 +663,7 @@ public class TCPConnectService extends Service {
 
 	}
 
+	/*
 	boolean SendBytesToServerLinePort(byte[] bytes, int length){
 
 		try{
@@ -628,7 +684,7 @@ public class TCPConnectService extends Service {
 
 		return true;
 	}
-
+*/
 
 
 	//  Network status monitors

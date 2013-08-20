@@ -9,8 +9,57 @@
     tools:context=".TcpConnect" >
 
     <TextView
+        android:id="@+id/textViewNetworkStatus"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="@string/hello_world" />
+
+    <Button
+        android:id="@+id/button2"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignBaseline="@+id/button1"
+        android:layout_alignBottom="@+id/button1"
+        android:layout_centerHorizontal="true"
+        android:text="Button" />
+    
+    <Button
+        android:id="@+id/button3"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignBaseline="@+id/button2"
+        android:layout_alignBottom="@+id/button2"
+        android:layout_marginLeft="27dp"
+        android:layout_toRightOf="@+id/button2"
+        android:text="Button" />
+
+    <Button
+        android:id="@+id/button1"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_below="@+id/textView1"
+        android:layout_marginTop="112dp"
+        android:layout_toLeftOf="@+id/button2"
+        android:layout_marginRight="27dp"
+        android:text="Button" />
+
+    <TextView
+        android:id="@+id/textViewServerStatus"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignLeft="@+id/textViewNetworkStatus"
+        android:layout_below="@+id/textViewNetworkStatus"
+        android:layout_marginTop="18dp"
+        android:text="TextView" />
+
+    <Button
+        android:id="@+id/buttonEchoTest"
+        style="?android:attr/buttonStyleSmall"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentBottom="true"
+        android:layout_alignRight="@+id/button3"
+        android:layout_marginBottom="116dp"
+        android:text="Echo Test" />
 
 </RelativeLayout>
