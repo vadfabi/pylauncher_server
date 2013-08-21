@@ -9,57 +9,77 @@
     tools:context=".TcpConnect" >
 
     <TextView
-        android:id="@+id/textViewNetworkStatus"
+        android:id="@+id/textViewServerStatus"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="@string/hello_world" />
+        android:layout_alignLeft="@+id/textViewNetworkStatus"
+        android:layout_alignRight="@+id/button3"
+        android:layout_below="@+id/textViewNetworkStatus"
+        android:layout_marginTop="18dp"
+        android:text="TextView" />
 
     <Button
         android:id="@+id/button2"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_alignBaseline="@+id/button1"
-        android:layout_alignBottom="@+id/button1"
+        android:layout_below="@+id/textViewServerStatus"
         android:layout_centerHorizontal="true"
-        android:text="Button" />
-    
+        android:layout_marginTop="20dp"
+        android:text="Button 2" />
+
+    <Button
+        android:id="@+id/button1"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignBaseline="@+id/button2"
+        android:layout_alignBottom="@+id/button2"
+        android:layout_toLeftOf="@+id/button2"
+        android:text="Button 1" />
+
     <Button
         android:id="@+id/button3"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_alignBaseline="@+id/button2"
         android:layout_alignBottom="@+id/button2"
-        android:layout_marginLeft="27dp"
         android:layout_toRightOf="@+id/button2"
-        android:text="Button" />
+        android:text="Button 3" />
 
-    <Button
-        android:id="@+id/button1"
+    <EditText
+        android:id="@+id/editTextSendMessage"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_below="@+id/textView1"
-        android:layout_marginTop="112dp"
-        android:layout_toLeftOf="@+id/button2"
-        android:layout_marginRight="27dp"
-        android:text="Button" />
-
-    <TextView
-        android:id="@+id/textViewServerStatus"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_alignLeft="@+id/textViewNetworkStatus"
-        android:layout_below="@+id/textViewNetworkStatus"
-        android:layout_marginTop="18dp"
-        android:text="TextView" />
+        android:layout_alignLeft="@+id/button1"
+        android:layout_below="@+id/button2"
+        android:layout_marginTop="16dp"
+        android:layout_toLeftOf="@+id/button4"
+        android:ems="10" />
+    
 
     <Button
-        android:id="@+id/buttonEchoTest"
+        android:id="@+id/buttonSendMessage"
         style="?android:attr/buttonStyleSmall"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_alignParentBottom="true"
+        android:layout_alignBaseline="@+id/editTextSendMessage"
+        android:layout_alignBottom="@+id/editTextSendMessage"
         android:layout_alignRight="@+id/button3"
-        android:layout_marginBottom="116dp"
-        android:text="Echo Test" />
+        android:text="Send" />
+
+    <TextView
+        android:id="@+id/textViewNetworkStatus"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignLeft="@+id/button1"
+        android:layout_alignParentTop="true"
+        android:text="@string/hello_world" />
+
+    <ListView
+        android:id="@+id/listViewEventLog"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_alignParentLeft="true"
+        android:layout_below="@+id/editTextSendMessage" >
+    </ListView>
 
 </RelativeLayout>

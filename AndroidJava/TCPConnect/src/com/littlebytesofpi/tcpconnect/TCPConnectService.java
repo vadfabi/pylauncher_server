@@ -3,16 +3,12 @@ package com.littlebytesofpi.tcpconnect;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
-import java.net.DatagramPacket;
-import java.net.DatagramSocket;
-import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
-import java.net.SocketException;
 import java.net.SocketTimeoutException;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
-
+import java.util.List;
 
 import android.app.Notification;
 import android.app.NotificationManager;
@@ -22,7 +18,6 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
-import android.content.SharedPreferences;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.net.wifi.WifiInfo;
@@ -32,15 +27,12 @@ import android.os.Binder;
 import android.os.Handler;
 import android.os.IBinder;
 import android.os.Message;
-import android.os.PowerManager;
-import android.os.PowerManager.WakeLock;
-import android.preference.PreferenceManager;
 import android.util.Log;
 import android.widget.Toast;
 
 public class TCPConnectService extends Service {
 
-	
+
 
 	/*
 	 * Messages
@@ -50,6 +42,8 @@ public class TCPConnectService extends Service {
 	public static final int MESSAGE_CONNECTEDSTATECHANGE = 1;
 	//
 	public static final int MESSAGE_EVENTRECEIVED = 2;
+	//
+	public static final int MESSAGE_NEWEVENT = 3;
 
 
 
@@ -61,7 +55,7 @@ public class TCPConnectService extends Service {
 	 * Constructor and Lifecycle
 	 */
 	public TCPConnectService() {
-		
+
 		//  This service will monitor network status, so setup a network state broadcast receiver
 		mNetworkStateChangedFilter = new IntentFilter();
 		mNetworkStateChangedFilter.addAction(ConnectivityManager.CONNECTIVITY_ACTION);
@@ -74,26 +68,28 @@ public class TCPConnectService extends Service {
 				}
 			}
 		};
+		
+		
 	}
-	
-	
+
+
 	@Override
 	public void onDestroy() {
 
-		if ( mConnectedControlThread != null )
-			mConnectedControlThread.cancel();
+		if ( mClientsServerThread != null && mClientsServerThread.IsConnected() )
+			mClientsServerThread.cancel();
 
 		super.onDestroy();
 	}
 
 
-	
+
 
 	/**
 	 * Service Binding and Messaging Functions
 	 * 
 	 */
-	
+
 	//  we keep a list of message handlers registered with the service
 	//  all handlers will receive all messages that are sent out
 	private  ArrayList<Handler> mHandlerList = new ArrayList<Handler>(); 
@@ -112,14 +108,14 @@ public class TCPConnectService extends Service {
 	//  for binding with the service
 	//  this is a simple intraprocess application, so we use the LocalBinder method
 	private LocalBinder mBinder = null;
-	
+
 	public class LocalBinder extends Binder {
 		TCPConnectService getService() {
 			return TCPConnectService.this;
 		}
 	}
 
-	
+
 	@Override
 	public IBinder onBind(Intent arg0) {
 
@@ -128,7 +124,7 @@ public class TCPConnectService extends Service {
 			//  create the binder object
 			mBinder = new LocalBinder();
 		}
-		
+
 		//  hook up the 
 		registerReceiver(mNetworkStateIntentReceiver, mNetworkStateChangedFilter);
 
@@ -139,8 +135,8 @@ public class TCPConnectService extends Service {
 		return mBinder;
 	}
 
-	
-	
+
+
 	//  notification manager
 	private final int NOTIFICATION_ID = 99;
 	private NotificationManager mNM;
@@ -155,7 +151,7 @@ public class TCPConnectService extends Service {
 		// The PendingIntent to launch our activity if the user selects this notification
 		PendingIntent contentIntent = null;
 		String description;
-		
+
 		contentIntent = PendingIntent.getActivity(this, 0, new Intent(this, TcpConnect.class), 0);
 
 		//  set event info
@@ -168,7 +164,7 @@ public class TCPConnectService extends Service {
 		startForeground(NOTIFICATION_ID, notification);
 	}
 
-	
+
 	@Override
 	public int onStartCommand(Intent intent, int flags, int startId) {
 
@@ -182,15 +178,15 @@ public class TCPConnectService extends Service {
 		return START_STICKY;
 	}
 
-	
-	
+
+
 	/**
 	 * Message Handling
 	 * this is a simple intraprocess implementation, 
 	 * so you can pass objects to handlers
 	 * 
 	 */
-	
+
 	//  send message to registered handler
 	public synchronized void SendMessage(int message)
 	{
@@ -215,8 +211,27 @@ public class TCPConnectService extends Service {
 		}
 	}
 
-	
-	
+
+	/**
+	 * 
+	 * Event Log
+	 * 
+	 */
+
+	private ArrayList<LogEvent> mLogEventList = new ArrayList<LogEvent>();
+	public synchronized void AddLogEvent(LogEvent event){
+
+		mLogEventList.add(event);
+		//  message the UI
+		SendMessage(MESSAGE_NEWEVENT);
+	}
+
+	public synchronized void GetLogEvents(List<LogEvent> list){
+
+		for ( int i = list.size(); i < mLogEventList.size(); i++ )
+			list.add(mLogEventList.get(i));
+	}
+
 
 
 	/**
@@ -225,14 +240,14 @@ public class TCPConnectService extends Service {
 	 *  
 	 */
 
-	//  server connect port is hard coded for now
-	//  TODO:  this is to be replaced with zero config networking or maybe something like RTP / SIP handling
+	//  Port that we connect to the server on (this must be set in the settings)
+	//  TODO:  replace user settings with zero-conf networking discovery of server service
 	private int mServerPort = 48888;
 	public int getServerPort()
 	{
 		return mServerPort;
 	}
-	
+
 	//  ip address of the server we are connected to
 	private String mConnectedToServerIp = "";
 	public String getConnectedToServerIp(){
@@ -240,16 +255,18 @@ public class TCPConnectService extends Service {
 	}
 
 	//  when connected, the server opens a socket connection on this port to receive our control commands
-	private int mConnectedToServerControlOnPort = 0; 
-	public int getConnectedToServerControlOnPort(){
-		return mConnectedToServerControlOnPort;
+	private int mConnectedToServerOnPort = 0; 
+	public int getConnectedToServerOnPort(){
+		return mConnectedToServerOnPort;
 	}
 
-	
+
 	//  when connected we open a socket connection on this port for the server to send to us
-	public int getClientControlPort(){  
-		if ( mConnectedControlServerSocket != null )
-			return mConnectedControlServerSocket.getLocalPort();
+	//  and we run a socket accept thread
+	ClientsServerThread mClientsServerThread = null;
+	public int getClientListeningOnPort(){  
+		if ( mClientsServerThread != null )
+			return mClientsServerThread.getClientListeningOnPort();
 		else
 			return -1;
 	}
@@ -259,7 +276,7 @@ public class TCPConnectService extends Service {
 	public synchronized boolean IsConnectedToServer()
 	{
 		//  we are connected when control thread is running and control socket is open
-		return (mConnectedControlThread != null && mConnectedControlServerSocket != null );
+		return mClientsServerThread != null && mClientsServerThread.IsConnected();
 	}
 
 
@@ -272,11 +289,15 @@ public class TCPConnectService extends Service {
 	public void openConnectionToServer(String connectAddress, int connectPort)
 	{
 		//  close previous connection to the server if it is open
-		if ( mConnectedControlThread != null )
-			mConnectedControlThread.cancel();
-		mConnectedControlServerSocket = null;
-
+		if ( mClientsServerThread != null )
+		{
+			mClientsServerThread.cancel();
+			mClientsServerThread = null;
+		}
+		
 		mServerPort = connectPort;
+
+		mClientsServerThread = new ClientsServerThread(this);
 		
 		//  launch the connection task
 		new OpenConnectionTask().execute(connectAddress);
@@ -288,28 +309,16 @@ public class TCPConnectService extends Service {
 		String readResponse = "";
 		protected Integer doInBackground(String... param ) {
 
-			//  determine our client port
-			int clientsControlPort = 50000;
-			mConnectedControlServerSocket = null;
-			while ( mConnectedControlServerSocket == null )
+			if ( mClientsServerThread.OpenSocketConnection() )
 			{
-				//  setup a socket connection for the client end of the control connection
-				try {
-					mConnectedControlServerSocket = new ServerSocket(clientsControlPort);
-
-				} catch (IOException e) {
-					clientsControlPort++;
-				}
-
-				if ( clientsControlPort > 51000 )
-					return 0;		//  No open port in 1000? must be a problem
+				//  connect to server command:
+				// $TCP_CONNECT,clientsControlPort
+				mConnectedToServerIp = param[0];
+				readResponse = IpFunctions.sendStringToPort(mConnectedToServerIp, mServerPort, "$TCP_CONNECT," + getClientListeningOnPort());
+				return 1;
 			}
-
-			//  connect to server command:
-			// $TCP_CONNECT,clientsControlPort
-			mConnectedToServerIp = param[0];
-			readResponse = sendStringToPort(mConnectedToServerIp, mServerPort, "$TCP_CONNECT," + getClientControlPort());
-			return 1;
+			else
+				return 0;
 		}
 
 		//  Post Execute
@@ -324,27 +333,19 @@ public class TCPConnectService extends Service {
 				String command = parser.GetNextString();
 				String pass = parser.GetNextString();
 				String serversControlPort = parser.GetNextString();
-				//String xtra = parser.GetNextString();
-
+				
 				try{
-					mConnectedToServerControlOnPort =  Integer.parseInt(serversControlPort);
+					mConnectedToServerOnPort =  Integer.parseInt(serversControlPort);
 				} catch (NumberFormatException e){
 					Toast.makeText(TCPConnectService.this, "Error starting connection, unable to parse server control port number!", Toast.LENGTH_SHORT).show();
 					return;
 				}
 
-				if ( mConnectedControlServerSocket == null )
-				{
-					//  uncaught error above ?
-					Toast.makeText(TCPConnectService.this, "Error starting connection, failed to start client control socket!", Toast.LENGTH_SHORT).show();
-					return;
-				}
+			
+				//  start the client's listening server thread
+				mClientsServerThread.start();
 
-				//  start the connection thread
-				mConnectedControlThread = new ConnectedControlThread();
-				mConnectedControlThread.start();
 
-				
 				showNotification();
 
 				//  message success
@@ -352,6 +353,8 @@ public class TCPConnectService extends Service {
 			}
 			else
 			{
+				mClientsServerThread = null;
+				
 				Toast.makeText(TCPConnectService.this, "Failed to open server connection!", Toast.LENGTH_SHORT).show();
 				mConnectedToServerIp = "";
 			}
@@ -367,7 +370,7 @@ public class TCPConnectService extends Service {
 	 */
 	public void closeConnectionToServer(){
 
-		if ( mConnectedControlServerSocket == null || mConnectedControlThread == null )
+		if ( mClientsServerThread == null )
 			return; //  closed already
 
 		//  launch the close connection task
@@ -381,26 +384,23 @@ public class TCPConnectService extends Service {
 		String readResponse = "";
 		protected Integer doInBackground(String... param ) {
 
-			readResponse = sendStringToPort(mConnectedToServerIp, mServerPort, "$TCP_DISCONNECT");
+			readResponse = IpFunctions.sendStringToPort(mConnectedToServerIp, mServerPort, "$TCP_DISCONNECT");
 
 			return 1;
 		}
 
 		protected void onPostExecute(Integer result ) {
 
-			
 			//  shut down the server thread
-			if ( mConnectedControlThread != null )
-				mConnectedControlThread.cancel();
-			mConnectedControlThread = null;
-
+			mClientsServerThread.cancel();
 			
+
 			if ( readResponse.contains("$TCP_DISCONNECT,ACK") )
 				Toast.makeText(TCPConnectService.this, "Server closed connection.", Toast.LENGTH_SHORT).show();
 			else
 				Toast.makeText(TCPConnectService.this, "Error closing server connection", Toast.LENGTH_SHORT).show();
 
-			
+
 
 			showNotification();
 
@@ -408,20 +408,20 @@ public class TCPConnectService extends Service {
 			TCPConnectService.this.SendMessage(MESSAGE_CONNECTEDSTATECHANGE);	
 		}
 	}
-	
-	
-	
+
+
+
 	public void PressButton(int buttonNumber){
-		
+
 		new PressButtonTask().execute(buttonNumber);
-		
+
 	}
-	
-//  close connection task
+
+	//  close connection task
 	private class PressButtonTask extends AsyncTask<Integer, Void, Integer> {
-		
+
 		String readResponse = "";
-		
+
 		protected Integer doInBackground(Integer... param ) {
 
 			readResponse = TCPConnectService.this.sendStringToConnectedOnCommandPort("$TCP_BUTTON,"+param[0]);
@@ -432,14 +432,14 @@ public class TCPConnectService extends Service {
 		protected void onPostExecute(Integer result ) {
 
 			//  todo:  process read response
-			
-		
+
+
 		}
 	}
-	
-	
+
+
+	//  TODO - move echo test to its own thread
 	EchoTest echoTestThread = null;
-	
 	public void EchoTest()
 	{
 		if ( echoTestThread == null )
@@ -452,130 +452,10 @@ public class TCPConnectService extends Service {
 			echoTestThread.cancel();
 			echoTestThread = null;
 		}
-		
+
 	}
 
 
-	/**
-	 * Connected control thread 
-	 * 
-	 * This thread is running while we are connected
-	 * this is the client's ServerSocket accept thread, listening for control messages from the server
-	 *  
-	 */
-	private ServerSocket mConnectedControlServerSocket = null; 
-	private Socket mControlSocket = null;
-
-	private ConnectedControlThread mConnectedControlThread = null;  
-	private class ConnectedControlThread extends Thread {  
-
-		private boolean mThreadRunning = false;
-		private boolean mThreadExit = false;
-
-		public void run() {
-
-			mThreadRunning = true;
-
-			// Keep listening to the InputStream while connected
-			while (mThreadRunning) {
-
-				try {
-					
-					//  wait to accept something on this socket
-					//  this will block until we have something to read
-					mControlSocket = null;
-					mControlSocket = mConnectedControlServerSocket.accept();
-
-					//  we got something, process it
-					ProcessSocketAccept();
-
-				} 
-				catch (IOException e) {
-					break;	//  thread was stopped on socket close
-				} 
-				finally{ 
-
-					try{
-						if (mControlSocket != null)
-							mControlSocket.close();
-					}
-					catch(IOException e){
-						Log.e(TAG, "Exception in Connected Control Thread: " + e.toString());
-					}
-				}
-			}
-
-			mThreadRunning = false;
-			mThreadExit = true;
-		}
-
-		public void cancel() {
-
-			mThreadRunning = false;
-
-			if ( mConnectedControlServerSocket != null )
-			{
-				try{
-					//  close the socket
-					mConnectedControlServerSocket.close();
-
-					//  now wait for thread run to exit
-					while ( ! mThreadExit )
-						Sleep(100);
-
-				} catch(IOException e){
-					Log.e(TAG, "Exception in Connected Control Thread: " + e.toString());
-				} finally {
-					mConnectedControlServerSocket = null;
-				}
-			}
-		}
-	}
-
-
-	/**
-	 * ProcessSocketAccept
-	 * 
-	 * Gets the input stream from the socket and does something with the command
-	 * Sends response to the output stream
-	 */
-	private void ProcessSocketAccept(){
-
-		DataInputStream dataInputStream = null;
-		DataOutputStream dataOutputStream = null;
-
-		try{
-
-			dataInputStream = new DataInputStream(mControlSocket.getInputStream());
-			dataOutputStream = new DataOutputStream(mControlSocket.getOutputStream());
-			String input = dataInputStream.readUTF();
-
-			//  extract the command and arguments
-			Parser parser = new Parser(input, ",");
-			String command = parser.GetNextString();
-			String arguments = parser.GetRemainingBuffer();
-
-			if ( command.contains("$TPC_RINGING") )
-			{
-				
-			}
-
-		} catch(IOException e){
-			Log.e(TAG, "Exception in ProcessControlInput:" + e.toString());
-		}
-		finally{
-			try{
-				if (dataOutputStream != null)
-					dataOutputStream.close();
-
-				if (dataInputStream != null)
-					dataInputStream.close();
-
-			} catch(IOException e){
-				Log.e(TAG, "Exception in ProcessControlInput:" + e.toString());
-			}
-		}
-	}
 
 
 
@@ -594,97 +474,18 @@ public class TCPConnectService extends Service {
 
 
 
-	
+
 
 
 
 	/*
-	 * IP Helper functions
+	 * TCP/IP Helper functions
 	 */
 
 	private String sendStringToConnectedOnCommandPort(String message){
-		return sendStringToPort(mConnectedToServerIp, mConnectedToServerControlOnPort, message);
+		return IpFunctions.sendStringToPort(mConnectedToServerIp, mConnectedToServerOnPort, message);
 	}
 
-	public String sendStringToPort(String ipAddress, int portNumber, String message){
-
-		String response = "";
-
-
-		int attempts = 1;
-
-		while ( attempts <= 1 )
-		{
-			Socket socket = null;
-			DataOutputStream dataOutputStream = null;
-			DataInputStream dataInputStream = null;
-
-			try {
-				socket = new Socket(ipAddress, portNumber);
-				socket.setSoTimeout(5000);		//  TODO:  I have big problems with this on slow wifi network, must find proper method (timeout / retries ?)
-				dataOutputStream = new DataOutputStream(socket.getOutputStream());
-				dataInputStream = new DataInputStream(socket.getInputStream());
-				dataOutputStream.writeBytes(message);
-				dataOutputStream.flush();
-				
-				byte[] buffer = new byte[1024];
-				
-				int readCount  = dataInputStream.read(buffer);
-				response = new String( buffer ).trim();
-				return response;
-
-			} catch ( SocketTimeoutException e ){
-				attempts ++;	//  retries
-				continue;
-			} catch (UnknownHostException e) {
-				if (D) Log.e(TAG, "Exception in sendStringToPort " + e.toString());
-				return response;
-			} catch (IOException e) {
-				if (D) Log.e(TAG, "Exception in sendStringToPort " + e.toString());
-				return response;
-			} finally{
-				try{
-					if (socket != null)
-						socket.close();
-
-					if (dataOutputStream != null)
-						dataOutputStream.close();
-
-					if (dataInputStream != null)
-						dataInputStream.close();
-				}
-				catch(IOException e){
-					if (D) Log.e(TAG, "Exception in sendStringToPort finally " + e.toString());
-				}
-			}
-		}
-
-		return response;
-
-	}
-
-	/*
-	boolean SendBytesToServerLinePort(byte[] bytes, int length){
-
-		try{
-			DatagramSocket clientSocket = new DatagramSocket();
-			DatagramPacket sendPacket = new DatagramPacket(bytes, length, InetAddress.getByName(mConnectedToServerIp), mConnectedToServerLineOnPort);
-			clientSocket.send(sendPacket);
-			clientSocket.close();
-		} catch(SocketException e){
-			if (D) Log.e(TAG, "Exception in SendBytesToServerLinePort " + e.toString());
-			return false;
-		} catch(UnknownHostException e){
-			if (D) Log.e(TAG, "Exception in SendBytesToServerLinePort " + e.toString());
-			return false;
-		} catch(IOException e){
-			if (D) Log.e(TAG, "Exception in SendBytesToServerLinePort " + e.toString());
-			return false;
-		}
-
-		return true;
-	}
-*/
 
 
 	//  Network status monitors
@@ -695,86 +496,49 @@ public class TCPConnectService extends Service {
 	NetworkInfo mIpMobileInfo;
 	public String mIpWiFiAddress = "";
 
-	public String getLocalIpAddress() {
 
-		try{
-			WifiManager wifiManager = (WifiManager) getSystemService(WIFI_SERVICE);
-			WifiInfo wifiInfo = wifiManager.getConnectionInfo();
-			int ipAddress = wifiInfo.getIpAddress();
-
-			String ip = intToIp(ipAddress);
-			return ip;
-
-
-		} catch (Exception e){
-			Log.e(TAG, "Exception in getLocalIpAddress: " + e.toString());
-		}
-
-		return "";
-
-	}
-
-	public String intToIp(int i) {
-
-		return ( i & 0xFF)  + "." +
-				((i >> 8 ) & 0xFF) + "." +
-				((i >> 16 ) & 0xFF) + "." +    
-				((i >> 24 ) & 0xFF ) ;
-	}
 
 	private void HandleNetworkStatusChange(){
 
-		//  handle change of network status
-		//  items to address:
-		//
-		//  1)  IP address of client and server were changed while client was connected
-
-
-		// TODO:  with zeroConf networking, we should launch automatic connect or recovery when we detect network state change
-
-
-		//  Update the status and notify the UI
+		
 		SetNetworkStatus();
 	}
 
+	protected void SetNetworkStatus()
+	{
+	//  get the LAN IP address of this device
+		WifiManager wifiManager = (WifiManager) getSystemService(WIFI_SERVICE);
+			mIpWiFiAddress = IpFunctions.getLocalIpAddress(wifiManager);
 
-	private void SetNetworkStatus() {
+			//  get the info about wifi and mobile connection
+			mIpWiFiInfo = null;
+			mIpMobileInfo = null;
 
-		//  get the LAN IP address of this device
-		mIpWiFiAddress = getLocalIpAddress();
-
-		//  get the info about wifi and mobile connection
-		mIpWiFiInfo = null;
-		mIpMobileInfo = null;
-
-		ConnectivityManager connectivity = (ConnectivityManager)this.getSystemService(Context.CONNECTIVITY_SERVICE);
-		NetworkInfo[] netInfo = connectivity.getAllNetworkInfo();
-		for (NetworkInfo ni : netInfo) 
-		{
-			switch ( ni.getType() )
+			ConnectivityManager connectivity = (ConnectivityManager)this.getSystemService(Context.CONNECTIVITY_SERVICE);
+			NetworkInfo[] netInfo = connectivity.getAllNetworkInfo();
+			for (NetworkInfo ni : netInfo) 
 			{
-			case ConnectivityManager.TYPE_WIFI:
-				mIpWiFiInfo = ni;
-				break;
+				switch ( ni.getType() )
+				{
+				case ConnectivityManager.TYPE_WIFI:
+					mIpWiFiInfo = ni;
+					break;
 
-			case ConnectivityManager.TYPE_MOBILE:
-				mIpMobileInfo = ni;
-				break;
+				case ConnectivityManager.TYPE_MOBILE:
+					mIpMobileInfo = ni;
+					break;
+				}
 			}
-		}
 
-		//  message the UI
-		SendMessage(MESSAGE_NETSTATECHANGE);
+			//  message the UI
+			SendMessage(MESSAGE_NETSTATECHANGE);
+	
 	}
 
 
 
-	//  Thread Sleep
-	private void Sleep(long millis){
-		try{
-			Thread.sleep(millis);
-		} catch (InterruptedException e){}
-	}
+
+
 
 
 	//  debug flags
