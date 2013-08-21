@@ -26,6 +26,8 @@ public:
 
 	//  get the port number that the client is listening for our messages on
 	int GetPortNumberClientIsListeningOn() { return mPortNumberClientIsListeningOn; }
+
+	bool SendMessageToClient(string message, string& response);
 	
 	//  Server thread for this client will be running in our RunFunction
 	virtual void RunFunction();

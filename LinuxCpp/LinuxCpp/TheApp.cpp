@@ -27,6 +27,8 @@ TheApp::TheApp() :
 	mDisplayUpdatesOn = true;
 	mUpdateDisplay = true;
 
+	mForwardMessagesToAllClients = true;
+
 }
 
 
@@ -44,7 +46,7 @@ TheApp::~TheApp()
 bool TheApp::InitializeInstance()
 {
 	//  open the server socket
-	mConnectionServerPort = mConnectionThread.OpenServerSocket(3000, false);
+	mConnectionServerPort = mConnectionThread.OpenServerSocket(48888, false);
 	if ( mConnectionServerPort < 0 )
 	{
 		printf("Failed to open server socket!");
@@ -100,12 +102,12 @@ void TheApp::ShutDown()
 //  AddEvent
 //  add an event to the event log
 //
-void TheApp::AddEvent(timeval eventTime, string eventAddress, string eventDetails)
+void TheApp::AddEvent(timeval eventTime, string eventSender, string eventDetails)
 {
 	//  we will be modifying the event log list, lock access to it
 	mEventLogMutex.lock();
 
-	LogEvent* newEvent = new LogEvent(eventTime, eventAddress, eventDetails);
+	LogEvent* newEvent = new LogEvent(eventTime, eventSender, eventDetails);
 	mEventLog.push_front(newEvent);
 
 	if ( mEventLog.size() > mMaxEventsToLog )
@@ -213,16 +215,72 @@ void TheApp::DisconnectClient(struct sockaddr_in &clientAddress)
 
 
 
+//  HandleButtonPush
+//
+void TheApp::HandleButtonPush(timeval eventTime, string eventSender, string eventDetails)
+{
+	//  parse what was read
+	Parser readParser(eventDetails, ",");
+	string command = readParser.GetNextString();
+
+	//  get the button number
+	string argument = readParser.GetNextString();
+	int buttonNumber = atoi(argument.c_str());
+
+	//  Here is where you could take action on receiving the button push
+	//  remember, this could be called from any of the n connected client threads, 
+	//  so make sure you wrap a lock around access to any shared memory collections
+	//
+	//
+
+
+	//  if message forwarding is turned on, send the message to all of our clients
+	if ( mForwardMessagesToAllClients )
+	{
+		mConnectedClientsMutex.lock();
+
+		map<string, ConnectedClient*>::iterator nextClient;
+		for ( nextClient = mConnectedClients.begin(); nextClient != mConnectedClients.end(); nextClient++ )
+		{
+			if ( nextClient->second->GetIpAddressOfClient().compare(eventSender) == 0 )
+				continue;	//  don't rebroadcast to sender
+
+			string response;
+			nextClient->second->SendMessageToClient(eventDetails, response);
+		}
+
+		mConnectedClientsMutex.unlock();
+	}
+
+	AddEvent(eventTime, eventSender, eventDetails);
+}
+
+
+
+
 //  BroadcastClientsMessage
 //  takes a message in from one client, and broadcasts to all other connected clients
 //
-void  TheApp::BroadcastClientsMessage(timeval eventTime, string eventAddress, string message)
+void  TheApp::BroadcastMessageToClients(timeval eventTime, string eventSender, string message)
 {
-	//string broadcastMessage = format("$
-	//  add an event log for this
-	//mEventLogMutex.lock();
+	string broadcastMessage = format("$TCP_BROADCAST,%s,%s,%s", eventSender.c_str(), FormatTime(eventTime).c_str(), message.c_str());
+	
+	//  lock access to connected clients map
+	mConnectedClientsMutex.lock();
 
-	//LogEvent* newEvent = new LogEvent
+	//  send the message to all of our clients
+	map<string, ConnectedClient*>::iterator nextClient;
+	for ( nextClient = mConnectedClients.begin(); nextClient != mConnectedClients.end(); nextClient++ )
+	{
+		string response;
+		nextClient->second->SendMessageToClient(broadcastMessage, response);
+	}	
+		
+	//  unlock access to the connected clients map
+	mConnectedClientsMutex.unlock();
+
+	//  log the event
+	AddEvent(eventTime, eventSender, broadcastMessage);
 }
 
 
@@ -231,6 +289,26 @@ void  TheApp::BroadcastClientsMessage(timeval eventTime, string eventAddress, st
 //  Command Line Functions
 //  handlers for command arguments entered in main loop
 //
+
+
+void TheApp::BroadcastMessage(string input)
+{
+	// parse the message out of the input string
+	string message = input.substr(string("broadcast").size()+1);
+
+	//  log event time
+	timeval eventTime;
+	gettimeofday(&eventTime, 0);
+
+	//  log event sender
+	//  todo - change to host name
+	string eventSender = mCMDifconfig.mEth0Info.mInet4Address;
+
+	BroadcastMessageToClients(eventTime, eventSender, message);
+
+	return;
+}
+
 
 //  SaveLogs
 //  save logs out to a log file

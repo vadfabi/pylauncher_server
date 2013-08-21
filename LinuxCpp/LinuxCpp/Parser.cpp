@@ -15,19 +15,19 @@ using namespace std;
 
 //  TODO:  Comment parser
 
-char *get_line (char *s, size_t n, FILE *f)
+char *get_line (char *readIntoBuffer, size_t n, FILE *f)
 {
 	//  call fgets to read from file stream
-	char *p = fgets (s, n, f);
+	char *p = fgets (readIntoBuffer, n, f);
 
 	//  if we read something
 	if (p != 0) 
 	{
 		//  force it to be null terminated
-		size_t last = strlen (s) - 1;
+		size_t last = strlen (readIntoBuffer) - 1;
 
-		if (s[last] == '\n') 
-			s[last] = '\0';
+		if (readIntoBuffer[last] == '\n') 
+			readIntoBuffer[last] = '\0';
 	}
 
 	return p;

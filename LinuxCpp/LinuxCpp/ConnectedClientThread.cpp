@@ -7,6 +7,12 @@
 #include <string>
 #include <sys/time.h>
 
+#include <stdio.h>
+#include <stdlib.h>
+#include <netinet/in.h>
+#include <netdb.h> 
+
+
 #include "ConnectedClientThread.h"
 #include "TheApp.h"
 #include "Parser.h"
@@ -36,6 +42,79 @@ ConnectedClient::~ConnectedClient()
 		DEBUG_TRACE("Destroying ConnectedClient while thread still running !\n");
 		Cancel();
 	}
+}
+
+
+//  SendMessageToClient
+//
+bool ConnectedClient::SendMessageToClient(string message, string& response)
+{
+	int clientSocketFileDescriptor;
+	clientSocketFileDescriptor = socket(AF_INET, SOCK_STREAM, 0);
+
+	//  set the socket timeouts  
+	struct timeval timeout;
+	timeout.tv_usec = 0;
+	//
+	//  send timeout
+	//if ( mSendTimeout > 0 )
+	//{
+		timeout.tv_sec = 1;
+		if ( setsockopt(clientSocketFileDescriptor, SOL_SOCKET, SO_SNDTIMEO, (char *)&timeout, sizeof(timeout)) < 0 )
+			return -1;
+	//}
+	//
+	//  receive timeout
+	//if ( mReceiveTimeout > 0 )
+	//{
+		timeout.tv_sec = 3;
+		if ( setsockopt(clientSocketFileDescriptor, SOL_SOCKET, SO_RCVTIMEO, (char *)&timeout, sizeof(timeout)) < 0 )
+			return -1;
+	//}
+
+
+	struct hostent *server;
+	server = gethostbyname(mIpAddressOfClient.c_str());
+
+    if (server == 0) {
+        fprintf(stderr,"ERROR, no such host\n");
+        exit(0);
+    }
+
+	struct sockaddr_in serverAddress;
+	memset(&serverAddress, 0, sizeof(struct sockaddr_in)); 
+
+	serverAddress.sin_family = AF_INET;
+	bcopy((char*)server->h_addr, (char*)&serverAddress.sin_addr.s_addr, server->h_length);
+	serverAddress.sin_port = htons(mPortNumberClientIsListeningOn);
+	
+
+	if ( connect(clientSocketFileDescriptor, (struct sockaddr *)&serverAddress, sizeof(serverAddress)) < 0 )
+	{
+		return false;
+	}
+
+	if ( write(clientSocketFileDescriptor, message.c_str(), message.size()) != message.size() )
+	{
+		return false;
+	}
+
+	char buffer[TCPSERVER_READBUFFERSIZE+1];
+	memset(buffer, 0, TCPSERVER_READBUFFERSIZE+1);
+
+	int bytesRead = 0;
+	while((bytesRead = read(clientSocketFileDescriptor, buffer, TCPSERVER_READBUFFERSIZE)) > 0)
+	{
+		/* ensure null-terminated */
+		buffer[bytesRead] = '\0';
+		response += buffer;
+		memset(buffer, 0, TCPSERVER_READBUFFERSIZE+1);
+	}
+
+	shutdown(clientSocketFileDescriptor, SHUT_RDWR);
+	close(clientSocketFileDescriptor);
+
+	return (bytesRead != 0);
 }
 
 
@@ -77,8 +156,7 @@ void ConnectedClient::RunFunction()
 
 		write(acceptFileDescriptor, returnMessage.c_str(), returnMessage.size());
 
-		//  log the event
-		mTheApp.AddEvent(eventTime, eventSender, readFromSocket);
+		mTheApp.HandleButtonPush(eventTime, eventSender, readFromSocket);
 	}
 	else if ( command.compare("$TPC_BROADCASTMESSAGE") )
 	{
@@ -87,7 +165,7 @@ void ConnectedClient::RunFunction()
 		write(acceptFileDescriptor, returnMessage.c_str(), returnMessage.size());
 
 		string message = readParser.GetNextString();
-		mTheApp.BroadcastClientsMessage(eventTime, eventSender, message);
+		mTheApp.BroadcastMessageToClients(eventTime, eventSender, message);
 	}
 	else if ( command.compare("$TCP_ECHOTEST") == 0 )
 	{

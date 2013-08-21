@@ -77,8 +77,11 @@ public:
 	//  initialize app components for startup
 	bool InitializeInstance();
 
-	//  shut down applicatio components for exit
+	//  shut down application components for exit
 	void ShutDown();
+
+	//  add event to the event log
+	void AddEvent(timeval eventTime,  string eventSender, string eventDetails);
 
 	//  create a connection to a client
 	//  returns the port that this program is listening on for TCP from the client
@@ -88,11 +91,14 @@ public:
 	//  disconnect a client connection
 	void DisconnectClient(struct sockaddr_in &clientAddress);
 
-	//  add event to the event log
-	void AddEvent(timeval eventTime,  string eventAddress, string eventDetails);
+	//  function to process the button push message from any connected client
+	void HandleButtonPush(timeval eventTime, string eventSender, string eventDetails);
 
 	//  pass along a broadcast message to all clients
-	void BroadcastClientsMessage(timeval eventTime, string eventAddress, string message);
+	void BroadcastMessageToClients(timeval eventTime, string eventSender, string message);
+
+	//  flag for message forwarding
+	bool mForwardMessagesToAllClients;
 
 
 	//  Display Handling
@@ -106,6 +112,7 @@ public:
 
 
 	//  command line functions
+	void BroadcastMessage(string input);
 	bool SaveLogs(string input);
 	void PrintLogs(FILE* stream);
 	void ClearLogs();
@@ -129,6 +136,9 @@ protected:
 	map<string, ConnectedClient*> mConnectedClients;
 
 	mutex mConnectedClientsMutex;
+
+	
+
 
 	//  the event log
 	list<LogEvent*> mEventLog;

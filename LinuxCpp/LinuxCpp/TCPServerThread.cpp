@@ -42,7 +42,10 @@ void TCPServerThread::Cancel()
 {
 	//  close the socket connection - this will kill the accept call if it is blocking in the thread
 	if ( mSocketFileDescriptor > 0 )
-		shutdown(mSocketFileDescriptor, 2);
+	{
+		shutdown(mSocketFileDescriptor, SHUT_RDWR);
+		close(mSocketFileDescriptor);
+	}
 
 	//  stop the running thread 
 	Thread::Cancel();
