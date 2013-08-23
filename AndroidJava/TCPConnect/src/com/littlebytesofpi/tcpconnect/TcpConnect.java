@@ -1,5 +1,8 @@
 package com.littlebytesofpi.tcpconnect;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import android.app.Activity;
 import android.content.ComponentName;
 import android.content.Context;
@@ -15,7 +18,9 @@ import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.widget.AbsListView;
 import android.widget.Button;
+import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -33,8 +38,13 @@ public class TcpConnect extends Activity {
 	Button mButtonTwo;
 	Button mButtonThree;
 	
-	Button mEchoTestButton;
+	ListView mListView;
 	
+//  create records adapter for event log objects
+	private List<LogEvent> mLogEventList = new ArrayList<LogEvent>();
+	private LogEventAdapter mEventAdapter = new LogEventAdapter(mLogEventList, this);
+
+
 	
 	View.OnClickListener ButtonOnClickListener = new View.OnClickListener() {
 
@@ -53,10 +63,7 @@ public class TcpConnect extends Activity {
 			{
 				mService.PressButton(3);
 			}
-			else if ( v.getId() == R.id.buttonEchoTest )
-			{
-				mService.EchoTest();
-			}
+			
 		}
 	};
 
@@ -81,10 +88,11 @@ public class TcpConnect extends Activity {
 			mButtonTwo.setOnClickListener(ButtonOnClickListener);
 			mButtonThree = (Button)findViewById(R.id.button3);
 			mButtonThree.setOnClickListener(ButtonOnClickListener);
-			
-			mEchoTestButton = (Button)findViewById(R.id.buttonEchoTest);
-			mEchoTestButton.setOnClickListener(ButtonOnClickListener);
-			
+					
+			mListView = (ListView)findViewById(R.id.listViewEventLog);
+			mListView.setAdapter(mEventAdapter);
+			mListView.setStackFromBottom(true);
+
 			PreferenceManager.setDefaultValues(this,  R.xml.preferences,  false);
 	}
 
@@ -103,7 +111,8 @@ public class TcpConnect extends Activity {
 	public void onResume(){
 		super.onResume();
 
-		//SetConnectedStateUi();
+		SetNetworkStateUi();
+		SetConnectedStateUi();
 
 	}
 
@@ -221,6 +230,11 @@ public class TcpConnect extends Activity {
 				SetConnectedStateUi();
 				break;
 
+			case TCPConnectService.MESSAGE_NEWEVENT:
+				mService.GetLogEvents(mLogEventList);
+				mEventAdapter.notifyDataSetChanged();
+
+
 
 			}
 		}
@@ -258,7 +272,9 @@ public class TcpConnect extends Activity {
 			String status = "";
 			if ( mService.IsConnectedToServer() )
 			{
-				status = "Connected to Server at: " + mService.getConnectedToServerIp() + "\n   on port: " + mService.getConnectedToServerControlOnPort();
+				status = "Connected to Server at: " + mService.getConnectedToServerIp() + 
+						"\n  on server port: " + mService.getConnectedToServerOnPort() +
+						"\n  listening on port: " +  mService.getClientListeningOnPort();
 			}
 			else
 				status = "Not connected to Server";
