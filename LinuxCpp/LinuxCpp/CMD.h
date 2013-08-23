@@ -55,4 +55,6 @@ protected:
 	vector<string> LastCommandResponse;
 };
 
+
+
 #endif

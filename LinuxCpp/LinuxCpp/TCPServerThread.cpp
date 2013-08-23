@@ -75,7 +75,7 @@ int TCPServerThread::GetConnectedOnPortNumber()
 bool TCPServerThread::SetSocketTimeouts(long sendTimeout, long receiveTimeout)
 {
 	if ( mThread != 0 )
-		return false;
+		return false;	//  can't change timeouts when we are running
 
 	if ( sendTimeout < 1 )
 		mSendTimeout = 1;

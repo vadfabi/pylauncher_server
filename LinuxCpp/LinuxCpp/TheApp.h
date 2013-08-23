@@ -15,51 +15,26 @@
 using namespace std;
 
 
-//////////////
-//  Display Output 
+//  Helper classe for the main app
+//
+
+//  DisplayThread
 //  The display output runs on it own thread
 //
 class DisplayThread : public Thread
 {
 public:
+	// this class takes a reference to the TheApp class
+	// this is a quick and dirty (and easy) way for classes to communicate without using singletons or global variables
 	DisplayThread(TheApp& theApp);
 	
 	virtual void RunFunction();
 
 protected:
+	//  reference to TheApp object so we can call its functions
 	TheApp& mTheApp;
 };
 
-
-/////////////////
-//  LogEvent
-//  class to hold log events
-//
-
-
-class LogEvent
-{
-public:
-	LogEvent();
-	LogEvent(timeval eventTime, string eventAddress, string eventDescription)
-	{ 
-		mEventTime = eventTime;
-		mEventAddress = eventAddress;
-		mEvent = eventDescription;
-	}
-
-	void PrintLog( FILE* stream )
-	{
-		fprintf( stream, "%s,%s,%s\n", FormatTime(mEventTime).c_str(), mEventAddress.c_str(), mEvent.c_str() );
-	}
-
-	timeval mEventTime;
-	string mEventAddress;
-	string mEvent;
-};
-
-//  deletion helper function
-inline static bool deleteLogEvent( LogEvent* eventToDelete ) { delete eventToDelete; return true; } 
 
 
 // TheApp
@@ -99,6 +74,7 @@ public:
 
 	//  flag for message forwarding
 	bool mForwardMessagesToAllClients;
+	bool mForwardMessageWaitForClientResponse;
 
 
 	//  Display Handling
@@ -116,15 +92,13 @@ public:
 	bool SaveLogs(string input);
 	void PrintLogs(FILE* stream);
 	void ClearLogs();
-
-	
+		
 
 protected:
 
-	string mVersionString;
-
 	//  remember ifconfig properties
 	CMDifconfig mCMDifconfig;
+	string mHostname;
 
 	//  connection server port, listening for connect / disconnect requests on this port
 	int mConnectionServerPort;
@@ -135,9 +109,8 @@ protected:
 	//  connected clients
 	map<string, ConnectedClient*> mConnectedClients;
 
+	//  mutex to lock access to connected clients map
 	mutex mConnectedClientsMutex;
-
-	
 
 
 	//  the event log
@@ -163,6 +136,8 @@ protected:
 	void DisplayWriteLogs();
 	void DisplayWriteTime();
 	void DisplayUpdateClock();
+
+	string mVersionString;
 };
 
 

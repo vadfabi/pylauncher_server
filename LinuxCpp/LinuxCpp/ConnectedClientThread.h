@@ -21,14 +21,22 @@ public:
 	
 	virtual ~ConnectedClient();
 
+	// set the send and receive timeouts (in seconds)
+	// default send time out is 3 seconds
+	// default receive timeout is 3 seconds
+	bool SetClientSocketTimeouts(long sendTimeout, long receiveTimeout);
+
 	//  get the dots and numbers format address of the client, this is used as the key in the client map
 	string GetIpAddressOfClient() { return mIpAddressOfClient; }
 
 	//  get the port number that the client is listening for our messages on
 	int GetPortNumberClientIsListeningOn() { return mPortNumberClientIsListeningOn; }
 
-	bool SendMessageToClient(string message, string& response);
+	string SendMessageToClient(string message, bool waitForResponse);
 	
+	//  override cancel so we can shut down our client socket
+	virtual void Cancel();
+
 	//  Server thread for this client will be running in our RunFunction
 	virtual void RunFunction();
 
@@ -36,6 +44,12 @@ public:
 protected:
 		
 	string mIpAddressOfClient;
+
+	
+
+	//  socket read and write timeouts (in seconds)
+	long mClientReceiveTimeout;
+	long mClientSendTimeout;
 
 	//  where is the client
 	struct sockaddr_in mClientsAddress;

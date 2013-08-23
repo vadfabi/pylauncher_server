@@ -2,18 +2,15 @@
 #define _PARSER_H
 
 #include <iostream>
-#include <vector>
+
 
 using namespace std;
 
 
-//  TODO:  comment and refactor parser
-char *get_line (char *s, size_t n, FILE *f);
 
 
-
-void Tokenize(const string& str, vector<string>& tokens, const string& delimiters = " ");
-
+//  Parser
+//  a class to take a string and return the value of substring elements
 
 
 class Parser
@@ -26,14 +23,22 @@ public:
 	void SetBuffer(string buffer);
 	void SetBuffer(string buffer, string delimiters);
 
-	string mBuffer;
-	string mDelimiters;
-
-	vector<string> mTokens;
-
+	//  returns the next item as a string
 	string GetNextString();
 
+	//  returns the next item as an int
+	int GetNextInt();
 
+	//  returns the remaining buffer as a string
+	string GetRemainingBuffer();
+	
+
+protected:
+
+	string mOriginalBuffer;
+	string mDelimiters;
+	string mRemainingBuffer;
 };
+
 
 #endif

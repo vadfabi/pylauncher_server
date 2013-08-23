@@ -67,7 +67,7 @@ protected:
 	int WriteStringToSocket(int socketFileDescriptor, string& writeString);
 
 
-	//  TODO:  
+	//  TODO:  Room for Improvement
 	//  This class only handles single character strings
 	//  it should be able to handle all formats of data over the IP connection, such as
 	//  multi byte strings

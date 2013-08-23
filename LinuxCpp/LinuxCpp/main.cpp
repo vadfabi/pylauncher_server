@@ -120,7 +120,7 @@ int ProcessCommandModeInput(string input)
 		//  'resume'  -  break out of command mode
 		return 1;
 	}
-	else if ( input.substr(0, string("broadcast").size()).compare("broadcast") == 0 )
+	else if ( input.substr(0, string("broadcast").size()).compare("broadcast") == 0 && input.size() > string("broadcast").size() )
 	{
 		//  'broadcast'
 		theApp.BroadcastMessage(input);
@@ -129,22 +129,32 @@ int ProcessCommandModeInput(string input)
 		printf("/***      >");
 		return 0;
 	}
-	else if ( input.substr(0, string("forwarding").size()).compare("forwarding") == 0 )
+	else if ( input.substr(0, string("forwarding").size()).compare("forwarding") == 0 && input.size() > string("forwarding").size() )
 	{
 		theApp.mForwardMessagesToAllClients = true;
 		Parser inputParser(input, " ");
 		inputParser.GetNextString();
-		string inputOnOff = inputParser.GetNextString();
+		string argument = inputParser.GetNextString();
 		
-		if ( inputOnOff.compare("on") == 0 )
+		if ( argument.compare("on") == 0 )
 		{
 			theApp.mForwardMessagesToAllClients = true;
 			printf("/***      > message forwarding on\n");
 		}
-		else if (inputOnOff.compare("off") == 0 )
+		else if (argument.compare("off") == 0 )
 			{
 				theApp.mForwardMessagesToAllClients = false;
 				printf("/***      > message forwarding off\n");
+		}
+		else if ( argument.compare("wait") == 0 )
+		{
+			theApp.mForwardMessageWaitForClientResponse = true;
+			printf("/***      > wait for response on\n");
+		}
+		else if ( argument.compare("nowait") == 0 )
+		{
+			theApp.mForwardMessageWaitForClientResponse = false;
+			printf("/***      > wait for response off\n");
 		}
 		else
 		{
@@ -156,7 +166,7 @@ int ProcessCommandModeInput(string input)
 		return 0;
 
 	}
-	else if ( input.substr(0, string("savelogs").size()).compare("savelogs") == 0 )
+	else if ( input.substr(0, string("savelogs").size()).compare("savelogs") == 0 && input.size() > string("savelogs").size()  )
 	{
 		//  'savelogs'
 		if ( theApp.SaveLogs(input) )
@@ -189,7 +199,6 @@ int ProcessCommandModeInput(string input)
 		printf("/***      >");
 		return 0;
 	}
-	
 	else
 	{
 		if ( ! printedHelp )
@@ -218,7 +227,9 @@ void PrintCommandHelp()
 	printf("\n/***\n");
 	printf("/***      Commands:\n");
 	printf("/***        - broadcast [message]      -  sends message to all connected clients\n");
-	printf("/***        - savelogs [filename] -c   -  saves the event log to filename, optional -c to clear logs after save.\n");
+	printf("/***        - forwarding [arg]         -  on / off to control forwarding of messages");
+	printf("/***        - forwarding [arg]         -  wait | nowait to control wait for forwarded response\n");
+	printf("/***        - savelogs [filename] <-c> -  saves the event log to filename, optional -c to clear logs after save.\n");
 	printf("/***        - listlogs                 -  prints all logged events to monitor.\n");
 	printf("/***        - clearlogs                -  clears the event log.\n");
 	printf("/***        - resume                   -  exits command mode, resume display updates.\n");

@@ -69,16 +69,14 @@ void ConnectionThread::RunFunction()
 	{
 		//  $TCP_CONNECT,portNumberOfClientsServerPort
 
-		string argument1 = readParser.GetNextString();
-		
 		//  make sure connect command specifies proper port
 		//  argument is port number that client is listenting on
-		int clientsListeningPort = atoi(argument1.c_str());
+		int clientsListeningPort = readParser.GetNextInt();
 
 		//  check for valid range
 		if ( clientsListeningPort < 1024 || clientsListeningPort > 65535 )
 		{
-			string returnMessage = format("%s %s %s", "$TCP_CONNECT,NAK,", argument1.c_str(),  " is a bad port number.");
+			string returnMessage = format("$TCP_CONNECT,NAK, %d is a bad port number.", clientsListeningPort);
 			write(acceptFileDescriptor, returnMessage.c_str(), returnMessage.size());
 			return;
 		}
