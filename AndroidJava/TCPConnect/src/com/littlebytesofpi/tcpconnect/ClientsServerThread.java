@@ -11,29 +11,53 @@ import android.util.Log;
 
 public class ClientsServerThread extends Thread {
 
-	TCPConnectService mService;
-
-	public ClientsServerThread(TCPConnectService service) {
-		mService = service;
-	}
-
 	/**
-	 * Connected control thread 
+	 * ClientsServerThread 
 	 * 
 	 * This thread is running while we are connected
 	 * this is the client's ServerSocket accept thread, listening for control messages from the server
 	 *  
 	 */
+	
+	
+	//  Class Members
+	//
+	
+	//  server socket
 	private ServerSocket mServerSocket = null; 
 	private Socket mSocket = null;
 
-	public int getClientListeningOnPort(){  
+	//  return port number that client is listening on (client's server port)
+	public int GetClientListeningOnPort(){  
 		if ( mServerSocket != null )
 			return mServerSocket.getLocalPort();
 		else
 			return -1;
 	}
+	
+	
+	//  get the state of the connection to the server
+	public boolean IsConnected(){
+		return (mThreadRunning  && mServerSocket != null );
+	}
+	
+	//  reference to the service
+	private TCPConnectService mService;
 
+	
+	/*
+	 * Constructor
+	 */
+	public ClientsServerThread(TCPConnectService service) {
+		mService = service;
+	}
+
+	
+	
+	/*
+	 * OpenSocketConnection
+	 * opens the port that the client is listening on
+	 */
 	public boolean OpenSocketConnection(){
 
 		//  determine our client port
@@ -52,34 +76,30 @@ public class ClientsServerThread extends Thread {
 			if ( clientsServerPort > 51000 )
 				return false;		//  No open port in 1000? must be a problem
 		}
-
 		
 		return true;
 	}
 
 
-	public boolean IsConnected(){
 
-
-		return (mThreadRunning  && mServerSocket != null );
-	}
-
+	//  Thread flags
+	//  low tech, but very effective to manage state of running thread
 	private boolean mThreadRunning = false;
 	private boolean mThreadExit = false;
 
+	//  Run function
 	public void run() {
 
 		//  we must have a valid socket to start
 		if ( mServerSocket == null )
 			return;
 		
+		//  self start, run until the flag gets cleared
 		mThreadRunning = true;
-
-		// Keep listening to the InputStream while connected
+		//
 		while (mThreadRunning) {
 
 			try {
-
 				//  wait to accept something on this socket
 				//  this will block until we have something to read
 				mSocket = null;
@@ -132,7 +152,7 @@ public class ClientsServerThread extends Thread {
 
 
 
-	/**
+	/*
 	 * ProcessSocketAccept
 	 * 
 	 * Gets the input stream from the socket and does something with the command
@@ -144,25 +164,28 @@ public class ClientsServerThread extends Thread {
 		DataOutputStream dataOutputStream = null;
 
 		try{
-
+			mSocket.setSoTimeout(2000);
 			dataInputStream = new DataInputStream(mSocket.getInputStream());
 			dataOutputStream = new DataOutputStream(mSocket.getOutputStream());
-			//String input = dataInputStream.readUTF();
-
-			//  todo - rewrite into loop to handle reads larger than 1024
-			byte[] buffer = new byte[1024];
-			int readCount  = dataInputStream.read(buffer);
-			String input = new String( buffer ).trim();
-
-			dataOutputStream.writeBytes(input);
+			
+			String inputRead = IpFunctions.ReadStringFromInputSocket(dataInputStream);
+			
+			//
+			//  BUILD YOUR PROGRAM HERE:
+			//  if you were going to do something with the message from the server, you would initiate it here
+			//  perhaps respond with a success or fail message back to the server that the command was received
+			//
+			
+			//  we will just respond with an respond with an echo in case the server is waiting for reply
+			String response = "TCP_RECEIVED," + mService.mIpWiFiAddress + "," + inputRead;
+			dataOutputStream.writeBytes(response);
 			dataOutputStream.flush();
 			
-			//  extract the command and arguments
-			Parser parser = new Parser(input, ",");
-			String command = parser.GetNextString();
-			String arguments = parser.GetRemainingBuffer();
-
-			//  log this event at reception time
+			//  log the event
+			Parser inputParser = new Parser(inputRead, ",");
+			String command = inputParser.GetNextString();
+			String arguments = inputParser.GetRemainingBuffer();
+			//
 			LogEvent logEvent = new LogEvent(System.currentTimeMillis(), command, arguments);
 			logEvent.mIpAddressOfSender = mSocket.getInetAddress().toString().substring(1);
 			mService.AddLogEvent(logEvent);

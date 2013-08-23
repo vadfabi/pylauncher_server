@@ -229,7 +229,7 @@ public class TCPConnectService extends Service {
 	public synchronized void GetLogEvents(List<LogEvent> list){
 
 		for ( int i = list.size(); i < mLogEventList.size(); i++ )
-			list.add(mLogEventList.get(i));
+			list.add(0, mLogEventList.get(i));
 	}
 
 
@@ -266,7 +266,7 @@ public class TCPConnectService extends Service {
 	ClientsServerThread mClientsServerThread = null;
 	public int getClientListeningOnPort(){  
 		if ( mClientsServerThread != null )
-			return mClientsServerThread.getClientListeningOnPort();
+			return mClientsServerThread.GetClientListeningOnPort();
 		else
 			return -1;
 	}
@@ -314,7 +314,7 @@ public class TCPConnectService extends Service {
 				//  connect to server command:
 				// $TCP_CONNECT,clientsControlPort
 				mConnectedToServerIp = param[0];
-				readResponse = IpFunctions.sendStringToPort(mConnectedToServerIp, mServerPort, "$TCP_CONNECT," + getClientListeningOnPort());
+				readResponse = IpFunctions.SendStringToPort(mConnectedToServerIp, mServerPort, "$TCP_CONNECT," + getClientListeningOnPort());
 				return 1;
 			}
 			else
@@ -384,7 +384,7 @@ public class TCPConnectService extends Service {
 		String readResponse = "";
 		protected Integer doInBackground(String... param ) {
 
-			readResponse = IpFunctions.sendStringToPort(mConnectedToServerIp, mServerPort, "$TCP_DISCONNECT");
+			readResponse = IpFunctions.SendStringToPort(mConnectedToServerIp, mServerPort, "$TCP_DISCONNECT");
 
 			return 1;
 		}
@@ -436,6 +436,34 @@ public class TCPConnectService extends Service {
 
 		}
 	}
+	
+	
+	public void SendMessageToServer(String message){
+
+		new SendMessageTask().execute(message);
+
+	}
+
+	//  close connection task
+	private class SendMessageTask extends AsyncTask<String, Void, Integer> {
+
+		String readResponse = "";
+
+		protected Integer doInBackground(String... param ) {
+
+			readResponse = TCPConnectService.this.sendStringToConnectedOnCommandPort("$TCP_BROADCAST,"+ mIpWiFiAddress + "," + param[0]);
+
+			return 1;
+		}
+
+		protected void onPostExecute(Integer result ) {
+
+			//  todo:  process read response
+
+
+		}
+	}
+	
 
 
 	//  TODO - move echo test to its own thread
@@ -483,7 +511,7 @@ public class TCPConnectService extends Service {
 	 */
 
 	private String sendStringToConnectedOnCommandPort(String message){
-		return IpFunctions.sendStringToPort(mConnectedToServerIp, mConnectedToServerOnPort, message);
+		return IpFunctions.SendStringToPort(mConnectedToServerIp, mConnectedToServerOnPort, message);
 	}
 
 
@@ -508,7 +536,7 @@ public class TCPConnectService extends Service {
 	{
 	//  get the LAN IP address of this device
 		WifiManager wifiManager = (WifiManager) getSystemService(WIFI_SERVICE);
-			mIpWiFiAddress = IpFunctions.getLocalIpAddress(wifiManager);
+			mIpWiFiAddress = IpFunctions.GetLocalIpAddress(wifiManager);
 
 			//  get the info about wifi and mobile connection
 			mIpWiFiInfo = null;

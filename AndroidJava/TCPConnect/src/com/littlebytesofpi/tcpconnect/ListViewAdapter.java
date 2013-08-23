@@ -11,7 +11,7 @@ import android.widget.BaseAdapter;
 
 public abstract class ListViewAdapter extends BaseAdapter {
 
-//  save the context and the list of objects
+	//  save the context and the list of objects
 	public Context mContext;
 	public List<?> mDataList;
 	

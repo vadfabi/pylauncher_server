@@ -6,7 +6,9 @@
         android:dialogMessage="IP Address of Server" 
         android:dialogTitle="Server Address" 
         android:summary="Enter the IP address of the server"
-        android:title="IP Address Of Server"/>
+        android:title="IP Address Of Server"
+        android:inputType="phone"
+        />
     
     <EditTextPreference 
         android:key="pref_serverport" 
@@ -14,7 +16,8 @@
         android:dialogMessage="Server Port" 
         android:dialogTitle="Server Port" 
         android:summary="Enter the port number of the server"
-        android:title="Server Port"/>
+        android:title="Server Port"
+        android:numeric="integer"/>
     
 
 </PreferenceScreen>

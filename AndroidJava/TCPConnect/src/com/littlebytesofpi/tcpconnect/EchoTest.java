@@ -22,7 +22,7 @@ public class EchoTest extends Thread {
 			long startTime = System.currentTimeMillis();
 			String echoString = "$TCP_ECHOTEST," + startTime;
 
-			String readResponse = IpFunctions.sendStringToPort(mService.getConnectedToServerIp(), mService.getServerPort(), echoString + mService.getClientListeningOnPort());
+			String readResponse = IpFunctions.SendStringToPort(mService.getConnectedToServerIp(), mService.getServerPort(), echoString + mService.getClientListeningOnPort());
 		}
 
 		mThreadRunning = false;
