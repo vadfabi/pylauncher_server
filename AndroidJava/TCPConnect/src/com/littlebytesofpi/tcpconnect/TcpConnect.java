@@ -20,6 +20,7 @@ import android.view.MenuItem;
 import android.view.View;
 import android.widget.AbsListView;
 import android.widget.Button;
+import android.widget.EditText;
 import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -37,6 +38,8 @@ public class TcpConnect extends Activity {
 	Button mButtonOne;
 	Button mButtonTwo;
 	Button mButtonThree;
+	Button mButtonSend;
+	EditText mEditTextSendMessage;
 	
 	ListView mListView;
 	
@@ -63,6 +66,10 @@ public class TcpConnect extends Activity {
 			{
 				mService.PressButton(3);
 			}
+			else if ( v.getId() == R.id.buttonSendMessage )
+			{
+				mService.SendMessageToServer(mEditTextSendMessage.getText().toString());
+			}
 			
 		}
 	};
@@ -88,6 +95,11 @@ public class TcpConnect extends Activity {
 			mButtonTwo.setOnClickListener(ButtonOnClickListener);
 			mButtonThree = (Button)findViewById(R.id.button3);
 			mButtonThree.setOnClickListener(ButtonOnClickListener);
+			
+			mEditTextSendMessage = (EditText)findViewById(R.id.editTextSendMessage);
+			
+			mButtonSend = (Button)findViewById(R.id.buttonSendMessage);
+			mButtonSend.setOnClickListener(ButtonOnClickListener);
 					
 			mListView = (ListView)findViewById(R.id.listViewEventLog);
 			mListView.setAdapter(mEventAdapter);
@@ -113,6 +125,8 @@ public class TcpConnect extends Activity {
 
 		SetNetworkStateUi();
 		SetConnectedStateUi();
+		
+		mListView.requestFocus();
 
 	}
 
@@ -162,28 +176,14 @@ public class TcpConnect extends Activity {
 			//  attempt automatic connection to the server
 			if ( ! mService.IsConnectedToServer() )
 			{
-				//  TODO:  this should be replaced with zero conf networking ip address discovery
-				SharedPreferences sharedPrefs = PreferenceManager.getDefaultSharedPreferences(TcpConnect.this);
-				String ipAddress = sharedPrefs.getString("pref_serveripaddress", "");
-				int serverPort = 0;
-				try{
-					serverPort =  Integer.parseInt(sharedPrefs.getString("pref_serverport", "48888"));
-					
-					if ( ipAddress != "" && serverPort > 1024 )
-					{
-						//  open connection with default
-						mService.openConnectionToServer(ipAddress, serverPort);
-					}
-					
-				} 
-				catch (NumberFormatException e){
-					
-				}
-				finally{
+				if ( ! mService.IsConnectedToServer() )
+					openServerConnectionWithSettings();
+			}
+			else
+			{
+				SetNetworkStateUi();
+				SetConnectedStateUi();
 				
-					SetNetworkStateUi();
-					SetConnectedStateUi();
-				}
 			}
 		}
 
@@ -233,9 +233,7 @@ public class TcpConnect extends Activity {
 			case TCPConnectService.MESSAGE_NEWEVENT:
 				mService.GetLogEvents(mLogEventList);
 				mEventAdapter.notifyDataSetChanged();
-
-
-
+				mListView.smoothScrollToPosition(0);
 			}
 		}
 	};  
@@ -272,9 +270,9 @@ public class TcpConnect extends Activity {
 			String status = "";
 			if ( mService.IsConnectedToServer() )
 			{
-				status = "Connected to Server at: " + mService.getConnectedToServerIp() + 
-						"\n  on server port: " + mService.getConnectedToServerOnPort() +
-						"\n  listening on port: " +  mService.getClientListeningOnPort();
+				status = "Connected to Server at: " + mService.getConnectedToServerIp();
+				status += "\n  on server port: " + mService.getConnectedToServerOnPort();
+				status += "\n  listening on port: " +  mService.getClientListeningOnPort();
 			}
 			else
 				status = "Not connected to Server";
@@ -294,6 +292,46 @@ public class TcpConnect extends Activity {
 		return true;
 	}
 
+	private final int ACTIVITYRESULT_SETTINGS = 99;
+
+
+	protected void openServerConnectionWithSettings()
+	{
+		//  get the IP address to connect to
+		//  TODO:  this should be replaced with zero conf networking ip address discovery
+		SharedPreferences sharedPrefs = PreferenceManager.getDefaultSharedPreferences(TcpConnect.this);
+		String ipAddress = sharedPrefs.getString("pref_serveripaddress", "");
+
+		int serverPort = 0;
+		try{
+			serverPort =  Integer.parseInt(sharedPrefs.getString("pref_serverport", "48888"));
+
+			if ( ipAddress != "" && serverPort > 1024 )
+			{
+				//  open connection with default
+				//  message the user that we have initiated a connection
+				Toast.makeText(this, "Connecting to to server at: " + ipAddress + " on port: " + serverPort, Toast.LENGTH_SHORT).show();
+				mService.openConnectionToServer(ipAddress, serverPort);
+			}
+			else
+			{
+				Toast.makeText(this,  "IP Address: '" + ipAddress + "' or port '" + serverPort + "' is invalid.", Toast.LENGTH_LONG).show();
+			}
+		} 
+		catch (NumberFormatException e){
+			Toast.makeText(this,  "IP Address: '" + ipAddress + "' or port '" + serverPort + "' is invalid.", Toast.LENGTH_LONG).show();
+		}
+		finally{
+
+			SetNetworkStateUi();
+			SetConnectedStateUi();
+		}
+		
+		return;
+	}
+
+
+	
 	@Override
 	public boolean onOptionsItemSelected(MenuItem item) {
 
@@ -304,35 +342,7 @@ public class TcpConnect extends Activity {
 			if ( mService == null )
 				return true;
 
-			//  get the IP address to connect to
-			//  TODO:  this should be replaced with zero conf networking ip address discovery
-			SharedPreferences sharedPrefs = PreferenceManager.getDefaultSharedPreferences(TcpConnect.this);
-			String ipAddress = sharedPrefs.getString("pref_serveripaddress", "");
-			
-			int serverPort = 0;
-			try{
-				serverPort =  Integer.parseInt(sharedPrefs.getString("pref_serverport", "48888"));
-				
-				if ( ipAddress != "" && serverPort > 1024 )
-				{
-					//  open connection with default
-				//  message the user that we have initiated a connection
-					Toast.makeText(this, "Connecting to to server at: " + ipAddress + " on port: " + serverPort, Toast.LENGTH_SHORT).show();
-					mService.openConnectionToServer(ipAddress, serverPort);
-				}
-				else
-				{
-					Toast.makeText(this,  "IP Address: '" + ipAddress + "' or port '" + serverPort + "' is invalid.", Toast.LENGTH_LONG).show();
-				}
-			} 
-			catch (NumberFormatException e){
-				
-			}
-			finally{
-			
-				SetNetworkStateUi();
-				SetConnectedStateUi();
-			}
+			openServerConnectionWithSettings();
 			
 			return true;
 
@@ -348,8 +358,8 @@ public class TcpConnect extends Activity {
 
 		case R.id.menu_settings:
 
-			Intent intent = new Intent(this, SettingsActivity.class);
-			startActivity(intent);
+			Intent intent = new Intent(this, Settings_Activity.class);
+			startActivityForResult(intent, ACTIVITYRESULT_SETTINGS);
 
 			return true;
 
@@ -361,6 +371,11 @@ public class TcpConnect extends Activity {
 	
 	protected void onActivityResult(int requestCode, int resultCode, Intent data) {
 
+		if ( requestCode == ACTIVITYRESULT_SETTINGS )
+		{
+			if ( ! mService.IsConnectedToServer() )
+				openServerConnectionWithSettings();
+		}
 
 	}
 

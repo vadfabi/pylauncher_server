@@ -13,7 +13,14 @@ import android.util.Log;
 
 public class IpFunctions {
 
-	static public String sendStringToPort(String ipAddress, int portNumber, String message){
+	static public final int TCP_READBUFFER_SIZE = 1024;
+	
+	/*
+	 * SendStringToPort
+	 * sends the string 'message' to the specified port number and address
+	 * returns the response from the port, will return empty string if no response
+	 */
+	static public String SendStringToPort(String ipAddress, int portNumber, String message){
 
 		String response = "";
 
@@ -23,17 +30,14 @@ public class IpFunctions {
 
 		try {
 			socket = new Socket(ipAddress, portNumber);
-			socket.setSoTimeout(5000);		//  TODO:  I have big problems with this on slow wifi network, must find proper method (timeout / retries ?)
+			socket.setSoTimeout(5000);		//  TODO:  remove hard coded wait time, pass in wait time as parameter
 			dataOutputStream = new DataOutputStream(socket.getOutputStream());
 			dataInputStream = new DataInputStream(socket.getInputStream());
+			
 			dataOutputStream.writeBytes(message);
 			dataOutputStream.flush();
 
-			byte[] buffer = new byte[1024];
-
-			int readCount  = dataInputStream.read(buffer);
-			response = new String( buffer ).trim();
-			return response;
+			response = ReadStringFromInputSocket(dataInputStream);
 
 		} catch ( SocketTimeoutException e ){
 			
@@ -59,13 +63,52 @@ public class IpFunctions {
 			}
 		}
 
-
 		return response;
+	}
+	
+	
+	/*
+	 * ReadStringFromInputSocket
+	 * reads a string from the socket
+	 */
+	static String ReadStringFromInputSocket(DataInputStream dataInputStream ) throws IOException 
+	{
+		String inputRead = "";
+		
+		//  read the buffer, add one byte to make sure buffer is null at end
+		byte[] buffer = new byte[TCP_READBUFFER_SIZE+1];
 
+		//  read until we have reached end of file
+		try{
+
+			int readCount  = dataInputStream.read(buffer, 0, TCP_READBUFFER_SIZE);
+			inputRead = new String(buffer).trim();
+
+			//  did we read max buffer, if so keep going
+			if ( readCount == TCP_READBUFFER_SIZE )
+			{
+				while ( readCount > 0 )
+				{
+					//  reinit the buffer, this is the most efficient way to zero out the memory in java ?
+					buffer = new byte[TCP_READBUFFER_SIZE+1];
+					readCount = dataInputStream.read(buffer, 0, TCP_READBUFFER_SIZE);
+					inputRead += new String(buffer).trim();	
+				}
+			}
+		}
+		catch (IOException e){
+			throw e;
+		}
+
+		return inputRead;
 	}
 
 
-	static public String getLocalIpAddress(WifiManager wifiManager) {
+	/*
+	 * GetLocalIpAddress
+	 * gets the ip address of the android device
+	 */
+	static public String GetLocalIpAddress(WifiManager wifiManager) {
 
 		try{
 			

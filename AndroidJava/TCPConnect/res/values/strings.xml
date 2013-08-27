@@ -4,5 +4,6 @@
     <string name="app_name">TCP Connect</string>
     <string name="action_settings">Settings</string>
     <string name="hello_world">Hello world!</string>
+    <string name="applicationTitle">LBP Simple TCP Client</string>
 
 </resources>

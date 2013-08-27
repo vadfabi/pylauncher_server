@@ -8,23 +8,13 @@
     android:paddingTop="@dimen/activity_vertical_margin"
     tools:context=".TcpConnect" >
 
-    <TextView
-        android:id="@+id/textViewServerStatus"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_alignLeft="@+id/textViewNetworkStatus"
-        android:layout_alignRight="@+id/button3"
-        android:layout_below="@+id/textViewNetworkStatus"
-        android:layout_marginTop="18dp"
-        android:text="TextView" />
-
     <Button
         android:id="@+id/button2"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_below="@+id/textViewServerStatus"
         android:layout_centerHorizontal="true"
-        android:layout_marginTop="20dp"
+        android:layout_marginTop="10dp"
         android:text="Button 2" />
 
     <Button
@@ -45,16 +35,14 @@
         android:layout_toRightOf="@+id/button2"
         android:text="Button 3" />
 
-    <EditText
-        android:id="@+id/editTextSendMessage"
-        android:layout_width="wrap_content"
+    <ListView
+        android:id="@+id/listViewEventLog"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_alignLeft="@+id/button1"
-        android:layout_below="@+id/button2"
-        android:layout_marginTop="16dp"
-        android:layout_toLeftOf="@+id/button4"
-        android:ems="10" />
-    
+        android:layout_alignParentLeft="true"
+        android:layout_marginTop="7dp"
+        android:layout_below="@+id/editTextSendMessage" >
+    </ListView>
 
     <Button
         android:id="@+id/buttonSendMessage"
@@ -63,23 +51,38 @@
         android:layout_height="wrap_content"
         android:layout_alignBaseline="@+id/editTextSendMessage"
         android:layout_alignBottom="@+id/editTextSendMessage"
-        android:layout_alignRight="@+id/button3"
+        android:layout_alignParentRight="true"
         android:text="Send" />
+
+    <EditText
+        android:id="@+id/editTextSendMessage"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_below="@+id/button2"
+        android:layout_marginTop="16dp"
+        android:layout_toLeftOf="@+id/buttonSendMessage"
+        android:ems="10" >
+
+        <requestFocus />
+    </EditText>
+
+    <TextView
+        android:id="@+id/textViewServerStatus"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentLeft="true"
+        android:layout_below="@+id/textViewNetworkStatus"
+        android:layout_marginTop="5dp"
+        android:singleLine="false"
+        android:text="TextView" />
 
     <TextView
         android:id="@+id/textViewNetworkStatus"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_alignLeft="@+id/button1"
+        android:layout_alignLeft="@+id/textViewServerStatus"
         android:layout_alignParentTop="true"
+        android:layout_marginTop="3dp"
         android:text="@string/hello_world" />
-
-    <ListView
-        android:id="@+id/listViewEventLog"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_alignParentLeft="true"
-        android:layout_below="@+id/editTextSendMessage" >
-    </ListView>
 
 </RelativeLayout>

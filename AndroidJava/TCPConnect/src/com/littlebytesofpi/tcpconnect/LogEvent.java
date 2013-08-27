@@ -3,6 +3,7 @@ package com.littlebytesofpi.tcpconnect;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 
+
 public class LogEvent {
 	
 	public long mEventSystemTime;
