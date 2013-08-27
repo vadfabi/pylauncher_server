@@ -373,6 +373,7 @@ void  TheApp::BroadcastMessageToClients(timeval eventTime, string eventSender, s
 void TheApp::BroadcastMessage(string input)
 {
 	// parse the message out of the input string
+
 	string message = input.substr(string("broadcast").size()+1);
 
 	//  log event time
