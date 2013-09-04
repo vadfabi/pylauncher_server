@@ -51,6 +51,7 @@ Thread::~Thread()
 //  This is the thread run function
 //  it takes a reference to the Thread class, and calls the Thread::RunFunction() for each cycle
 //  note, if you have a process that never quits, you should add a sleep in your RunFunction to prevent race condition
+//  TODO:  Room For Improvement, I have read that sleep or yeild is not necessary on modern machines, is this true ?
 //
 void Run(Thread& thread)
 {
@@ -58,9 +59,9 @@ void Run(Thread& thread)
 	{
 		thread.RunFunction();
 
+		//  use sleep or yeild once per cycle to avoid race condition locking up UI
 		//  TODO: this won't compile, there is some question if it is necessary ?
-		//  yeild once per cycle to avoid race condition
-		//std::this_thread::yeild();
+		//  std::this_thread::yeild();
 	}
 
 	//  we are out of the run loop, set is stopped flag

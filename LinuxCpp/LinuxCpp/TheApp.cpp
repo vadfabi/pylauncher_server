@@ -20,7 +20,7 @@ using namespace std;
 //  Constructor
 //
 TheApp::TheApp() :
-	mConnectionThread(*this),  mDisplayThread(*this)
+	mConnectionThread(*this),  mDisplayThread(*this), mBroadcastThread(*this)
 {
 	mVersionString = "1.0.0.1";
 
@@ -70,6 +70,8 @@ bool TheApp::InitializeInstance()
 	//  flag for update on first pass
 	mUpdateDisplay = true;
 
+	mBroadcastThread.Start();
+
 	//  initialization successful
 	return true;
 }
@@ -81,6 +83,10 @@ bool TheApp::InitializeInstance()
 //
 void TheApp::ShutDown()
 {
+	//  stop the broadcast thread
+	if ( mBroadcastThread.IsRunning() )
+		mBroadcastThread.Cancel();
+
 	//  disconnect all of our clients
 	map<string, ConnectedClient*>::iterator nextClient;
 	for ( nextClient = mConnectedClients.begin(); nextClient != mConnectedClients.end(); nextClient++ )
@@ -91,10 +97,11 @@ void TheApp::ShutDown()
 	//  done with clients
 	mConnectedClients.erase(mConnectedClients.begin(), mConnectedClients.end());
 
-	//  cancel the connection thread
+	//  stop the connection thread
 	if ( mConnectionThread.IsRunning() )
 		mConnectionThread.Cancel();
 
+	//  stop the display thread
 	if ( mDisplayThread.IsRunning() )
 		mDisplayThread.Cancel();
 
@@ -112,7 +119,7 @@ void TheApp::AddEvent(timeval eventTime, string eventSender, string eventDetails
 {
 	//  we will be modifying the event log list, lock access to it
 	{
-		LockMutexInScope lockEvents(mEventLogMutex);
+		LockMutex lockEvents(mEventLogMutex);
 
 		LogEvent* newEvent = new LogEvent(eventTime, eventSender, eventDetails);
 		mEventLog.push_front(newEvent);
@@ -122,6 +129,10 @@ void TheApp::AddEvent(timeval eventTime, string eventSender, string eventDetails
 			delete mConnectedClients.end()->second;
 			mEventLog.pop_back();
 		}
+
+		if ( ! mDisplayUpdatesOn )
+			printf("%s %s %s\n", FormatTime(eventTime).c_str(), eventSender.c_str(), eventDetails.c_str());
+
 	}//  we are done modifying the event log, release access
 	
 	//  update display
@@ -142,7 +153,7 @@ int TheApp::CreateClientConnection(const struct sockaddr_in &clientAddress, int 
 
 	//  lock on access to map of clients
 	{
-		LockMutexInScope lockConnectedClients(mConnectedClientsMutex);
+		LockMutex lockConnectedClients(mConnectedClientsMutex);
 
 		//  get the dots and numbers string for client, this is used as the key in our clients map
 		string  addressOfSender = IpAddressString(clientAddress);
@@ -189,7 +200,7 @@ void TheApp::DisconnectClient(struct sockaddr_in &clientAddress)
 {
 	//  we will be modifying the client map, lock access to it
 	{
-		LockMutexInScope lockConnectedClients(mConnectedClientsMutex);
+		LockMutex lockConnectedClients(mConnectedClientsMutex);
 		
 		//  our map uses dots and numbers address of client as a key
 		string clientKey = IpAddressString(clientAddress);
@@ -221,6 +232,7 @@ void TheApp::DisconnectClient(struct sockaddr_in &clientAddress)
 
 
 //  HandleButtonPush
+//  this function is called from the connected client thread when we get a push button message
 //
 void TheApp::HandleButtonPush(timeval eventTime, string eventSender, string eventDetails)
 {
@@ -243,55 +255,61 @@ void TheApp::HandleButtonPush(timeval eventTime, string eventSender, string even
 
 	//  in this simple program, the response to button push from client is to check to see if message forwarding is turned on
 	//  if message forwarding is turned on, send the message to all of our clients
+
+	//  log the event
+	AddEvent(eventTime, eventSender, eventDetails);
+
+	//  forward message
 	if ( mForwardMessagesToAllClients )
 	{
-		LockMutexInScope lockConnectedClients(mConnectedClientsMutex);
+		mBroadcastThread.AddMessage(eventTime, eventSender, eventDetails);
+	}
+}
 
-		map<string, ConnectedClient*>::iterator nextClient;
-		for ( nextClient = mConnectedClients.begin(); nextClient != mConnectedClients.end(); nextClient++ )
+
+
+//  BroadcastMessage
+//  this function is called from the connected client thread when we get a broadcast message
+//
+void TheApp::HandleBroadcastMessage(timeval eventTime, string eventSender, string message)
+{
+	AddEvent(eventTime, eventSender, message);
+
+	if ( mForwardMessagesToAllClients )
+	{
+		mBroadcastThread.AddMessage(eventTime, eventSender, message);
+	}
+}
+
+
+
+//  SendMessageToAllClients
+//  this function is called from the broadcast thread to send a message to all clients
+//
+void TheApp::SendMessageToAllClients(timeval eventTime, string eventSender, string message)
+{
+	LockMutex lockConnectedClients(mConnectedClientsMutex);
+
+	map<string, ConnectedClient*>::iterator nextClient;
+	for ( nextClient = mConnectedClients.begin(); nextClient != mConnectedClients.end(); nextClient++ )
+	{
+		if ( nextClient->second->GetIpAddressOfClient().compare(eventSender) == 0 )
+			continue;	//  don't rebroadcast to sender
+
+		string response = nextClient->second->SendMessageToClient(message,  mForwardMessageWaitForClientResponse);
+		
+		//  if we are waiting for responses, log the response as an event
+		if ( mForwardMessageWaitForClientResponse )
 		{
-			if ( nextClient->second->GetIpAddressOfClient().compare(eventSender) == 0 )
-				continue;	//  don't rebroadcast to sender
-
-			string response = nextClient->second->SendMessageToClient(eventDetails,  mForwardMessageWaitForClientResponse);
+			timeval eventTime;
+			gettimeofday(&eventTime, 0);
+			AddEvent(eventTime, nextClient->second->GetIpAddressOfClient(), response);
 		}
 	}
-
-	AddEvent(eventTime, eventSender, eventDetails);
 }
 
 
 
-
-//  BroadcastMessageToClients
-//  broadcasts a message to all clients
-//
-void  TheApp::BroadcastMessageToClients(timeval eventTime, string eventSender, string message)
-{
-	string broadcastMessage = format("$TCP_BROADCAST,%s,%s,%s", eventSender.c_str(), FormatTime(eventTime).c_str(), message.c_str());
-
-	//  lock access to connected clients map
-	{
-		LockMutexInScope lockConnectedClients(mConnectedClientsMutex);
-
-		//  TODO:   Room for Improvement
-		//  this should be refactored to send message to all clients asynchronysly (sic)
-		//  as it is, you will wait n * response time if you want to get response from all clients
-		//  I tried to use std::async, but had problems, see function below
-
-
-		//  send the message to all of our clients
-		map<string, ConnectedClient*>::iterator nextClient;
-		for ( nextClient = mConnectedClients.begin(); nextClient != mConnectedClients.end(); ++nextClient )
-		{
-			nextClient->second->SendMessageToClient(broadcastMessage, false);
-		}	
-
-	}  //  unlock access to the connected clients map
-	
-	//  log the event
-	AddEvent(eventTime, eventSender, broadcastMessage);
-}
 
 
 //  BroadcastMessageToClients
@@ -384,7 +402,12 @@ void TheApp::BroadcastMessage(string input)
 	//  todo  this assumes you are on wired, we should check for wifi here ?
 	string eventSender = mCMDifconfig.mEth0Info.mInet4Address;
 
-	BroadcastMessageToClients(eventTime, eventSender, message);
+	string broadcastMessage = format("$TCP_BROADCAST,%s,%s,%s", eventSender.c_str(), FormatTime(eventTime).c_str(), message.c_str());
+
+	mBroadcastThread.AddMessage(eventTime, eventSender, broadcastMessage);
+
+	//  log the event
+	AddEvent(eventTime, eventSender, broadcastMessage);
 
 	return;
 }
@@ -406,7 +429,7 @@ bool TheApp::SaveLogs(string input)
 		return false;
 
 	//  accessing the event log list, lock it
-	LockMutexInScope lockEventLog(mEventLogMutex);
+	LockMutex lockEventLog(mEventLogMutex);
 
 	//  print all the logs
 	for_each(  mEventLog.begin(), mEventLog.end(), bind2nd(mem_fun(&LogEvent::PrintLog), outputFile) );
@@ -429,7 +452,7 @@ bool TheApp::SaveLogs(string input)
 void TheApp::PrintLogs(FILE* stream)
 {
 	//  lock access to event log list
-	LockMutexInScope lockEventLog(mEventLogMutex);
+	LockMutex lockEventLog(mEventLogMutex);
 
 	//  iterate through log list and print logs to stdout
 	//  this ta
@@ -444,7 +467,7 @@ void TheApp::PrintLogs(FILE* stream)
 void TheApp::ClearLogs()
 {
 	//  lock access to event log list
-	LockMutexInScope lockEventLog(mEventLogMutex);
+	LockMutex lockEventLog(mEventLogMutex);
 
 	//  delete the log event objects in the mEventLog list
 	//  this method uses the helper function deleteLogEvent( )
@@ -475,7 +498,7 @@ void TheApp::ClearLogs()
 //
 void TheApp::SetUpdateDisplay()
 {
-	LockMutexInScope lockDisplay(mDisplayUpdateMutex);
+	LockMutex lockDisplay(mDisplayUpdateMutex);
 	mUpdateDisplay = true;
 }
 
@@ -485,7 +508,7 @@ void TheApp::SetUpdateDisplay()
 //
 void TheApp::SuspendDisplayUpdates() 
 {
-	LockMutexInScope lockDisplay(mDisplayUpdateMutex);
+	LockMutex lockDisplay(mDisplayUpdateMutex);
 	mDisplayUpdatesOn = false; 
 }
 
@@ -541,7 +564,7 @@ void TheApp::DisplayUpdate()
 	if ( mUpdateDisplay )
 	{
 		//  lock the display update
-		LockMutexInScope lockDisplay(mDisplayUpdateMutex);
+		LockMutex lockDisplay(mDisplayUpdateMutex);
 
 		//  Redraw the whole display
 		system("clear");
@@ -587,14 +610,19 @@ void TheApp::DisplayWriteHeader()
 
 void TheApp::DisplayWriteClientConnections()
 {
-	LockMutexInScope lockClients(mConnectedClientsMutex);
-
+	//LockMutex lockClients(mConnectedClientsMutex);
+	if ( mConnectedClientsMutex.try_lock() )
+	{
 	//  write out client connection state
 	map<string, ConnectedClient*>::iterator iter;
 
 	for ( iter = mConnectedClients.begin(); iter != mConnectedClients.end(); iter++ )
 	{
 		printf("/***      - Client at %s connected on port %d.\n", iter->second->GetIpAddressOfClient().c_str(), iter->second->GetConnectedOnPortNumber() );
+	}
+
+	mConnectedClientsMutex.unlock();
+
 	}
 }
 
@@ -604,7 +632,7 @@ void TheApp::DisplayWriteLogs()
 	printf("/***\n");
 	printf("/***      Event Logs:\n");
 
-	LockMutexInScope lockEvents(mEventLogMutex);
+	LockMutex lockEvents(mEventLogMutex);
 
 	//  write out the last 5 logs
 	int logSize = mEventLog.size();
@@ -639,7 +667,7 @@ void TheApp::DisplayUpdateClock()
 	if ( ! mDisplayUpdatesOn )
 		return;
 
-	LockMutexInScope lockDisplay(mDisplayUpdateMutex);
+	LockMutex lockDisplay(mDisplayUpdateMutex);
 
 	//  this function is called when there is nothing on the display to update except the clock
 	//  use this little trick to rewind stdout two lines to reset to start of date string output and avoid redraw entire display

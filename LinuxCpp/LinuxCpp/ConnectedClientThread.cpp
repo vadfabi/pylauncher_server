@@ -96,15 +96,15 @@ string ConnectedClient::SendMessageToClient(string message,  bool waitForRespons
 	}
 	//
 	//  receive timeout
-	if ( mClientReceiveTimeout > 0 )
-	{
-		timeout.tv_sec = mClientReceiveTimeout;
+	//if ( mClientReceiveTimeout > 0 )
+	//{
+		timeout.tv_sec = waitForResponse ? mClientReceiveTimeout : 0;
 		if ( setsockopt(clientSocketFileDescriptor, SOL_SOCKET, SO_RCVTIMEO, (char *)&timeout, sizeof(timeout)) < 0 )
 		{
 			close(clientSocketFileDescriptor);
 			return response;
 		}
-	}
+	//}
 
 	struct hostent *server;
 	server = gethostbyname(mIpAddressOfClient.c_str());
@@ -123,9 +123,30 @@ string ConnectedClient::SendMessageToClient(string message,  bool waitForRespons
 	bcopy((char*)server->h_addr, (char*)&clientsListeningServerAddress.sin_addr.s_addr, server->h_length);
 	clientsListeningServerAddress.sin_port = htons(mPortNumberClientIsListeningOn);
 
-	if ( connect(clientSocketFileDescriptor, (struct sockaddr *)&clientsListeningServerAddress, sizeof(clientsListeningServerAddress)) < 0 )
+	int connectAttepmts = 0;
+	int connected = -1; 
+	while ( connected < 0 && connectAttepmts < 10 )
 	{
-		printf("Connected client thread: fail to connect %d \n", errno);
+		if ( connectAttepmts > 0 )
+		{
+			timeval eventTime;
+			gettimeofday(&eventTime, 0);
+
+			mTheApp.AddEvent( eventTime, "error report", format("Connected client thread: Connection attempt: %d",connectAttepmts+1) );
+
+			Sleep(10);
+		}
+
+		connected = connect(clientSocketFileDescriptor, (struct sockaddr *)&clientsListeningServerAddress, sizeof(clientsListeningServerAddress));
+		connectAttepmts++;
+	}
+
+	if ( connected < 0 )
+	{
+		timeval eventTime;
+		gettimeofday(&eventTime, 0);
+
+		mTheApp.AddEvent( eventTime, "error report", format("Connected client thread: fail to connect error: %d",errno) );
 		close(clientSocketFileDescriptor);
 		return response;
 	}
@@ -220,7 +241,7 @@ void ConnectedClient::RunFunction()
 		string message = readParser.GetRemainingBuffer();
 
 		//  broadcast this message to clients
-		mTheApp.BroadcastMessageToClients(eventTime, eventSender, message);
+		mTheApp.HandleBroadcastMessage(eventTime, eventSender, message);
 	}
 	else if ( command.compare("$TCP_ECHOTEST") == 0 )
 	{

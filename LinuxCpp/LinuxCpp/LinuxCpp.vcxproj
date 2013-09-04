@@ -66,6 +66,7 @@
     <None Include="release.mak" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="BroadcastThread.cpp" />
     <ClCompile Include="CMD.cpp" />
     <ClCompile Include="CMDifconfig.cpp" />
     <ClCompile Include="ConnectedClientThread.cpp" />
@@ -77,6 +78,7 @@
     <ClCompile Include="Thread.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="BroadcastThread.h" />
     <ClInclude Include="CMD.h" />
     <ClInclude Include="CMDifconfig.h" />
     <ClInclude Include="ConnectedClientThread.h" />

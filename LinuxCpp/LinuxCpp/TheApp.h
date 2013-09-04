@@ -9,6 +9,7 @@
 #include "Thread.h"
 #include "ConnectionThread.h"
 #include "ConnectedClientThread.h"
+#include "BroadcastThread.h"
 #include "CMDifconfig.h"
 #include "UtilityFn.h"
 
@@ -66,15 +67,21 @@ public:
 	//  disconnect a client connection
 	void DisconnectClient(struct sockaddr_in &clientAddress);
 
-	//  function to process the button push message from any connected client
+
+	//  function to process the button push message from a connected client
 	void HandleButtonPush(timeval eventTime, string eventSender, string eventDetails);
 
-	//  pass along a broadcast message to all clients
-	void BroadcastMessageToClients(timeval eventTime, string eventSender, string message);
+	//  function to process the broadcast message from a connected client
+	void HandleBroadcastMessage(timeval eventTime, string eventSender, string message);
 
-	//  flag for message forwarding
+
+	//  flags for broadcast of messages to clients
 	bool mForwardMessagesToAllClients;
 	bool mForwardMessageWaitForClientResponse;
+
+	//  send an event message to all clients
+	void SendMessageToAllClients(timeval eventTime, string eventSender, string message);
+
 
 
 	//  Display Handling
@@ -87,7 +94,7 @@ public:
 	void ResumeDisplayUpdates();
 
 
-	//  command line functions
+	//  command line input function handlers
 	void BroadcastMessage(string input);
 	bool SaveLogs(string input);
 	void PrintLogs(FILE* stream);
@@ -111,6 +118,8 @@ protected:
 
 	//  mutex to lock access to connected clients map
 	mutex mConnectedClientsMutex;
+
+	BroadcastThread mBroadcastThread;
 
 
 	//  the event log

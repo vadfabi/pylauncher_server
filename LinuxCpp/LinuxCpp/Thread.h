@@ -64,25 +64,7 @@ protected:
 //  This class will lock the mutex in the constructor, and unlock in the destructor
 //  to use, wrap scope around an instance of this class and your mutex will unlock for you
 // 
-class LockMutexInScope
-{
-public:
-	LockMutexInScope(std::mutex & mutexToLock) : mMutexToLock(mutexToLock)
-	{
-		mMutexToLock.lock();
-	}
-
-	virtual ~ LockMutexInScope()
-	{
-		mMutexToLock.unlock();
-	}
-
-protected:
-
-	std::mutex & mMutexToLock;
-};
+typedef std::lock_guard<std::mutex> LockMutex;
 
 
-
-
-#endif
+#endif // _THREAD_H
