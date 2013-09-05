@@ -4,8 +4,12 @@
 
 using namespace std;
 
+
+
+/////////////////////////////////////////////////////////////////////////////
 //  CMD
-//  a class to execute "system(yourCommand)" and store the response as a list of strings
+//  class to execute system("yourCommand")
+//
 
 //  Constructor
 //

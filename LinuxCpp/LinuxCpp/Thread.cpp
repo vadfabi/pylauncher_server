@@ -1,12 +1,10 @@
-
-#ifdef DEBUG
-#include <cstdio>		//  for printf
-#endif
-
-
 #include "Thread.h"
 
+using namespace std;
 
+
+
+/////////////////////////////////////////////////////////////////////////////
 //  Sleep
 //  sleep in milliseconds
 //
@@ -16,7 +14,10 @@ void Sleep(long millis)
 }
 
 
-
+/////////////////////////////////////////////////////////////////////////////
+//  Thread
+//  base class for simple thread wrapper
+//
 
 //  Constructor
 //  

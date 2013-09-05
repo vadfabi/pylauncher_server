@@ -1,17 +1,8 @@
-#include <sys/types.h> 
-#include <sys/socket.h>
-#include <cstdlib>
-#include <strings.h>
 #include <unistd.h>
-#include <string.h>
 #include <string>
 #include <sys/time.h>
-
-#include <stdio.h>
-#include <stdlib.h>
 #include <netinet/in.h>
 #include <netdb.h> 
-
 
 #include "ConnectedClientThread.h"
 #include "TheApp.h"
@@ -22,6 +13,11 @@ using namespace std;
 
 
 
+/////////////////////////////////////////////////////////////////////////////
+//  ConnectedClient
+//  manages the connection to a single client
+//
+
 //  Constructor
 //
 ConnectedClient::ConnectedClient(TheApp& theApp, const struct sockaddr_in &clientAddress, int clientsListeningOnPortNumber) :
@@ -30,6 +26,8 @@ ConnectedClient::ConnectedClient(TheApp& theApp, const struct sockaddr_in &clien
 	mClientsAddress = clientAddress;
 	mPortNumberClientIsListeningOn = clientsListeningOnPortNumber;
 	mIpAddressOfClient = IpAddressString(mClientsAddress);
+
+	mClientSocketFileDescriptor = -1;
 
 	mClientReceiveTimeout = 3;
 	mClientSendTimeout = 3;
@@ -42,7 +40,6 @@ ConnectedClient::~ConnectedClient()
 {
 	if ( mThreadRunning )
 	{
-		DEBUG_TRACE("Destroying ConnectedClient while thread still running !\n");
 		Cancel();
 	}
 }
@@ -68,17 +65,11 @@ bool ConnectedClient::SetClientSocketTimeouts(long sendTimeout, long receiveTime
 }
 
 
-
-
-//  SendMessageToClient
-//
-string ConnectedClient::SendMessageToClient(string message,  bool waitForResponse)
+bool ConnectedClient::OpenClientSocket()
 {
-	string response = "";
+	mClientSocketFileDescriptor = -1;
 
-	//  connected client object has a pipe open back to the client for sending messages
-	int clientSocketFileDescriptor;
-	clientSocketFileDescriptor = socket(AF_INET, SOCK_STREAM, 0);
+	int newSocketFileDescriptor = socket(AF_INET, SOCK_STREAM, 0);
 
 	//  set the socket timeouts  
 	struct timeval timeout;
@@ -88,72 +79,101 @@ string ConnectedClient::SendMessageToClient(string message,  bool waitForRespons
 	if ( mClientSendTimeout > 0 )
 	{
 		timeout.tv_sec = mClientSendTimeout;
-		if ( setsockopt(clientSocketFileDescriptor, SOL_SOCKET, SO_SNDTIMEO, (char *)&timeout, sizeof(timeout)) < 0 )
+		if ( setsockopt(newSocketFileDescriptor, SOL_SOCKET, SO_SNDTIMEO, (char *)&timeout, sizeof(timeout)) < 0 )
 		{
-			close(clientSocketFileDescriptor);
-			return response;
+			mTheApp.AddEvent( "sys_error", format("OpenClientSocket() fail to setsockopt: %d",errno) );
+			close(newSocketFileDescriptor);
+			return false;
 		}
 	}
 	//
 	//  receive timeout
-	//if ( mClientReceiveTimeout > 0 )
-	//{
-		timeout.tv_sec = waitForResponse ? mClientReceiveTimeout : 0;
-		if ( setsockopt(clientSocketFileDescriptor, SOL_SOCKET, SO_RCVTIMEO, (char *)&timeout, sizeof(timeout)) < 0 )
+	if ( mClientReceiveTimeout > 0 )
+	{
+		//  set receive timeout, if we are not waiting, receive timeout is 0
+		timeout.tv_sec = mClientReceiveTimeout;
+		if ( setsockopt(newSocketFileDescriptor, SOL_SOCKET, SO_RCVTIMEO, (char *)&timeout, sizeof(timeout)) < 0 )
 		{
-			close(clientSocketFileDescriptor);
-			return response;
+			mTheApp.AddEvent( "sys_error", format("Connected client thread: fail to setsockopt: %d",errno) );
+			close(newSocketFileDescriptor);
+			return false;
 		}
-	//}
+	}
 
 	struct hostent *server;
 	server = gethostbyname(mIpAddressOfClient.c_str());
 
     if (server == 0) 
 	{
-       close(clientSocketFileDescriptor);
-        return response;
+		close(newSocketFileDescriptor);
+        return false;
     }
-	
-	//
-	struct sockaddr_in clientsListeningServerAddress;
-	memset(&clientsListeningServerAddress, 0, sizeof(struct sockaddr_in)); 
 
-	clientsListeningServerAddress.sin_family = AF_INET;
-	bcopy((char*)server->h_addr, (char*)&clientsListeningServerAddress.sin_addr.s_addr, server->h_length);
-	clientsListeningServerAddress.sin_port = htons(mPortNumberClientIsListeningOn);
+	//
+	mClientsListeningServerAddress;
+	memset(&mClientsListeningServerAddress, 0, sizeof(struct sockaddr_in)); 
+
+	mClientsListeningServerAddress.sin_family = AF_INET;
+	bcopy((char*)server->h_addr, (char*)&mClientsListeningServerAddress.sin_addr.s_addr, server->h_length);
+	mClientsListeningServerAddress.sin_port = htons(mPortNumberClientIsListeningOn);
+
+	mClientSocketFileDescriptor = newSocketFileDescriptor;
 
 	int connectAttepmts = 0;
-	int connected = -1; 
-	while ( connected < 0 && connectAttepmts < 10 )
+	int connected = connect(mClientSocketFileDescriptor, (struct sockaddr *)&mClientsListeningServerAddress, sizeof(mClientsListeningServerAddress));
+	while ( connected == -1 && connectAttepmts < 10 )
 	{
-		if ( connectAttepmts > 0 )
+		//  retries for fail to connect on EINTR
+		if ( errno != EINTR )
 		{
-			timeval eventTime;
-			gettimeofday(&eventTime, 0);
-
-			mTheApp.AddEvent( eventTime, "error report", format("Connected client thread: Connection attempt: %d",connectAttepmts+1) );
-
-			Sleep(10);
+			mTheApp.AddEvent( "sys_error", format("Connected client thread: fail to connect error: %d",errno) );
+			return false;
 		}
-
-		connected = connect(clientSocketFileDescriptor, (struct sockaddr *)&clientsListeningServerAddress, sizeof(clientsListeningServerAddress));
+		
+		mTheApp.AddEvent( "sys_info", format("Connected client thread: Connection retry: %d",connectAttepmts+1) );
+		Sleep(10);
+		
+		connected = connect(mClientSocketFileDescriptor, (struct sockaddr *)&mClientsListeningServerAddress, sizeof(mClientsListeningServerAddress));
 		connectAttepmts++;
 	}
 
 	if ( connected < 0 )
 	{
-		timeval eventTime;
-		gettimeofday(&eventTime, 0);
+		mTheApp.AddEvent( "sys_error", format("Connected client thread: fail to connect error: %d",errno) );
+		return false;
+	}
 
-		mTheApp.AddEvent( eventTime, "error report", format("Connected client thread: fail to connect error: %d",errno) );
-		close(clientSocketFileDescriptor);
+
+
+	return true;
+}
+
+bool ConnectedClient::CloseClientSocket()
+{
+	if ( mClientSocketFileDescriptor >= 0 )
+		close(mClientSocketFileDescriptor);
+	
+	mClientSocketFileDescriptor = -1;
+}
+
+
+//  SendMessageToClient
+//
+string ConnectedClient::SendMessageToClient(string message,  bool waitForResponse)
+{
+	string response = "";
+
+	//  if we have not opened this socket yet, open it now
+	if ( mClientSocketFileDescriptor < 0 && ! OpenClientSocket() )
+	{
 		return response;
 	}
 
-	if ( write(clientSocketFileDescriptor, message.c_str(), message.size()) != message.size() )
+	
+
+	if ( write(mClientSocketFileDescriptor, message.c_str(), message.size()) != message.size() )
 	{
-		close(clientSocketFileDescriptor);
+		mTheApp.AddEvent( "sys_error", format("Failed to write message %s",message.c_str()) );
 		return response;
 	}
 
@@ -163,7 +183,7 @@ string ConnectedClient::SendMessageToClient(string message,  bool waitForRespons
 		char buffer[TCPSERVER_READBUFFERSIZE+1];
 		memset(buffer, 0, TCPSERVER_READBUFFERSIZE+1);
 
-		while((bytesRead = read(clientSocketFileDescriptor, buffer, TCPSERVER_READBUFFERSIZE)) > 0)
+		while((bytesRead = read(mClientSocketFileDescriptor, buffer, TCPSERVER_READBUFFERSIZE)) > 0)
 		{
 			/* ensure null-terminated */
 			buffer[bytesRead] = '\0';
@@ -172,10 +192,10 @@ string ConnectedClient::SendMessageToClient(string message,  bool waitForRespons
 		}
 	}
 
-	//  shutdown
-	shutdown(clientSocketFileDescriptor, SHUT_RDWR);
-	close(clientSocketFileDescriptor);
-
+	//  shutdown to end transmission
+	shutdown(mClientSocketFileDescriptor, SHUT_WR);
+	CloseClientSocket();
+	
 	return response;
 }
 
@@ -185,6 +205,8 @@ string ConnectedClient::SendMessageToClient(string message,  bool waitForRespons
 //
 void ConnectedClient::Cancel()
 {
+	CloseClientSocket();
+
 	TCPServerThread::Cancel();
 }
 
@@ -230,10 +252,10 @@ void ConnectedClient::RunFunction()
 
 		mTheApp.HandleButtonPush(eventTime, eventSender, readFromSocket);
 	}
-	else if ( command.compare("$TCP_BROADCAST") == 0 )
+	else if ( command.compare("$TCP_MESSAGE") == 0 )
 	{
-		//  broadcast message command
-		string returnMessage = "$TCP_BROADCAST,ACK";
+		//  message from client command
+		string returnMessage = "$TCP_MESSAGE,ACK";
 		write(acceptFileDescriptor, returnMessage.c_str(), returnMessage.size());
 
 		// get the message from the input

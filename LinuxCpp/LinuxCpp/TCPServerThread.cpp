@@ -1,18 +1,19 @@
-#include <stdio.h>
-#include <sys/types.h> 
-#include <sys/socket.h>
 #include <netinet/in.h>
-#include <cstdlib>
-#include <strings.h>
 #include <unistd.h>
-#include <string.h>
 #include <string>
 #include <arpa/inet.h>
 
 #include "TCPServerThread.h"
 #include "UtilityFn.h"
 
+using namespace std;
 
+
+
+/////////////////////////////////////////////////////////////////////////////
+//  TCPServerThread
+//  runs a simple TCP/IP socket server thread
+//
 
 //  Constructor
 //
@@ -31,6 +32,11 @@ TCPServerThread::TCPServerThread()
 //
 TCPServerThread::~TCPServerThread()
 {
+	if ( mThreadRunning )
+	{
+		Cancel();
+	}
+
 	mSocketFileDescriptor = -1;
 }
 
@@ -170,7 +176,8 @@ int TCPServerThread::OpenServerSocket(int portToOpen, bool exactPort)
 		else
 		{
 			//  fail to bind to port for some dire reason ?
-			DEBUG_TRACE("Failed to bind to port for some dire reason.");
+			
+
 			shutdown(mSocketFileDescriptor, 2);
 			return -1;	
 		}
@@ -178,7 +185,6 @@ int TCPServerThread::OpenServerSocket(int portToOpen, bool exactPort)
 		//  fail after 1000 tries
 		if ( bindToPortNumber - portToOpen > 1000 )
 		{
-			DEBUG_TRACE("Failed to bind to port in 1000 attempts");
 			shutdown(mSocketFileDescriptor, 2);
 			return -1;
 		}
@@ -187,7 +193,7 @@ int TCPServerThread::OpenServerSocket(int portToOpen, bool exactPort)
 	//  setup listening
 	if ( listen(mSocketFileDescriptor,5) < 0 )
 	{
-		DEBUG_TRACE("Failed on socket listen");
+		
 		shutdown(mSocketFileDescriptor, 2);
 		return -1;
 	}

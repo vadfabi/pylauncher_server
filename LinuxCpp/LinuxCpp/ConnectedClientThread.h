@@ -1,14 +1,13 @@
 #ifndef _CONNECTEDCLIENTTHREAD_H
 #define _CONNECTEDCLIENTTHREAD_H
 
-#include <netinet/in.h>		//  for struct sockaddr_in
+#include <netinet/in.h>		
 
 #include "TCPServerThread.h"
 
-using namespace std;
-
-//  pre declaration of TheApp object
 class TheApp;
+
+
 
 //  ConnectedClient
 //  manages the socket connection and interactions with a single client
@@ -27,12 +26,12 @@ public:
 	bool SetClientSocketTimeouts(long sendTimeout, long receiveTimeout);
 
 	//  get the dots and numbers format address of the client, this is used as the key in the client map
-	string GetIpAddressOfClient() { return mIpAddressOfClient; }
+	std::string GetIpAddressOfClient() { return mIpAddressOfClient; }
 
 	//  get the port number that the client is listening for our messages on
 	int GetPortNumberClientIsListeningOn() { return mPortNumberClientIsListeningOn; }
 
-	string SendMessageToClient(string message, bool waitForResponse);
+	std::string SendMessageToClient(std::string message, bool waitForResponse);
 	
 	//  override cancel so we can shut down our client socket
 	virtual void Cancel();
@@ -43,9 +42,14 @@ public:
 	
 protected:
 		
-	string mIpAddressOfClient;
+	std::string mIpAddressOfClient;
 
-	
+	//  client socket for sending messages to the client
+	int mClientSocketFileDescriptor;
+	struct sockaddr_in mClientsListeningServerAddress;
+
+	bool OpenClientSocket();
+	bool CloseClientSocket();
 
 	//  socket read and write timeouts (in seconds)
 	long mClientReceiveTimeout;

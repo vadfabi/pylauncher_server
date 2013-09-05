@@ -1,11 +1,8 @@
 #include <arpa/inet.h>
-#include <future>
 #include <string>
 #include <sys/time.h>
 #include <algorithm>
-#include <iostream>
 #include <future>
-#include <vector>
 
 #include "TheApp.h"
 #include "Parser.h"
@@ -15,6 +12,12 @@
 using namespace std;
 
 
+
+/////////////////////////////////////////////////////////////////////////////
+//  TheApp
+//  the grand central station of the program,
+//  this class runs everything except the keyboard input thread, which is in main
+//
 
 
 //  Constructor
@@ -140,7 +143,16 @@ void TheApp::AddEvent(timeval eventTime, string eventSender, string eventDetails
 }
 
 
+//  AddEvent
+//  add an event to the log
+//
+void TheApp::AddEvent(string eventSender, string eventDetails)
+{
+	timeval eventTime;
+	gettimeofday(&eventTime, 0);
 
+	AddEvent(eventTime, eventSender, eventDetails);
+}
 
 
 
@@ -210,7 +222,6 @@ void TheApp::DisconnectClient(struct sockaddr_in &clientAddress)
 		if ( it == mConnectedClients.end() )
 		{
 			//  this key does not exist, not expected here
-			DEBUG_TRACE("TheApp::DisconnectClient - client does not exist !!!\n");
 			return;
 		}
 
@@ -297,87 +308,54 @@ void TheApp::SendMessageToAllClients(timeval eventTime, string eventSender, stri
 			continue;	//  don't rebroadcast to sender
 
 		string response = nextClient->second->SendMessageToClient(message,  mForwardMessageWaitForClientResponse);
-		
+
 		//  if we are waiting for responses, log the response as an event
 		if ( mForwardMessageWaitForClientResponse )
 		{
-			timeval eventTime;
-			gettimeofday(&eventTime, 0);
-			AddEvent(eventTime, nextClient->second->GetIpAddressOfClient(), response);
+			AddEvent(nextClient->second->GetIpAddressOfClient(),  response);
 		}
 	}
+
+
+
 }
 
 
 
 
-
-//  BroadcastMessageToClients
-//  this implementation uses async to send all messages at once
-//  unfortunately, it does not work.  With multiple clients, it fails in SendMessageToClient when we call connect on the socket, error 4
-//  TODO:  get async to work with a task that involves opening socket
-
-//void  TheApp::BroadcastMessageToClients(timeval eventTime, string eventSender, string message)
+//  SendMessageToAllClients
+//  this function is called from the broadcast thread to send a message to all clients
+//  this implementation uses async, but it is not stable, too many failures to connect on socket with error code EINTR
+//
+//void TheApp::SendMessageToAllClients(timeval eventTime, string eventSender, string message)
 //{
-//	string broadcastMessage = format("$TCP_BROADCAST,%s,%s,%s", eventSender.c_str(), FormatTime(eventTime).c_str(), message.c_str());
-//	
-//	//  lock access to connected clients map
-//	mConnectedClientsMutex.lock();
+//	LockMutex lockConnectedClients(mConnectedClientsMutex);
 //
 //	vector<future<string>> futures;
 //
-//	//  iterate through the map of clients
 //	map<string, ConnectedClient*>::iterator nextClient;
-//	for ( nextClient = mConnectedClients.begin(); nextClient != mConnectedClients.end(); ++nextClient )
+//	for ( nextClient = mConnectedClients.begin(); nextClient != mConnectedClients.end(); nextClient++ )
 //	{
-//		
-//		futures.push_back(async(launch::async, &ConnectedClient::SendMessageToClient, nextClient->second, broadcastMessage, true));
-//	}	
-//	  
-//	vector<future<string>>::iterator nextFuture;
-//	for( nextFuture = futures.begin(); nextFuture != futures.end(); ++nextFuture )
-//	{
-//		nextFuture->wait();
-//		printf("%s\n", nextFuture->get().c_str());
+//		if ( nextClient->second->GetIpAddressOfClient().compare(eventSender) == 0 )
+//			continue;	//  don't rebroadcast to sender
+//
+//		futures.push_back(async(launch::async, &ConnectedClient::SendMessageToClient, nextClient->second, message, mForwardMessageWaitForClientResponse));
 //	}
 //
-//	//  unlock access to the connected clients map
-//	mConnectedClientsMutex.unlock();
-//
-//	//  log the event
-//	AddEvent(eventTime, eventSender, broadcastMessage);
+//	//  if we are waiting for responses, log the response as an event
+//	if ( mForwardMessageWaitForClientResponse )
+//	{
+//		vector<future<string>>::iterator nextFuture;
+//		for( nextFuture = futures.begin(); nextFuture != futures.end(); ++nextFuture )
+//		{
+//			nextFuture->wait();
+//			AddEvent("",  nextFuture->get());
+//		}
+//	}
 //
 //}
 
-////vector<future<string>>::iterator nextFuture;
-//	/*for( nextFuture = futures.begin(); nextFuture != futures.end(); nextFuture++ )
-//	{
-//		printf("Broadcast message - start wait\n");
-//		nextFuture->wait();
-//		printf("Broadcast message - end wait\n");
-//
-//		printf("%s\n", nextFuture->get().c_str());
-//	}*/
-//
-//	vector<future<string>> futures;
-//
-//	//  iterate through the map of clients
-//	map<string, ConnectedClient*>::iterator nextClient;
-//	for ( nextClient = mConnectedClients.begin(); nextClient != mConnectedClients.end(); ++nextClient )
-//	{
-//		
-//		futures.push_back(async(launch::async, &ConnectedClient::SendMessageToClient, nextClient->second, broadcastMessage, wait));
-//		future<string> fu = async(launch::async, &ConnectedClient::SendMessageToClient, nextClient->second, broadcastMessage, wait);
-//		//fu.wait();
-//		
-//	}	
-//	  
-//	vector<future<string>>::iterator nextFuture;
-//	for( nextFuture = futures.begin(); nextFuture != futures.end(); ++nextFuture )
-//	{
-//		nextFuture->wait();
-//		printf("%s\n", nextFuture->get().c_str());
-//	}
+
 
 
 

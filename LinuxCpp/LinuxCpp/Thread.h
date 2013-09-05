@@ -4,18 +4,17 @@
 #include <thread>
 #include <mutex>
 
-using namespace std;
-
-
-//  Thread
-//  a simple framework for using std::thread 
-//  to have a thread, derive your function from Thread
-//  and then define the RunFunction()
-//  if you want to do specific shutdown when the thread is canceled, also override Cancel()
-//
 
 //  sleep in the current thread for millis milliseconds
 void Sleep(long millis);
+
+//  Thread
+//  a simple framework for using std::thread 
+//  to have a thread, derive your class from Thread
+//  and then define  YourDerivedThreadClass::RunFunction()
+//  if you want to do specific shutdown when the thread is canceled, also override Cancel()
+//
+
 
 class Thread
 {
@@ -38,7 +37,7 @@ public:
 	virtual void Start();
 
 	//  Cancel the running thread.
-	//  it is safe to call this function even if the thread is not running
+	//  will join the running therad to ensure complete stop before returning
 	virtual void Cancel();
 
 	//  The RunFunction

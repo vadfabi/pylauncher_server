@@ -1,43 +1,37 @@
 #ifndef _PARSER_H
 #define _PARSER_H
 
-#include <iostream>
-
-
-using namespace std;
-
-
+#include <string>
 
 
 //  Parser
 //  a class to take a string and return the value of substring elements
-
-
+//
 class Parser
 {
 public:
 
-	Parser(string buffer, string delimiters);
+	Parser(std::string buffer, std::string delimiters);
 	virtual ~Parser();
 
-	void SetBuffer(string buffer);
-	void SetBuffer(string buffer, string delimiters);
+	void SetBuffer(std::string buffer);
+	void SetBuffer(std::string buffer, std::string delimiters);
 
 	//  returns the next item as a string
-	string GetNextString();
+	std::string GetNextString();
 
 	//  returns the next item as an int
 	int GetNextInt();
 
 	//  returns the remaining buffer as a string
-	string GetRemainingBuffer();
+	std::string GetRemainingBuffer();
 	
 
 protected:
 
-	string mOriginalBuffer;
-	string mDelimiters;
-	string mRemainingBuffer;
+	std::string mOriginalBuffer;
+	std::string mDelimiters;
+	std::string mRemainingBuffer;
 };
 
 

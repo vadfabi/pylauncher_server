@@ -1,10 +1,15 @@
-#include "string.h"
+#include <string>
 
 #include "TheApp.h"
 #include "Parser.h"
 
 using namespace std;
 
+
+
+/////////////////////////////////////////////////////////////////////////////
+//  main
+//
 
 //  define for stdin buffer read size
 #define FGETS_READBUFFERSIZE 1024
@@ -78,7 +83,7 @@ int main(int argc, char *argv[])
 			switch( ProcessCommandModeInput(input) )
 			{
 			default:
-				DEBUG_TRACE("Unexpected return from ProcessCommandModeInput()\n");		//  always a good idea to handle unexpected case in switch statement with default
+				//  todo log error
 			case 0:		//  continue in command mode
 				break;
 
@@ -226,10 +231,10 @@ void PrintCommandHelp()
 {
 	printf("\n/***\n");
 	printf("/***      Commands:\n");
-	printf("/***        - broadcast [message]      -  sends message to all connected clients\n");
-	printf("/***        - forwarding [arg]         -  on / off to control forwarding of messages");
-	printf("/***        - forwarding [arg]         -  wait | nowait to control wait for forwarded response\n");
-	printf("/***        - savelogs [filename] <-c> -  saves the event log to filename, optional -c to clear logs after save.\n");
+	printf("/***        - broadcast message        -  sends message to all connected clients\n");
+	printf("/***        - forwarding arg           -  on / off to control forwarding of messages\n");
+	printf("/***        - forwarding arg           -  wait | nowait to control wait for forwarded response\n");
+	printf("/***        - savelogs filename [-c]   -  saves the event log to filename, -c to clear logs after save.\n");
 	printf("/***        - listlogs                 -  prints all logged events to monitor.\n");
 	printf("/***        - clearlogs                -  clears the event log.\n");
 	printf("/***        - resume                   -  exits command mode, resume display updates.\n");

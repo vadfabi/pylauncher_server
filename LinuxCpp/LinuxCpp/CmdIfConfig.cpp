@@ -4,6 +4,11 @@
 using namespace std;
 
 
+/////////////////////////////////////////////////////////////////////////////
+//  CMDifconfig
+//  Command "ifconfig"
+//
+
 //  Constructor
 //
 CMDifconfig::CMDifconfig()

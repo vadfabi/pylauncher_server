@@ -13,8 +13,6 @@
 #include "CMDifconfig.h"
 #include "UtilityFn.h"
 
-using namespace std;
-
 
 //  Helper classe for the main app
 //
@@ -57,7 +55,8 @@ public:
 	void ShutDown();
 
 	//  add event to the event log
-	void AddEvent(timeval eventTime,  string eventSender, string eventDetails);
+	void AddEvent(timeval eventTime,  std::string eventSender, std::string eventDetails);
+	void AddEvent(std::string eventSender, std::string eventDetails);
 
 	//  create a connection to a client
 	//  returns the port that this program is listening on for TCP from the client
@@ -69,18 +68,17 @@ public:
 
 
 	//  function to process the button push message from a connected client
-	void HandleButtonPush(timeval eventTime, string eventSender, string eventDetails);
+	void HandleButtonPush(timeval eventTime, std::string eventSender, std::string eventDetails);
 
 	//  function to process the broadcast message from a connected client
-	void HandleBroadcastMessage(timeval eventTime, string eventSender, string message);
-
+	void HandleBroadcastMessage(timeval eventTime, std::string eventSender, std::string message);
 
 	//  flags for broadcast of messages to clients
 	bool mForwardMessagesToAllClients;
 	bool mForwardMessageWaitForClientResponse;
 
 	//  send an event message to all clients
-	void SendMessageToAllClients(timeval eventTime, string eventSender, string message);
+	void SendMessageToAllClients(timeval eventTime, std::string eventSender, std::string message);
 
 
 
@@ -95,8 +93,8 @@ public:
 
 
 	//  command line input function handlers
-	void BroadcastMessage(string input);
-	bool SaveLogs(string input);
+	void BroadcastMessage(std::string input);
+	bool SaveLogs(std::string input);
 	void PrintLogs(FILE* stream);
 	void ClearLogs();
 		
@@ -105,7 +103,7 @@ protected:
 
 	//  remember ifconfig properties
 	CMDifconfig mCMDifconfig;
-	string mHostname;
+	std::string mHostname;
 
 	//  connection server port, listening for connect / disconnect requests on this port
 	int mConnectionServerPort;
@@ -114,24 +112,24 @@ protected:
 	ConnectionThread mConnectionThread;
 
 	//  connected clients
-	map<string, ConnectedClient*> mConnectedClients;
+	std::map<std::string, ConnectedClient*> mConnectedClients;
 
 	//  mutex to lock access to connected clients map
-	mutex mConnectedClientsMutex;
+	std::mutex mConnectedClientsMutex;
 
 	BroadcastThread mBroadcastThread;
 
 
 	//  the event log
-	list<LogEvent*> mEventLog;
-	mutex mEventLogMutex;
+	std::list<LogEvent*> mEventLog;
+	std::mutex mEventLogMutex;
 	int mMaxEventsToLog;
 
 	//  The display output
 	//  this happens on its own thread
 	DisplayThread mDisplayThread;
 	friend class DisplayThread;
-	mutex mDisplayUpdateMutex;
+	std::mutex mDisplayUpdateMutex;
 	
 	bool mDisplayUpdatesOn;
 	bool mUpdateDisplay;
@@ -146,7 +144,7 @@ protected:
 	void DisplayWriteTime();
 	void DisplayUpdateClock();
 
-	string mVersionString;
+	std::string mVersionString;
 };
 
 

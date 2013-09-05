@@ -1,19 +1,13 @@
-//#include <stdlib.h>
-
-#include <cstring>
-//#include <iostream>
-//#include <sstream>
-//#include <cstdio>
-//#include <thread>
-//#include <string>
-
+#include <string>
 
 #include "Parser.h"
-
 
 using namespace std;
 
 
+/////////////////////////////////////////////////////////////////////////////
+//  Parser
+//  parse string with delimiters
 
 
 //  Constructor

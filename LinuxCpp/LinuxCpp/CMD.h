@@ -5,17 +5,15 @@
 #include <vector>
 
 
-using namespace std;
-
 //  CMD
 //  a class to execute "system(yourCommand)" and store the response as a list of strings
-
+//
 class CMD
 {
 public:
 
 	CMD();
-	CMD(string command);
+	CMD(std::string command);
 
 	virtual ~CMD();
 
@@ -36,23 +34,23 @@ public:
 
 	//  get the command string formatted to go into the system( ) call
 	//  you can override this function if you need to wrap some extra text around your command
-	virtual string GetCommandLineString();
+	virtual std::string GetCommandLineString();
 
 	//  get your command string
-	string	GetCommand() { return Command; }
+	std::string	GetCommand() { return Command; }
 	
 	//  get the number of lines in the command response
 	int		GetCommandResponseSize() { return CommandResponse.size(); }
 
 	//  get a specific line of the command response
-	string	GetCommandResponseLine(int i);
+	std::string	GetCommandResponseLine(int i);
 
 
 protected:
 
-	string	Command;
-	vector<string> CommandResponse;
-	vector<string> LastCommandResponse;
+	std::string	Command;
+	std::vector<std::string> CommandResponse;
+	std::vector<std::string> LastCommandResponse;
 };
 
 

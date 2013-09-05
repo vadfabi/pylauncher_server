@@ -1,15 +1,7 @@
-//#include <stdio.h>
-#include <sys/types.h> 
-#include <sys/socket.h>
-#include <netinet/in.h>
-#include <cstdlib>
-#include <strings.h>
 #include <unistd.h>
-#include <string.h>
 #include <string>
-#include <arpa/inet.h>
 #include <sys/time.h>
-
+#include <netinet/in.h>
 
 #include "ConnectionThread.h"
 #include "TheApp.h"
@@ -19,6 +11,9 @@
 using namespace std;
 
 
+
+
+/////////////////////////////////////////////////////////////////////////////
 //  ConnectionThread
 //  manages the main server connection thread, listens for connection requests from clients
 //
@@ -32,6 +27,10 @@ ConnectionThread::ConnectionThread(TheApp& theApp) :
 
 ConnectionThread::~ConnectionThread()
 {
+	if ( mThreadRunning )
+	{
+		Cancel();
+	}
 }
 
 

@@ -1,19 +1,38 @@
 #include "BroadcastThread.h"
 #include "TheApp.h"
 
+using namespace std;
+
+
+
+/////////////////////////////////////////////////////////////////////////////
+//  BroadcastThread
+//  runs a continuous thread waiting for messages to be put into queue
+//  sends messages to clients when there is something in the queue
+//
+
+
+//  Constructor
+//
 BroadcastThread::BroadcastThread(TheApp& theApp) : mTheApp(theApp)
 {
 	mNotified = false;
 }
 
 
+//  Destructor
+//
 BroadcastThread::~BroadcastThread()
 {
+	if ( mThreadRunning )
+	{
+		Cancel();
+	}
 }
 
 void BroadcastThread::AddMessage(timeval eventTime, string eventSender, string message)
 {
-	BroadcastMessage* newMessage = new BroadcastMessage(eventTime, eventSender, message);
+	LogEvent* newMessage = new LogEvent(eventTime, eventSender, message);
 
 	{
 		LockMutex lockMessageQueue(mMessageQueueMutex);
@@ -54,7 +73,7 @@ void BroadcastThread::RunFunction()
 
 
 	//  send all messages to clients
-	BroadcastMessage* nextMessage = NULL;
+	LogEvent* nextMessage = NULL;
 	while ( mMessageQueue.size() > 0 )
 	{
 		{
@@ -64,8 +83,9 @@ void BroadcastThread::RunFunction()
 		}
 
 
-		mTheApp.SendMessageToAllClients(nextMessage->mEventTime, nextMessage->mEventSender, nextMessage->mMessage);
+		mTheApp.SendMessageToAllClients(nextMessage->mEventTime, nextMessage->mEventAddress, nextMessage->mEvent);
 		delete nextMessage;
+		Sleep(10);
 	}
 
 

@@ -108,13 +108,5 @@ inline std::string IpAddressString(const struct sockaddr_in &address)
 
 
 
-//  debug trace function
-inline void DEBUG_TRACE(std::string traceString)
-{
-#ifdef DEBUG
-	printf("%s\n", traceString.c_str());
-#endif
-}
-
 
 #endif // _UTILITYFN_H
