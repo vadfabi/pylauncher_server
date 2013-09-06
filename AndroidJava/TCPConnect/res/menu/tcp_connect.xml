@@ -17,5 +17,11 @@
         android:orderInCategory="100"
         android:showAsAction="never"
         android:title="Disconnect"/>
+    
+    <item android:id="@+id/menu_clearLogs"
+		android:orderInCategory="100"
+        android:showAsAction="never"
+        android:title="Clear Logs"/>
+ 
 
 </menu>

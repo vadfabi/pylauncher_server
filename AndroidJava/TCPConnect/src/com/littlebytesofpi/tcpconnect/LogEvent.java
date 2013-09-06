@@ -28,7 +28,7 @@ public class LogEvent {
 
 	public String toString(){
 		
-		String returnString = String.format("Time: " + formatTime() + "\n Type: " + mEventType + "\n" + mEvent);
+		String returnString = String.format("Time: " + formatTime() + "\nType: " + mEventType + "\nFrom: " + mIpAddressOfSender + "\n>  " + mEvent);
 		return returnString;
 	}
 	

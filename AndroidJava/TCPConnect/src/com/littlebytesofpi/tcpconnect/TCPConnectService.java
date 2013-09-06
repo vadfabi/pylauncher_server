@@ -32,8 +32,6 @@ import android.widget.Toast;
 
 public class TCPConnectService extends Service {
 
-
-
 	/*
 	 * Messages
 	 */
@@ -47,13 +45,9 @@ public class TCPConnectService extends Service {
 
 
 
-
-
-	/**
-	 * TCPConnectService 
-	 * 
-	 * Constructor and Lifecycle
-	 */
+	//  TCPConnectService
+	//  Constructor
+	//
 	public TCPConnectService() {
 
 		//  This service will monitor network status, so setup a network state broadcast receiver
@@ -68,11 +62,16 @@ public class TCPConnectService extends Service {
 				}
 			}
 		};
-		
-		
 	}
 
 
+
+	/*
+	 * Service Lifecycle
+	 */
+
+	//  onDestroy
+	//
 	@Override
 	public void onDestroy() {
 
@@ -83,88 +82,7 @@ public class TCPConnectService extends Service {
 	}
 
 
-
-
-	/**
-	 * Service Binding and Messaging Functions
-	 * 
-	 */
-
-	//  we keep a list of message handlers registered with the service
-	//  all handlers will receive all messages that are sent out
-	private  ArrayList<Handler> mHandlerList = new ArrayList<Handler>(); 
-	public synchronized void AddHandler(Handler handler){
-		if ( mHandlerList.contains(handler) )
-			return;
-		mHandlerList.add(handler);
-
-	}
-
-	public synchronized void RemoveHandler(Handler handler){
-		mHandlerList.remove(handler);
-	}
-
-
-	//  for binding with the service
-	//  this is a simple intraprocess application, so we use the LocalBinder method
-	private LocalBinder mBinder = null;
-
-	public class LocalBinder extends Binder {
-		TCPConnectService getService() {
-			return TCPConnectService.this;
-		}
-	}
-
-
-	@Override
-	public IBinder onBind(Intent arg0) {
-
-		if ( mBinder == null )
-		{
-			//  create the binder object
-			mBinder = new LocalBinder();
-		}
-
-		//  hook up the 
-		registerReceiver(mNetworkStateIntentReceiver, mNetworkStateChangedFilter);
-
-		SetNetworkStatus();
-
-		showNotification();
-
-		return mBinder;
-	}
-
-
-
-	//  notification manager
-	private final int NOTIFICATION_ID = 99;
-	private NotificationManager mNM;
-
-	public void showNotification() {
-
-		CharSequence text = "TCP Client";
-
-		// Set the icon, scrolling text and timestamp
-		Notification notification = new Notification(R.drawable.ic_launcher, text,	System.currentTimeMillis());
-
-		// The PendingIntent to launch our activity if the user selects this notification
-		PendingIntent contentIntent = null;
-		String description;
-
-		contentIntent = PendingIntent.getActivity(this, 0, new Intent(this, TcpConnect.class), 0);
-
-		//  set event info
-		notification.setLatestEventInfo(this, text, "Service Running", contentIntent);
-
-		//  set this as a persistent notification
-		notification.flags |= Notification.FLAG_ONGOING_EVENT | Notification.FLAG_NO_CLEAR;
-
-		//  specify that the notification should be in the foreground
-		startForeground(NOTIFICATION_ID, notification);
-	}
-
-
+	//  onStartCommand
 	@Override
 	public int onStartCommand(Intent intent, int flags, int startId) {
 
@@ -180,14 +98,103 @@ public class TCPConnectService extends Service {
 
 
 
-	/**
-	 * Message Handling
-	 * this is a simple intraprocess implementation, 
-	 * so you can pass objects to handlers
-	 * 
+
+	/*
+	 * Binding
 	 */
 
-	//  send message to registered handler
+	//  LocalBinder
+	//  this is a simple intraprocess application, so we use the LocalBinder method
+	//
+	private LocalBinder mBinder = null;
+	//
+	public class LocalBinder extends Binder {
+		TCPConnectService getService() {
+			return TCPConnectService.this;
+		}
+	}
+
+
+	// onBind
+	//
+	@Override
+	public IBinder onBind(Intent arg0) {
+
+		if ( mBinder == null )
+		{
+			//  create the binder object
+			mBinder = new LocalBinder();
+		}
+
+		//  hook up the network state listener
+		registerReceiver(mNetworkStateIntentReceiver, mNetworkStateChangedFilter);
+
+		//  query current network state
+		SetNetworkStatus();
+
+		//  show notification
+		showNotification();
+
+		return mBinder;
+	}
+
+
+
+	/*
+	 * Notification Manager
+	 */
+
+	private final int NOTIFICATION_ID = 99;
+	private NotificationManager mNM;
+
+	//  showNotification
+	//
+	public void showNotification() {
+
+		CharSequence text = "TCP Client";
+		// Set the icon, scrolling text and timestamp
+		Notification notification = new Notification(R.drawable.ic_launcher, text,	System.currentTimeMillis());
+
+		// The PendingIntent to launch our activity if the user selects this notification
+		PendingIntent contentIntent = null;
+		contentIntent = PendingIntent.getActivity(this, 0, new Intent(this, TcpConnect.class), 0);
+
+		//  set string with state info
+		String notificationText;
+		if ( IsConnectedToServer() )
+			notificationText = "Connected to server";
+		else
+			notificationText = "Not connected to server";
+
+		notification.setLatestEventInfo(this, text, notificationText, contentIntent);
+
+		//  set this as a persistent notification
+		notification.flags |= Notification.FLAG_ONGOING_EVENT | Notification.FLAG_NO_CLEAR;
+		//  specify that the notification should be in the foreground
+		startForeground(NOTIFICATION_ID, notification);
+	}
+
+
+	/*
+	 * Message Handling
+	 */
+
+	//  List of Handlers we will send messages to
+	private  ArrayList<Handler> mHandlerList = new ArrayList<Handler>(); 
+	//
+	public synchronized void AddHandler(Handler handler){
+		if ( mHandlerList.contains(handler) )
+			return;
+		mHandlerList.add(handler);
+
+	}
+	//
+	public synchronized void RemoveHandler(Handler handler){
+		mHandlerList.remove(handler);
+	}
+
+	// SendMessage
+	//
 	public synchronized void SendMessage(int message)
 	{
 		for ( Handler handler : mHandlerList )
@@ -199,7 +206,8 @@ public class TCPConnectService extends Service {
 		}
 	}
 
-	//  send message to registered handler
+	//  SendMessage
+	//
 	public synchronized void SendMessage(int message, int arg1)
 	{
 		for ( Handler handler : mHandlerList )
@@ -212,29 +220,39 @@ public class TCPConnectService extends Service {
 	}
 
 
-	/**
-	 * 
+
+
+
+	/*
 	 * Event Log
 	 * 
 	 */
 
+	//  List of events in the log
 	private ArrayList<LogEvent> mLogEventList = new ArrayList<LogEvent>();
+	//
 	public synchronized void AddLogEvent(LogEvent event){
 
 		mLogEventList.add(event);
 		//  message the UI
 		SendMessage(MESSAGE_NEWEVENT);
 	}
-
+	//
 	public synchronized void GetLogEvents(List<LogEvent> list){
 
 		for ( int i = list.size(); i < mLogEventList.size(); i++ )
 			list.add(0, mLogEventList.get(i));
 	}
+	//
+	public synchronized void ClearLogs()
+	{
+		mLogEventList.clear();
+		SendMessage(MESSAGE_NEWEVENT);
+	}
 
 
 
-	/**
+	/*
 	 *  IP Connection to the server
 	 *  
 	 *  
@@ -248,11 +266,13 @@ public class TCPConnectService extends Service {
 		return mServerPort;
 	}
 
+
 	//  ip address of the server we are connected to
 	private String mConnectedToServerIp = "";
 	public String getConnectedToServerIp(){
 		return mConnectedToServerIp;
 	}
+
 
 	//  when connected, the server opens a socket connection on this port to receive our control commands
 	private int mConnectedToServerOnPort = 0; 
@@ -272,7 +292,9 @@ public class TCPConnectService extends Service {
 	}
 
 
-	//  return connection state
+	//  IsConnectedToServer
+	//  returns connection state
+	//
 	public synchronized boolean IsConnectedToServer()
 	{
 		//  we are connected when control thread is running and control socket is open
@@ -280,12 +302,15 @@ public class TCPConnectService extends Service {
 	}
 
 
-	/**
-	 * OpenConnectionToServer
-	 * 
-	 * Launches task to open a connection to the server
-	 * 
-	 */
+	//  SendStringToConnectedOnCommandPort
+	//  
+	private String SendStringToConnectedOnCommandPort(String message){
+		return IpFunctions.SendStringToPort(mConnectedToServerIp, mConnectedToServerOnPort, message);
+	}
+
+
+	//  OpenConnectionToServer
+	//
 	public void openConnectionToServer(String connectAddress, int connectPort)
 	{
 		//  close previous connection to the server if it is open
@@ -294,16 +319,16 @@ public class TCPConnectService extends Service {
 			mClientsServerThread.cancel();
 			mClientsServerThread = null;
 		}
-		
+
 		mServerPort = connectPort;
 
 		mClientsServerThread = new ClientsServerThread(this);
-		
+
 		//  launch the connection task
 		new OpenConnectionTask().execute(connectAddress);
 	}
-
-	//  open connection task
+	//
+	//  OpenConnectionTask
 	private class OpenConnectionTask extends AsyncTask<String, Void, Integer> {
 
 		String readResponse = "";
@@ -333,7 +358,7 @@ public class TCPConnectService extends Service {
 				String command = parser.GetNextString();
 				String pass = parser.GetNextString();
 				String serversControlPort = parser.GetNextString();
-				
+
 				try{
 					mConnectedToServerOnPort =  Integer.parseInt(serversControlPort);
 				} catch (NumberFormatException e){
@@ -341,12 +366,8 @@ public class TCPConnectService extends Service {
 					return;
 				}
 
-			
 				//  start the client's listening server thread
 				mClientsServerThread.start();
-
-
-				showNotification();
 
 				//  message success
 				TCPConnectService.this.SendMessage(MESSAGE_CONNECTEDSTATECHANGE);
@@ -354,20 +375,18 @@ public class TCPConnectService extends Service {
 			else
 			{
 				mClientsServerThread = null;
-				
+
 				Toast.makeText(TCPConnectService.this, "Failed to open server connection!", Toast.LENGTH_SHORT).show();
 				mConnectedToServerIp = "";
 			}
+
+			showNotification();
 		}
 	}
 
 
-	/**
-	 * CloseConnectionToServer
-	 * 
-	 * Launches task to close the server connection.
-	 * 
-	 */
+	//  CloseConnectionToServer
+	//
 	public void closeConnectionToServer(){
 
 		if ( mClientsServerThread == null )
@@ -376,10 +395,9 @@ public class TCPConnectService extends Service {
 		//  launch the close connection task
 		new CloseConnectionTask().execute();
 	}
-
-	//  close connection task
+	//
+	//  CloseConnectionTask
 	private class CloseConnectionTask extends AsyncTask<String, Void, Integer> {
-
 
 		String readResponse = "";
 		protected Integer doInBackground(String... param ) {
@@ -393,14 +411,11 @@ public class TCPConnectService extends Service {
 
 			//  shut down the server thread
 			mClientsServerThread.cancel();
-			
 
 			if ( readResponse.contains("$TCP_DISCONNECT,ACK") )
 				Toast.makeText(TCPConnectService.this, "Server closed connection.", Toast.LENGTH_SHORT).show();
 			else
 				Toast.makeText(TCPConnectService.this, "Error closing server connection", Toast.LENGTH_SHORT).show();
-
-
 
 			showNotification();
 
@@ -411,165 +426,123 @@ public class TCPConnectService extends Service {
 
 
 
+
+	/*
+	 * Network State Monitor
+	 */
+
+	private BroadcastReceiver mNetworkStateIntentReceiver;
+	private IntentFilter mNetworkStateChangedFilter;
+	//
+	NetworkInfo mIpWiFiInfo;
+	NetworkInfo mIpMobileInfo;
+	public String mIpWiFiAddress = "";
+
+
+	//  HandleNetworkStatusChange
+	//
+	private void HandleNetworkStatusChange(){		
+		SetNetworkStatus();
+	}
+
+
+	//  SetNetworkStatus
+	//
+	protected void SetNetworkStatus()
+	{
+		//  get the LAN IP address of this device
+		WifiManager wifiManager = (WifiManager) getSystemService(WIFI_SERVICE);
+		mIpWiFiAddress = IpFunctions.GetLocalIpAddress(wifiManager);
+
+		//  get the info about wifi and mobile connection
+		mIpWiFiInfo = null;
+		mIpMobileInfo = null;
+
+		ConnectivityManager connectivity = (ConnectivityManager)this.getSystemService(Context.CONNECTIVITY_SERVICE);
+		NetworkInfo[] netInfo = connectivity.getAllNetworkInfo();
+		for (NetworkInfo ni : netInfo) 
+		{
+			switch ( ni.getType() )
+			{
+			case ConnectivityManager.TYPE_WIFI:
+				mIpWiFiInfo = ni;
+				break;
+
+			case ConnectivityManager.TYPE_MOBILE:
+				mIpMobileInfo = ni;
+				break;
+			}
+		}
+
+		//  message the UI
+		SendMessage(MESSAGE_NETSTATECHANGE);
+	}
+
+
+
+
+	/*
+	 * Handle events from user interface
+	 */
+
+	//  PressButton
+	//  handles a button press event
 	public void PressButton(int buttonNumber){
 
 		new PressButtonTask().execute(buttonNumber);
-
 	}
-
-	//  close connection task
+	//
+	//  PressButtonTask
 	private class PressButtonTask extends AsyncTask<Integer, Void, Integer> {
 
 		String readResponse = "";
 
 		protected Integer doInBackground(Integer... param ) {
 
-			readResponse = TCPConnectService.this.sendStringToConnectedOnCommandPort("$TCP_BUTTON,"+param[0]);
+			readResponse = TCPConnectService.this.SendStringToConnectedOnCommandPort("$TCP_BUTTON,"+param[0]);
 
 			return 1;
 		}
 
 		protected void onPostExecute(Integer result ) {
 
-			//  todo:  process read response
-
-
+			//  Build Your Program Here
+			//  if you want to react to the server's response to your button press, do it here
 		}
 	}
-	
-	
+
+
+	//  SendMessageToServer
+	//  handles message send event
 	public void SendMessageToServer(String message){
 
-		new SendMessageTask().execute(message);
-
+		new SendMessageToServerTask().execute(message);
 	}
-
-	//  close connection task
-	private class SendMessageTask extends AsyncTask<String, Void, Integer> {
+	//
+	//  SendMessageToServerTask
+	private class SendMessageToServerTask extends AsyncTask<String, Void, Integer> {
 
 		String readResponse = "";
 
 		protected Integer doInBackground(String... param ) {
 
-			readResponse = TCPConnectService.this.sendStringToConnectedOnCommandPort("$TCP_BROADCAST,"+ mIpWiFiAddress + "," + param[0]);
+			readResponse = TCPConnectService.this.SendStringToConnectedOnCommandPort("$TCP_MESSAGE,"+ mIpWiFiAddress + "," + param[0]);
 
 			return 1;
 		}
 
 		protected void onPostExecute(Integer result ) {
 
-			//  todo:  process read response
-
-
+			//  Build Your Program Here
+			//  if you want to react to the server's response to your button press, do it here
 		}
 	}
-	
-
-
-	//  TODO - move echo test to its own thread
-	EchoTest echoTestThread = null;
-	public void EchoTest()
-	{
-		if ( echoTestThread == null )
-		{
-			echoTestThread = new EchoTest(this);
-			echoTestThread.start();
-		}
-		else
-		{
-			echoTestThread.cancel();
-			echoTestThread = null;
-		}
-
-	}
 
 
 
 
-
-
-	/* 
-	 * Device State Management 
-	 * 
-	 * This state flag is used to suppress action commands while we are in the middle of another action
-	 * 
-	 */
-	public static final int STATE_UNKNOWN					=-1;
-	public static final int STATE_STEADY 					= 0;
-	public static final int STATE_CHANGING			 		= 1;
+	//  Debug Flags
 	//
-	private int mServiceState = 0; 
-
-
-
-
-
-
-
-	/*
-	 * TCP/IP Helper functions
-	 */
-
-	private String sendStringToConnectedOnCommandPort(String message){
-		return IpFunctions.SendStringToPort(mConnectedToServerIp, mConnectedToServerOnPort, message);
-	}
-
-
-
-	//  Network status monitors
-	private BroadcastReceiver mNetworkStateIntentReceiver;
-	private IntentFilter mNetworkStateChangedFilter;
-
-	NetworkInfo mIpWiFiInfo;
-	NetworkInfo mIpMobileInfo;
-	public String mIpWiFiAddress = "";
-
-
-
-	private void HandleNetworkStatusChange(){
-
-		
-		SetNetworkStatus();
-	}
-
-	protected void SetNetworkStatus()
-	{
-	//  get the LAN IP address of this device
-		WifiManager wifiManager = (WifiManager) getSystemService(WIFI_SERVICE);
-			mIpWiFiAddress = IpFunctions.GetLocalIpAddress(wifiManager);
-
-			//  get the info about wifi and mobile connection
-			mIpWiFiInfo = null;
-			mIpMobileInfo = null;
-
-			ConnectivityManager connectivity = (ConnectivityManager)this.getSystemService(Context.CONNECTIVITY_SERVICE);
-			NetworkInfo[] netInfo = connectivity.getAllNetworkInfo();
-			for (NetworkInfo ni : netInfo) 
-			{
-				switch ( ni.getType() )
-				{
-				case ConnectivityManager.TYPE_WIFI:
-					mIpWiFiInfo = ni;
-					break;
-
-				case ConnectivityManager.TYPE_MOBILE:
-					mIpMobileInfo = ni;
-					break;
-				}
-			}
-
-			//  message the UI
-			SendMessage(MESSAGE_NETSTATECHANGE);
-	
-	}
-
-
-
-
-
-
-
-	//  debug flags
 	private final boolean D = true;
 	private final String TAG = "TCPConnectService";
 

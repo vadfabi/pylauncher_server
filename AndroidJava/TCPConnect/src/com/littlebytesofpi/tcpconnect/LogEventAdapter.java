@@ -15,17 +15,13 @@ public class LogEventAdapter extends ListViewAdapter {
 		super(dataList, c);
 	}
 	
-//  To implement this list view adapter
-	//
-	//  1)  Create a class to hold your specific UI view items
-	//  This is necessary because getView recycles views, so your UI element click listeners will not respond properly if you do not persist the view
-//  Declare the view holder class
+
+	//  Declare the view holder class
 	private class ViewHolder
 	{
 		TextView textView1;
 	}
 	
-	//  2)  Declare a member variable of this class
 	ViewHolder mViewHolder;
 	
 	
