@@ -1,3 +1,6 @@
+#include <sys/time.h>
+#include <vector>
+
 #include "BroadcastThread.h"
 #include "TheApp.h"
 
@@ -56,6 +59,7 @@ void BroadcastThread::Cancel()
 
 void BroadcastThread::RunFunction()
 {
+	
 	if ( mMessageQueue.size() == 0 && mThreadRunning )
 	{
 		//  wait for messages
@@ -70,25 +74,23 @@ void BroadcastThread::RunFunction()
 			return;
 	}
 
-
-
-	//  send all messages to clients
-	LogEvent* nextMessage = NULL;
-	while ( mMessageQueue.size() > 0 )
+	list<LogEvent*> eventsToSend;
+	//  empty the queue and put the events to send into a list
 	{
+		LockMutex lockQueue(mMessageQueueMutex);
+		LogEvent* nextMessage = NULL;
+		while ( mMessageQueue.size() > 0 )
 		{
-			LockMutex lockQueue(mMessageQueueMutex);
 			nextMessage = mMessageQueue.front();
 			mMessageQueue.pop();
+			eventsToSend.push_back(nextMessage);
 		}
-
-
-		mTheApp.SendMessageToAllClients(nextMessage->mEventTime, nextMessage->mEventAddress, nextMessage->mEvent);
-		delete nextMessage;
-		Sleep(10);
 	}
 
+	mTheApp.SendMessageToAllClients(eventsToSend);
 
+	eventsToSend.remove_if(deleteLogEvent);
+	
 	mNotified = false;
 
 	return;

@@ -57,13 +57,13 @@ string Parser::GetNextString()
 
 	string returnString = "";
 	size_t index = mRemainingBuffer.find_first_of(mDelimiters, 0);
-
+	
 	//Skip delimiters at beginning.
 	string::size_type lastPos = mRemainingBuffer.find_first_not_of(mDelimiters, 0);
 	// Find first "non-delimiter".
 	string::size_type pos     = mRemainingBuffer.find_first_of(mDelimiters, lastPos);
 
-	if (string::npos != pos || string::npos != lastPos)
+	if (string::npos != pos && string::npos != lastPos)
 		returnString = mRemainingBuffer.substr(lastPos, pos - lastPos);
 	else
 	{

@@ -45,7 +45,7 @@ int main(int argc, char *argv[])
 		return 1;
 	}
 
-	//  TheApp is running, we will take input from the command line now
+	//  TheApp is running, the user input is running in main thread
 	//  this loops until the user quits the program
 	while ( true )
 	{
@@ -64,8 +64,8 @@ int main(int argc, char *argv[])
 		theApp.SuspendDisplayUpdates();
 
 		// print a prompter on the screen
-		printf("/***\n");
-		printf("/***      >");
+		printf("/***   Command Line Input: \n");
+		printf(" >");
 
 		//  init the help display counter
 		printedHelp = false;
@@ -112,6 +112,9 @@ int main(int argc, char *argv[])
 //
 int ProcessCommandModeInput(string input)
 {
+	//  disable log listing
+	theApp.mListingLogs = false;
+
 	//  check for known commands	
 	if ( input.compare("quit") == 0 || input.compare("exit") == 0 )
 	{
@@ -131,7 +134,7 @@ int ProcessCommandModeInput(string input)
 		theApp.BroadcastMessage(input);
 		
 		//  contiue in command mode
-		printf("/***      >");
+		printf(" >");
 		return 0;
 	}
 	else if ( input.substr(0, string("forwarding").size()).compare("forwarding") == 0 && input.size() > string("forwarding").size() )
@@ -144,30 +147,30 @@ int ProcessCommandModeInput(string input)
 		if ( argument.compare("on") == 0 )
 		{
 			theApp.mForwardMessagesToAllClients = true;
-			printf("/***      > message forwarding on\n");
+			printf(" > message forwarding on\n");
 		}
 		else if (argument.compare("off") == 0 )
 			{
 				theApp.mForwardMessagesToAllClients = false;
-				printf("/***      > message forwarding off\n");
+				printf(" > message forwarding off\n");
 		}
 		else if ( argument.compare("wait") == 0 )
 		{
 			theApp.mForwardMessageWaitForClientResponse = true;
-			printf("/***      > wait for response on\n");
+			printf(" > wait for response on\n");
 		}
 		else if ( argument.compare("nowait") == 0 )
 		{
 			theApp.mForwardMessageWaitForClientResponse = false;
-			printf("/***      > wait for response off\n");
+			printf(" > wait for response off\n");
 		}
 		else
 		{
-			printf("/***      > input error, you must enter 'on' or 'off'\n");
+			printf(" > input error, you must enter 'on' or 'off'\n");
 		}
 
 		//  contiue in command mode
-		printf("/***      >");
+		printf(" >");
 		return 0;
 
 	}
@@ -175,33 +178,32 @@ int ProcessCommandModeInput(string input)
 	{
 		//  'savelogs'
 		if ( theApp.SaveLogs(input) )
-			printf("/***      > logs saved\n");
+			printf(" > logs saved\n");
 		else
-			printf("/***      > ! error saving logs\n");
+			printf(" > ! error saving logs\n");
 
 		//  contiue in command mode
-		printf("/***      >");
+		printf(" >");
 		return 0;
 	}
 	else if ( input.compare("listlogs") == 0 )
 	{
 		//  'listlogs' - print all events from event log to terminal
-		printf("\n");
+		printf(" > ListLogs \n");
 
 		theApp.PrintLogs(stdout);
-
-		//  contiue in command mode
-		printf("/***      >");
+		theApp.mListingLogs = true;
+	
 		return 0;
 	}
 	else if ( input.compare("clearlogs") == 0 )
 	{
 		//  'clearlogs'  -  clear the event log
 		theApp.ClearLogs();
-		printf("/***      > logs cleared\n");
+		printf(" > logs cleared\n");
 		
 		//  contiue in command mode
-		printf("/***      >");
+		printf("/***   >");
 		return 0;
 	}
 	else
@@ -214,14 +216,14 @@ int ProcessCommandModeInput(string input)
 		}
 		else
 		{
-			printf("/***      > Unknown command\n");
+			printf(" > Unknown command\n");
 			unknownCommandCounter ++;
 			if ( unknownCommandCounter > 3 )
 				printedHelp = false;
 		}	
 
 		//  contiue in command mode
-		printf("/***      >");
+		printf(" >");
 		return 0;
 	}
 }
@@ -230,13 +232,13 @@ int ProcessCommandModeInput(string input)
 void PrintCommandHelp()
 {
 	printf("\n/***\n");
-	printf("/***      Commands:\n");
-	printf("/***        - broadcast message        -  sends message to all connected clients\n");
-	printf("/***        - forwarding arg           -  on / off to control forwarding of messages\n");
-	printf("/***        - forwarding arg           -  wait | nowait to control wait for forwarded response\n");
-	printf("/***        - savelogs filename [-c]   -  saves the event log to filename, -c to clear logs after save.\n");
-	printf("/***        - listlogs                 -  prints all logged events to monitor.\n");
-	printf("/***        - clearlogs                -  clears the event log.\n");
-	printf("/***        - resume                   -  exits command mode, resume display updates.\n");
-	printf("/***        - quit                     -  exit the program\n");
+	printf("/***   Commands:\n");
+	printf("/***     - broadcast message        -  sends message to all connected clients\n");
+	printf("/***     - forwarding arg           -  arg = on | off to control forwarding of messages\n");
+	printf("/***     - forwarding arg           -  arg = wait | nowait to control wait for forwarded response\n");
+	printf("/***     - savelogs filename [-c]   -  saves the event log to filename, -c to clear logs after save.\n");
+	printf("/***     - listlogs                 -  prints all logged events to monitor.\n");
+	printf("/***     - clearlogs                -  clears the event log.\n");
+	printf("/***     - resume                   -  exits command mode, resume display updates.\n");
+	printf("/***     - quit                     -  exit the program\n");
 }

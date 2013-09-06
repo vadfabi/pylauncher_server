@@ -65,6 +65,9 @@ bool ConnectedClient::SetClientSocketTimeouts(long sendTimeout, long receiveTime
 }
 
 
+//  OpenClientSocket
+//  opens a socket file description to the client's listening port and connects
+//
 bool ConnectedClient::OpenClientSocket()
 {
 	mClientSocketFileDescriptor = -1;
@@ -81,7 +84,7 @@ bool ConnectedClient::OpenClientSocket()
 		timeout.tv_sec = mClientSendTimeout;
 		if ( setsockopt(newSocketFileDescriptor, SOL_SOCKET, SO_SNDTIMEO, (char *)&timeout, sizeof(timeout)) < 0 )
 		{
-			mTheApp.AddEvent( "sys_error", format("OpenClientSocket() fail to setsockopt: %d",errno) );
+			mTheApp.AddEvent( SYSEVENT, format("Error - OpenClientSocket() fail to setsockopt send, errno = %d",errno) );
 			close(newSocketFileDescriptor);
 			return false;
 		}
@@ -94,7 +97,7 @@ bool ConnectedClient::OpenClientSocket()
 		timeout.tv_sec = mClientReceiveTimeout;
 		if ( setsockopt(newSocketFileDescriptor, SOL_SOCKET, SO_RCVTIMEO, (char *)&timeout, sizeof(timeout)) < 0 )
 		{
-			mTheApp.AddEvent( "sys_error", format("Connected client thread: fail to setsockopt: %d",errno) );
+			mTheApp.AddEvent( SYSEVENT, format("Error - OpenClientSocket() fail to setsockopt receive, errno = %d",errno) );
 			close(newSocketFileDescriptor);
 			return false;
 		}
@@ -105,6 +108,7 @@ bool ConnectedClient::OpenClientSocket()
 
     if (server == 0) 
 	{
+		mTheApp.AddEvent( SYSEVENT, format("Error - OpenClientSocket() fail gethostbyname(), errno = %d",errno) );
 		close(newSocketFileDescriptor);
         return false;
     }
@@ -119,6 +123,8 @@ bool ConnectedClient::OpenClientSocket()
 
 	mClientSocketFileDescriptor = newSocketFileDescriptor;
 
+	Sleep(50);
+
 	int connectAttepmts = 0;
 	int connected = connect(mClientSocketFileDescriptor, (struct sockaddr *)&mClientsListeningServerAddress, sizeof(mClientsListeningServerAddress));
 	while ( connected == -1 && connectAttepmts < 10 )
@@ -126,12 +132,12 @@ bool ConnectedClient::OpenClientSocket()
 		//  retries for fail to connect on EINTR
 		if ( errno != EINTR )
 		{
-			mTheApp.AddEvent( "sys_error", format("Connected client thread: fail to connect error: %d",errno) );
+			mTheApp.AddEvent( SYSEVENT, format("Error - OpenClientSocket() fail to connect errno = %d",errno) );
 			return false;
 		}
 		
-		mTheApp.AddEvent( "sys_info", format("Connected client thread: Connection retry: %d",connectAttepmts+1) );
-		Sleep(10);
+		mTheApp.AddEvent( SYSEVENT, format("Warning - OpenClientSocket() Connection retry %d",connectAttepmts+1) );
+		Sleep(50);
 		
 		connected = connect(mClientSocketFileDescriptor, (struct sockaddr *)&mClientsListeningServerAddress, sizeof(mClientsListeningServerAddress));
 		connectAttepmts++;
@@ -139,15 +145,16 @@ bool ConnectedClient::OpenClientSocket()
 
 	if ( connected < 0 )
 	{
-		mTheApp.AddEvent( "sys_error", format("Connected client thread: fail to connect error: %d",errno) );
+		mTheApp.AddEvent( SYSEVENT, format("Error - OpenClientSocket() fail to connect errno = %d",errno) );
 		return false;
 	}
-
-
 
 	return true;
 }
 
+
+//  Closes the socket to the client's listening port
+//
 bool ConnectedClient::CloseClientSocket()
 {
 	if ( mClientSocketFileDescriptor >= 0 )
@@ -164,16 +171,14 @@ string ConnectedClient::SendMessageToClient(string message,  bool waitForRespons
 	string response = "";
 
 	//  if we have not opened this socket yet, open it now
-	if ( mClientSocketFileDescriptor < 0 && ! OpenClientSocket() )
+	if ( ! OpenClientSocket() )
 	{
 		return response;
 	}
 
-	
-
 	if ( write(mClientSocketFileDescriptor, message.c_str(), message.size()) != message.size() )
 	{
-		mTheApp.AddEvent( "sys_error", format("Failed to write message %s",message.c_str()) );
+		mTheApp.AddEvent( SYSEVENT, format("Error - SendMessageToClient() fail send message %s errno = %d",message.c_str(), errno) );
 		return response;
 	}
 

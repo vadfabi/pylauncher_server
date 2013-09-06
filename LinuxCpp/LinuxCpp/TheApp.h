@@ -36,6 +36,7 @@ protected:
 
 
 
+
 // TheApp
 // This class is the main application
 // it is running on the main thead
@@ -78,11 +79,11 @@ public:
 	bool mForwardMessageWaitForClientResponse;
 
 	//  send an event message to all clients
-	void SendMessageToAllClients(timeval eventTime, std::string eventSender, std::string message);
+	void SendMessageToAllClients(std::list<LogEvent*>& eventsToSend);
 
 
 
-	//  Display Handling
+	//  User Interface:  Display
 	//
 	//  set flag to update display
 	void SetUpdateDisplay();
@@ -92,12 +93,18 @@ public:
 	void ResumeDisplayUpdates();
 
 
+	//  User Interface:  Input
+
 	//  command line input function handlers
 	void BroadcastMessage(std::string input);
 	bool SaveLogs(std::string input);
 	void PrintLogs(FILE* stream);
 	void ClearLogs();
+
+	bool mListingLogs;
 		
+	//  function to return IP address of server
+	std::string GetIpAddress();
 
 protected:
 
@@ -124,6 +131,7 @@ protected:
 	std::list<LogEvent*> mEventLog;
 	std::mutex mEventLogMutex;
 	int mMaxEventsToLog;
+	bool mLogSysEvents;
 
 	//  The display output
 	//  this happens on its own thread
@@ -147,6 +155,8 @@ protected:
 	std::string mVersionString;
 };
 
+
+#define SYSEVENT "systemEvent"
 
 
 #endif // _THEAPP_H

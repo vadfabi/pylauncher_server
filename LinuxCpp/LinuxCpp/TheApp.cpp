@@ -25,16 +25,16 @@ using namespace std;
 TheApp::TheApp() :
 	mConnectionThread(*this),  mDisplayThread(*this), mBroadcastThread(*this)
 {
-	mVersionString = "1.0.0.1";
+	mVersionString = "1.0.2";
 
-	mMaxEventsToLog = 9999;
+	mMaxEventsToLog = 99999;
+	mLogSysEvents = true;
 
 	mDisplayUpdatesOn = true;
 	mUpdateDisplay = true;
 
-	mForwardMessagesToAllClients = false;
-	mForwardMessageWaitForClientResponse = false;
-
+	mForwardMessagesToAllClients = true;
+	mForwardMessageWaitForClientResponse = true;
 }
 
 
@@ -120,6 +120,9 @@ void TheApp::ShutDown()
 //
 void TheApp::AddEvent(timeval eventTime, string eventSender, string eventDetails)
 {
+	if ( ! mLogSysEvents && eventSender.compare(SYSEVENT) == 0 )
+		return;
+
 	//  we will be modifying the event log list, lock access to it
 	{
 		LockMutex lockEvents(mEventLogMutex);
@@ -133,8 +136,9 @@ void TheApp::AddEvent(timeval eventTime, string eventSender, string eventDetails
 			mEventLog.pop_back();
 		}
 
-		if ( ! mDisplayUpdatesOn )
-			printf("%s %s %s\n", FormatTime(eventTime).c_str(), eventSender.c_str(), eventDetails.c_str());
+		//  if we are in listing logs mode, all logs get printed to stdout
+		if ( mListingLogs )
+			newEvent->PrintLog(stdout);
 
 	}//  we are done modifying the event log, release access
 	
@@ -148,6 +152,9 @@ void TheApp::AddEvent(timeval eventTime, string eventSender, string eventDetails
 //
 void TheApp::AddEvent(string eventSender, string eventDetails)
 {
+	if ( ! mLogSysEvents && eventSender.compare(SYSEVENT) == 0 )
+		return;
+
 	timeval eventTime;
 	gettimeofday(&eventTime, 0);
 
@@ -284,6 +291,15 @@ void TheApp::HandleButtonPush(timeval eventTime, string eventSender, string even
 //
 void TheApp::HandleBroadcastMessage(timeval eventTime, string eventSender, string message)
 {
+	//  BUILD YOUR PROGRAM HERE
+	//
+
+	//  Here is where you could take action on receiving a specific message
+	//  remember, this could be called from any of the n connected client threads, 
+	//  so make sure you wrap a lock around access to any shared memory collections
+	//
+	//
+
 	AddEvent(eventTime, eventSender, message);
 
 	if ( mForwardMessagesToAllClients )
@@ -297,30 +313,53 @@ void TheApp::HandleBroadcastMessage(timeval eventTime, string eventSender, strin
 //  SendMessageToAllClients
 //  this function is called from the broadcast thread to send a message to all clients
 //
-void TheApp::SendMessageToAllClients(timeval eventTime, string eventSender, string message)
+void TheApp::SendMessageToAllClients(list<LogEvent*>& eventsToSend)
 {
+	//  lock the connected clients map
 	LockMutex lockConnectedClients(mConnectedClientsMutex);
 
 	map<string, ConnectedClient*>::iterator nextClient;
 	for ( nextClient = mConnectedClients.begin(); nextClient != mConnectedClients.end(); nextClient++ )
 	{
-		if ( nextClient->second->GetIpAddressOfClient().compare(eventSender) == 0 )
-			continue;	//  don't rebroadcast to sender
+		//  build a string of all events to send
+		string sendString;
 
-		string response = nextClient->second->SendMessageToClient(message,  mForwardMessageWaitForClientResponse);
+		//  iterate through list of events for each client, so we can filter out events that came from this client
+		list<LogEvent*>::iterator nextEvent;
+		for ( nextEvent = eventsToSend.begin(); nextEvent != eventsToSend.end(); nextEvent++ )
+		{
+			if ( nextClient->second->GetIpAddressOfClient().compare((*nextEvent)->mEventAddress) == 0 )
+				continue;
+
+			sendString += (*nextEvent)->mEvent + "," + (*nextEvent)->mEventAddress + "\n";
+
+		}
+		
+		string response = nextClient->second->SendMessageToClient(sendString,  mForwardMessageWaitForClientResponse);
 
 		//  if we are waiting for responses, log the response as an event
 		if ( mForwardMessageWaitForClientResponse )
 		{
-			AddEvent(nextClient->second->GetIpAddressOfClient(),  response);
+			timeval eventTime;
+			gettimeofday(&eventTime, 0);
+
+			//  parse response into different events
+			Parser responseParser(response, "\n");
+			string nextResponse = responseParser.GetNextString();
+			while ( nextResponse.size() > 0 )
+			{
+				AddEvent(eventTime, nextClient->second->GetIpAddressOfClient(),  nextResponse);
+				nextResponse = responseParser.GetNextString();
+			}
 		}
 	}
-
-
-
 }
 
 
+string TheApp::GetIpAddress()
+{
+	return mCMDifconfig.mEth0Info.mInet4Address;
+}
 
 
 //  SendMessageToAllClients
@@ -433,8 +472,16 @@ void TheApp::PrintLogs(FILE* stream)
 	LockMutex lockEventLog(mEventLogMutex);
 
 	//  iterate through log list and print logs to stdout
-	//  this ta
-	for_each(  mEventLog.begin(), mEventLog.end(), bind2nd(mem_fun(&LogEvent::PrintLog),stream) );
+	list<LogEvent*>::reverse_iterator nextLog = mEventLog.rbegin();
+	for ( ; nextLog != mEventLog.rend(); ++nextLog )
+	{
+		(*nextLog)->PrintLog(stream);
+	}
+
+
+	
+	//  very cool way to iterate through a list does it work for back to front?
+	//for_each(  mEventLog.end(), mEventLog.begin(), bind2nd(mem_fun(&LogEvent::PrintLog),stream) );
 
 }
 
@@ -574,13 +621,13 @@ void TheApp::DisplayUpdate()
 void TheApp::DisplayWriteHeader()
 {
 	printf("/***********************************************************************************\n");
-	printf("/***  Simple Linux Connect TCP/IP Program \n");
-	printf("/***  %s:\n", mVersionString.c_str());
+	printf("/*** Simple Linux TCP/IP Connect Program \n");
+	printf("/***   version %s:\n", mVersionString.c_str());
 	printf("/***\n");
-	printf("/***      Connected on eth0: %s\n",mCMDifconfig.mEth0Info.mInet4Address.size() == 0 ? "not enabled " : mCMDifconfig.mEth0Info.mInet4Address.c_str());
-	printf("/***      Connected on wlan: %s\n",mCMDifconfig.mWlanInfo.mInet4Address.size() == 0 ? "not enabled " : mCMDifconfig.mWlanInfo.mInet4Address.c_str());
-	printf("/***      Server is listening on port: %d\n", mConnectionServerPort);	
-	printf("/***      Message forwarding is %s with %s for response.\n", mForwardMessagesToAllClients ? "on" : "off", mForwardMessageWaitForClientResponse ? "wait" : "no wait");	
+	printf("/***   Connected on eth0: %s\n",mCMDifconfig.mEth0Info.mInet4Address.size() == 0 ? "not enabled " : mCMDifconfig.mEth0Info.mInet4Address.c_str());
+	printf("/***   Connected on wlan: %s\n",mCMDifconfig.mWlanInfo.mInet4Address.size() == 0 ? "not enabled " : mCMDifconfig.mWlanInfo.mInet4Address.c_str());
+	printf("/***   Server is listening on port: %d\n", mConnectionServerPort);	
+	printf("/***   Message forwarding is %s with %s for response.\n", mForwardMessagesToAllClients ? "on" : "off", mForwardMessageWaitForClientResponse ? "wait" : "no wait");	
 
 
 }
@@ -596,7 +643,7 @@ void TheApp::DisplayWriteClientConnections()
 
 	for ( iter = mConnectedClients.begin(); iter != mConnectedClients.end(); iter++ )
 	{
-		printf("/***      - Client at %s connected on port %d.\n", iter->second->GetIpAddressOfClient().c_str(), iter->second->GetConnectedOnPortNumber() );
+		printf("/***   - Client at %s connected on port %d.\n", iter->second->GetIpAddressOfClient().c_str(), iter->second->GetConnectedOnPortNumber() );
 	}
 
 	mConnectedClientsMutex.unlock();
@@ -608,22 +655,22 @@ void TheApp::DisplayWriteClientConnections()
 void TheApp::DisplayWriteLogs()
 {
 	printf("/***\n");
-	printf("/***      Event Logs:\n");
+	printf("/***    > Event Time   : Address      : Event\n");
 
 	LockMutex lockEvents(mEventLogMutex);
 
-	//  write out the last 5 logs
+	//  write out the last 10 logs
 	int logSize = mEventLog.size();
-	for ( int i = 4; i >= 0; i-- )
+	for ( int i = 9; i >= 0; i-- )
 	{
 		if ( i < logSize )
 		{
 			list<LogEvent*>::iterator it = mEventLog.begin();
 			advance(it, i);
-			printf("/***        > %s : %s : %s\n", FormatTime((*it)->mEventTime).c_str(), (*it)->mEventAddress.c_str(), (*it)->mEvent.c_str());
+			printf("/***    > %s : %s : %s\n", FormatTime((*it)->mEventTime).c_str(), (*it)->mEventAddress.c_str(), (*it)->mEvent.c_str());
 		}
 		else
-			printf("/***        >\n");
+			printf("/***    >\n");
 	}
 
 	printf("/***\n");
@@ -635,8 +682,8 @@ void TheApp::DisplayWriteTime()
 	//  put the time as last line of display
 	CMD dateCommand("date");
 	dateCommand.Execute();
-	printf("/***     Time:      %s\n", dateCommand.GetCommandResponseLine(0).c_str());
-	printf("/***     Press Enter to enable command mode:>\n");
+	printf("/*** Time:      %s\n", dateCommand.GetCommandResponseLine(0).c_str());
+	printf("/*** Press Enter to enable command mode:\n");
 }
 
 
