@@ -1,6 +1,6 @@
 <?xml version="1.0"?>
 <VisualGDBProjectSettings2 xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
-  <ConfigurationName>Release</ConfigurationName>
+  <ConfigurationName>Debug</ConfigurationName>
   <Project xsi:type="com.visualgdb.project.linux">
     <CustomSourceDirectories>
       <Directories />
@@ -19,7 +19,7 @@
         <UserName>grahambriggs</UserName>
       </RemoteHost>
       <LocalDirectory>$(ProjectDir)</LocalDirectory>
-      <RemoteDirectory>/home/grahambriggs/Source/LBP_tcpipSockets</RemoteDirectory>
+      <RemoteDirectory>/home/grahambriggs/Source/LBP_tcpipsockets</RemoteDirectory>
       <FileMasks>
         <string>*.cpp</string>
         <string>*.h</string>
@@ -36,7 +36,7 @@
   </Project>
   <Build xsi:type="com.visualgdb.build.make">
     <MakeFilePathRelativeToSourceDir>Makefile</MakeFilePathRelativeToSourceDir>
-    <MakeConfigurationName>Release</MakeConfigurationName>
+    <MakeConfigurationName>Debug</MakeConfigurationName>
     <AdditionalMakeArguments />
     <Toolchain>
       <Name>Default GCC toolchain on 192.168.1.216</Name>
