@@ -526,7 +526,7 @@ public class TCPConnectService extends Service {
 
 		protected Integer doInBackground(String... param ) {
 
-			readResponse = TCPConnectService.this.SendStringToConnectedOnCommandPort("$TCP_MESSAGE,"+ mIpWiFiAddress + "," + param[0]);
+			readResponse = TCPConnectService.this.SendStringToConnectedOnCommandPort("$TCP_MESSAGE,"+ param[0]);
 
 			return 1;
 		}
