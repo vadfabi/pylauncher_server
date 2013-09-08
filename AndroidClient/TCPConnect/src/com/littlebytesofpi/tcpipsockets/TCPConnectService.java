@@ -1,4 +1,4 @@
-package com.littlebytesofpi.tcpconnect;
+package com.littlebytesofpi.tcpipsockets;
 
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
@@ -9,6 +9,8 @@ import java.net.SocketTimeoutException;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.List;
+
+import com.littlebytesofpi.tcpconnect.R;
 
 import android.app.Notification;
 import android.app.NotificationManager;

@@ -1,4 +1,4 @@
-package com.littlebytesofpi.tcpconnect;
+package com.littlebytesofpi.tcpipsockets;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -25,7 +25,8 @@ import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import com.littlebytesofpi.tcpconnect.TCPConnectService.LocalBinder;
+import com.littlebytesofpi.tcpconnect.R;
+import com.littlebytesofpi.tcpipsockets.TCPConnectService.LocalBinder;
 
 public class TcpConnect extends Activity {
 

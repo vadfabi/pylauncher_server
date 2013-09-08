@@ -17,11 +17,11 @@
         android:icon="@drawable/ic_launcher"
         android:label="@string/applicationTitle"
         android:theme="@style/AppTheme" >
-        <service android:name="com.littlebytesofpi.tcpconnect.TCPConnectService" >
+        <service android:name="com.littlebytesofpi.tcpipsockets.TCPConnectService" >
         </service>
 
         <activity
-            android:name="com.littlebytesofpi.tcpconnect.TcpConnect"
+            android:name="com.littlebytesofpi.tcpipsockets.TcpConnect"
             android:label="@string/app_name" >
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -30,7 +30,7 @@
             </intent-filter>
         </activity>
         <activity
-            android:name="com.littlebytesofpi.tcpconnect.Settings_Activity"
+            android:name="com.littlebytesofpi.tcpipsockets.Settings_Activity"
             android:label="Settings" >
         </activity>
     </application>

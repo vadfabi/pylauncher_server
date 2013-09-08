@@ -1,4 +1,4 @@
-package com.littlebytesofpi.tcpconnect;
+package com.littlebytesofpi.tcpipsockets;
 
 public class Parser {
 
