@@ -13,15 +13,15 @@ OBJCOPY := objcopy
 
 #Additional flags
 PREPROCESSOR_MACROS := DEBUG
-INCLUDE_DIRS := 
-LIBRARY_DIRS := 
-LIBRARY_NAMES := 
-ADDITIONAL_LINKER_INPUTS := 
-MACOS_FRAMEWORKS := 
+INCLUDE_DIRS :=,,\tcpip_Sockets
+LIBRARY_DIRS :=..\tcpip_Sockets
+LIBRARY_NAMES :=pthread
+ADDITIONAL_LINKER_INPUTS :=
+MACOS_FRAMEWORKS :=
 
-CFLAGS := -ggdb -ffunction-sections -O0
-CXXFLAGS := -ggdb -ffunction-sections -O0
-ASFLAGS := 
+CFLAGS := -ggdb -ffunction-sections -O0 -std=c++0x
+CXXFLAGS := -ggdb -ffunction-sections -O0 -std=c++0x
+ASFLAGS :=
 LDFLAGS := -Wl,-gc-sections
 COMMONFLAGS := 
 

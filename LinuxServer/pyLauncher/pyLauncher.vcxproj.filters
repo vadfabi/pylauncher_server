@@ -19,7 +19,34 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="pyLauncher.cpp">
+    <ClCompile Include="ConnectedClientThread.cpp">
+      <Filter>Source files</Filter>
+    </ClCompile>
+    <ClCompile Include="TheApp.cpp">
+      <Filter>Source files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\tcPIp_Sockets\BroadcastThread.cpp">
+      <Filter>Source files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\tcPIp_Sockets\CMD.cpp">
+      <Filter>Source files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\tcPIp_Sockets\CMDifconfig.cpp">
+      <Filter>Source files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\tcPIp_Sockets\ConnectionThread.cpp">
+      <Filter>Source files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\tcPIp_Sockets\Parser.cpp">
+      <Filter>Source files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\tcPIp_Sockets\TCPServerThread.cpp">
+      <Filter>Source files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\tcPIp_Sockets\Thread.cpp">
+      <Filter>Source files</Filter>
+    </ClCompile>
+    <ClCompile Include="main.cpp">
       <Filter>Source files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -31,5 +58,37 @@
     <None Include="release.mak">
       <Filter>Make files</Filter>
     </None>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="ConnectedClientThread.h">
+      <Filter>Header files</Filter>
+    </ClInclude>
+    <ClInclude Include="TheApp.h">
+      <Filter>Header files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\tcPIp_Sockets\BroadcastThread.h">
+      <Filter>Header files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\tcPIp_Sockets\CMD.h">
+      <Filter>Header files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\tcPIp_Sockets\CMDifconfig.h">
+      <Filter>Header files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\tcPIp_Sockets\ConnectionThread.h">
+      <Filter>Header files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\tcPIp_Sockets\Parser.h">
+      <Filter>Header files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\tcPIp_Sockets\TCPServerThread.h">
+      <Filter>Header files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\tcPIp_Sockets\Thread.h">
+      <Filter>Header files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\tcPIp_Sockets\UtilityFn.h">
+      <Filter>Header files</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

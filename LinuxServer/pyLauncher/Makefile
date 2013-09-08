@@ -4,7 +4,7 @@
 #Visit http://visualgdb.com/makefiles for more details
 
 #VisualGDB: AutoSourceFiles		#<--- remove this line to disable auto-updating of SOURCEFILES and EXTERNAL_LIBS
-SOURCEFILES :=
+SOURCEFILES := ../tcPIp_Sockets/BroadcastThread.cpp ../tcPIp_Sockets/CMD.cpp ../tcPIp_Sockets/CMDifconfig.cpp ../tcPIp_Sockets/ConnectionThread.cpp ../tcPIp_Sockets/Parser.cpp ../tcPIp_Sockets/TCPServerThread.cpp ../tcPIp_Sockets/Thread.cpp ConnectedClientThread.cpp main.cpp TheApp.cpp
 
 TARGETNAME := pyLauncher
 #TARGETTYPE can be APP, STATIC or SHARED
@@ -123,3 +123,32 @@ $(BINARYDIR)/%.o : %.S $(all_make_files) |$(BINARYDIR)
 	$(CC) $(CFLAGS) $(ASFLAGS) -c $< -o $@ -MD -MF $(@:.o=.dep)
 
 #VisualGDB: GeneratedRules				#<--- All lines below are auto-generated
+
+
+$(BINARYDIR)/BroadcastThread.o : ../tcPIp_Sockets/BroadcastThread.cpp $(all_make_files) |$(BINARYDIR)
+	$(CXX) $(CXXFLAGS) -c $< -o $@ -MD -MF $(@:.o=.dep)
+
+
+$(BINARYDIR)/CMD.o : ../tcPIp_Sockets/CMD.cpp $(all_make_files) |$(BINARYDIR)
+	$(CXX) $(CXXFLAGS) -c $< -o $@ -MD -MF $(@:.o=.dep)
+
+
+$(BINARYDIR)/CMDifconfig.o : ../tcPIp_Sockets/CMDifconfig.cpp $(all_make_files) |$(BINARYDIR)
+	$(CXX) $(CXXFLAGS) -c $< -o $@ -MD -MF $(@:.o=.dep)
+
+
+$(BINARYDIR)/ConnectionThread.o : ../tcPIp_Sockets/ConnectionThread.cpp $(all_make_files) |$(BINARYDIR)
+	$(CXX) $(CXXFLAGS) -c $< -o $@ -MD -MF $(@:.o=.dep)
+
+
+$(BINARYDIR)/Parser.o : ../tcPIp_Sockets/Parser.cpp $(all_make_files) |$(BINARYDIR)
+	$(CXX) $(CXXFLAGS) -c $< -o $@ -MD -MF $(@:.o=.dep)
+
+
+$(BINARYDIR)/TCPServerThread.o : ../tcPIp_Sockets/TCPServerThread.cpp $(all_make_files) |$(BINARYDIR)
+	$(CXX) $(CXXFLAGS) -c $< -o $@ -MD -MF $(@:.o=.dep)
+
+
+$(BINARYDIR)/Thread.o : ../tcPIp_Sockets/Thread.cpp $(all_make_files) |$(BINARYDIR)
+	$(CXX) $(CXXFLAGS) -c $< -o $@ -MD -MF $(@:.o=.dep)
+
