@@ -264,7 +264,8 @@ void ConnectedClient::RunFunction()
 	else if ( command.compare("$TCP_MESSAGE") == 0 )
 	{
 		//  message from client command
-		string returnMessage = "$TCP_MESSAGE,ACK";
+		string argument = readParser.GetNextString();
+		string returnMessage = format("$TCP_MESSAGE,ACK,%s", argument.c_str());
 		write(acceptFileDescriptor, returnMessage.c_str(), returnMessage.size());
 
 		//  broadcast this message to clients

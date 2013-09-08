@@ -19,7 +19,7 @@
         <UserName>grahambriggs</UserName>
       </RemoteHost>
       <LocalDirectory>$(ProjectDir)</LocalDirectory>
-      <RemoteDirectory>/home/grahambriggs/Source/LBP_tcpConnect</RemoteDirectory>
+      <RemoteDirectory>/home/grahambriggs/Source/LBP_tcpipSockets</RemoteDirectory>
       <FileMasks>
         <string>*.cpp</string>
         <string>*.h</string>
