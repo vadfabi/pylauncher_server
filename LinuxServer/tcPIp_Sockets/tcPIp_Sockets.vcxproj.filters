@@ -72,12 +72,6 @@
     <ClInclude Include="ConnectionThread.h">
       <Filter>Header files</Filter>
     </ClInclude>
-    <ClInclude Include="gcc_Debug.h">
-      <Filter>Header files</Filter>
-    </ClInclude>
-    <ClInclude Include="gcc_Release.h">
-      <Filter>Header files</Filter>
-    </ClInclude>
     <ClInclude Include="Parser.h">
       <Filter>Header files</Filter>
     </ClInclude>

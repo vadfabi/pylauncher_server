@@ -3,6 +3,8 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 2012
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "tcPIp_Sockets", "tcPIp_Sockets\tcPIp_Sockets.vcxproj", "{26AF56A2-F20A-40F3-AA55-0B4BE96C8FB5}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "pyLauncher", "pyLauncher\pyLauncher.vcxproj", "{4625CB32-6C3B-4082-985F-E99E339AF4B7}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Win32 = Debug|Win32
@@ -13,6 +15,10 @@ Global
 		{26AF56A2-F20A-40F3-AA55-0B4BE96C8FB5}.Debug|Win32.Build.0 = Debug|Win32
 		{26AF56A2-F20A-40F3-AA55-0B4BE96C8FB5}.Release|Win32.ActiveCfg = Release|Win32
 		{26AF56A2-F20A-40F3-AA55-0B4BE96C8FB5}.Release|Win32.Build.0 = Release|Win32
+		{4625CB32-6C3B-4082-985F-E99E339AF4B7}.Debug|Win32.ActiveCfg = Debug|Win32
+		{4625CB32-6C3B-4082-985F-E99E339AF4B7}.Debug|Win32.Build.0 = Debug|Win32
+		{4625CB32-6C3B-4082-985F-E99E339AF4B7}.Release|Win32.ActiveCfg = Release|Win32
+		{4625CB32-6C3B-4082-985F-E99E339AF4B7}.Release|Win32.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
