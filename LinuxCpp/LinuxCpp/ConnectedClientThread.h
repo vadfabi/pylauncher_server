@@ -31,8 +31,16 @@ public:
 	//  get the port number that the client is listening for our messages on
 	int GetPortNumberClientIsListeningOn() { return mPortNumberClientIsListeningOn; }
 
+	//  send a message to the listening client, set waitForResponse = true to get client response
+	//  returns response (or empty string if not waiting)
 	std::string SendMessageToClient(std::string message, bool waitForResponse);
 	
+	//  handling for missing clients, we will allow 3 failed attempts to before marking client as inactive
+	void IncrementClientConnectionFailureCounter() { mNumberOfClientConnectionFailuers++; }
+	
+	//  is client still active 
+	bool IsActiveClient() { return mNumberOfClientConnectionFailuers < 3; }
+
 	//  override cancel so we can shut down our client socket
 	virtual void Cancel();
 
@@ -60,6 +68,10 @@ protected:
 
 	//  the port is this client listening on for messages from us
 	int mPortNumberClientIsListeningOn;
+
+	//  counter for number of TCP failures, used to detect if maybe client is gone
+	int mNumberOfClientConnectionFailuers;
+
 
 	//  reference to the app
 	TheApp& mTheApp;

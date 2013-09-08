@@ -31,6 +31,8 @@ ConnectedClient::ConnectedClient(TheApp& theApp, const struct sockaddr_in &clien
 
 	mClientReceiveTimeout = 3;
 	mClientSendTimeout = 3;
+
+	mNumberOfClientConnectionFailuers = 0;
 }
 
 
@@ -173,6 +175,7 @@ string ConnectedClient::SendMessageToClient(string message,  bool waitForRespons
 	//  if we have not opened this socket yet, open it now
 	if ( ! OpenClientSocket() )
 	{
+		IncrementClientConnectionFailureCounter();
 		return response;
 	}
 
@@ -232,7 +235,8 @@ void ConnectedClient::RunFunction()
 	if ( acceptFileDescriptor < 0 )
 		return;
 
-	//  we read something
+	//  we read something, reset the conection flag
+	mNumberOfClientConnectionFailuers = 0;
 
 	//  log event time
 	timeval eventTime;
@@ -263,12 +267,8 @@ void ConnectedClient::RunFunction()
 		string returnMessage = "$TCP_MESSAGE,ACK";
 		write(acceptFileDescriptor, returnMessage.c_str(), returnMessage.size());
 
-		// get the message from the input
-		readParser.GetNextString();
-		string message = readParser.GetRemainingBuffer();
-
 		//  broadcast this message to clients
-		mTheApp.HandleBroadcastMessage(eventTime, eventSender, message);
+		mTheApp.HandleBroadcastMessage(eventTime, eventSender, readFromSocket);
 	}
 	else if ( command.compare("$TCP_ECHOTEST") == 0 )
 	{

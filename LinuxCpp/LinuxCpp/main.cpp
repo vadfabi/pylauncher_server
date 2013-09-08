@@ -128,7 +128,7 @@ int ProcessCommandModeInput(string input)
 		//  'resume'  -  break out of command mode
 		return 1;
 	}
-	else if ( input.substr(0, string("broadcast").size()).compare("broadcast") == 0 && input.size() > string("broadcast").size() )
+	else if ( input.substr(0, string("message").size()).compare("message") == 0 && input.size() > string("message").size() )
 	{
 		//  'broadcast'
 		theApp.BroadcastMessage(input);
@@ -203,7 +203,7 @@ int ProcessCommandModeInput(string input)
 		printf(" > logs cleared\n");
 		
 		//  contiue in command mode
-		printf("/***   >");
+		printf(" >");
 		return 0;
 	}
 	else
@@ -233,7 +233,7 @@ void PrintCommandHelp()
 {
 	printf("\n/***\n");
 	printf("/***   Commands:\n");
-	printf("/***     - broadcast message        -  sends message to all connected clients\n");
+	printf("/***     - message toSend           -  sends toSend to all connected clients\n");
 	printf("/***     - forwarding arg           -  arg = on | off to control forwarding of messages\n");
 	printf("/***     - forwarding arg           -  arg = wait | nowait to control wait for forwarded response\n");
 	printf("/***     - savelogs filename [-c]   -  saves the event log to filename, -c to clear logs after save.\n");

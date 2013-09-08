@@ -321,6 +321,10 @@ void TheApp::SendMessageToAllClients(list<LogEvent*>& eventsToSend)
 	map<string, ConnectedClient*>::iterator nextClient;
 	for ( nextClient = mConnectedClients.begin(); nextClient != mConnectedClients.end(); nextClient++ )
 	{
+		//  skip dormant clients
+		if ( ! nextClient->second->IsActiveClient() )
+			continue;
+
 		//  build a string of all events to send
 		string sendString;
 
@@ -409,7 +413,7 @@ void TheApp::BroadcastMessage(string input)
 {
 	// parse the message out of the input string
 
-	string message = input.substr(string("broadcast").size()+1);
+	string message = input.substr(string("message").size()+1);
 
 	//  log event time
 	timeval eventTime;
@@ -419,7 +423,7 @@ void TheApp::BroadcastMessage(string input)
 	//  todo  this assumes you are on wired, we should check for wifi here ?
 	string eventSender = mCMDifconfig.mEth0Info.mInet4Address;
 
-	string broadcastMessage = format("$TCP_BROADCAST,%s,%s,%s", eventSender.c_str(), FormatTime(eventTime).c_str(), message.c_str());
+	string broadcastMessage = format("$TCP_MESSAGE,%s,%s,%s", eventSender.c_str(), FormatTime(eventTime).c_str(), message.c_str());
 
 	mBroadcastThread.AddMessage(eventTime, eventSender, broadcastMessage);
 
@@ -471,17 +475,17 @@ void TheApp::PrintLogs(FILE* stream)
 	//  lock access to event log list
 	LockMutex lockEventLog(mEventLogMutex);
 
-	//  iterate through log list and print logs to stdout
-	list<LogEvent*>::reverse_iterator nextLog = mEventLog.rbegin();
-	for ( ; nextLog != mEventLog.rend(); ++nextLog )
-	{
-		(*nextLog)->PrintLog(stream);
-	}
+	////  iterate through log list and print logs to stdout
+	//list<LogEvent*>::reverse_iterator nextLog = mEventLog.rbegin();
+	//for ( ; nextLog != mEventLog.rend(); ++nextLog )
+	//{
+	//	(*nextLog)->PrintLog(stream);
+	//}
 
 
 	
 	//  very cool way to iterate through a list does it work for back to front?
-	//for_each(  mEventLog.end(), mEventLog.begin(), bind2nd(mem_fun(&LogEvent::PrintLog),stream) );
+	for_each(  mEventLog.rbegin(), mEventLog.rend(), bind2nd(mem_fun(&LogEvent::PrintLog),stream) );
 
 }
 
@@ -621,7 +625,7 @@ void TheApp::DisplayUpdate()
 void TheApp::DisplayWriteHeader()
 {
 	printf("/***********************************************************************************\n");
-	printf("/*** Simple Linux TCP/IP Connect Program \n");
+	printf("/*** tcPIp Sockets - by LittleBytesOfPi \n");
 	printf("/***   version %s:\n", mVersionString.c_str());
 	printf("/***\n");
 	printf("/***   Connected on eth0: %s\n",mCMDifconfig.mEth0Info.mInet4Address.size() == 0 ? "not enabled " : mCMDifconfig.mEth0Info.mInet4Address.c_str());
@@ -643,7 +647,7 @@ void TheApp::DisplayWriteClientConnections()
 
 	for ( iter = mConnectedClients.begin(); iter != mConnectedClients.end(); iter++ )
 	{
-		printf("/***   - Client at %s connected on port %d.\n", iter->second->GetIpAddressOfClient().c_str(), iter->second->GetConnectedOnPortNumber() );
+		printf("/***   - Client at %s connected on port %d %s.\n", iter->second->GetIpAddressOfClient().c_str(), iter->second->GetConnectedOnPortNumber(), iter->second->IsActiveClient() ? "" : "(not active)" );
 	}
 
 	mConnectedClientsMutex.unlock();
