@@ -6,6 +6,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.ServiceConnection;
 import android.content.SharedPreferences;
+import android.content.SharedPreferences.Editor;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.IBinder;
@@ -43,15 +44,29 @@ public class ConnectTab extends Activity {
 			switch ( v.getId() )
 			{
 			case R.id.buttonConnect:
+
+				//  save the current preferences
+				Editor editPref = PreferenceManager.getDefaultSharedPreferences(ConnectTab.this).edit();
+				editPref.putString("pref_serveripaddress", editTextIpAddress.getText().toString());
+				editPref.putString("pref_serverport", editTextPort.getText().toString());
+
+
+				// Commit the edits!
+				editPref.commit();
+				
+				openServerConnectionWithSettings();
+
 				break;
 
 			case R.id.buttonDisconnect:
+				
+				mService.closeConnectionToServer();
 				break;
 
 			}
 		}
 	};
-	
+
 
 
 	@Override
@@ -66,13 +81,22 @@ public class ConnectTab extends Activity {
 
 		buttonConnect = (Button)findViewById(R.id.buttonConnect);
 		buttonConnect.setOnClickListener(ButtonOnClickListener);
-		
+
 		buttonDisconnect = (Button)findViewById(R.id.buttonDisconnect);
 		buttonDisconnect.setOnClickListener(ButtonOnClickListener);
 
+		//  setup default preferences
+		PreferenceManager.setDefaultValues(this,  R.xml.preferences,  false);
+		
+		SharedPreferences sharedPrefs = PreferenceManager.getDefaultSharedPreferences(ConnectTab.this);
+		
+		//  initialize edit fields
+		editTextIpAddress.setText(sharedPrefs.getString("pref_serveripaddress", ""));
+		editTextPort.setText(sharedPrefs.getString("pref_serverport",  "48888"));
+
 	}
-	
-//  onStart
+
+	//  onStart
 	//
 	@Override
 	public void onStart() {
@@ -95,19 +119,12 @@ public class ConnectTab extends Activity {
 	//  onDestroy
 	@Override
 	public void onDestroy(){
-		super.onDestroy();
-
 		//  if we are connected to server, start the service so it stays connected
-		
-		if ( mService.IsConnectedToServer() )
-		{
-			Intent startIntent = new Intent(this, PyLauncherService.class);
-			this.startService(startIntent);
-		}
-		
 		UnbindFromService();
+		
+		super.onDestroy();
 	}
-	
+
 
 	/*
 	 * Service Handling
@@ -152,7 +169,7 @@ public class ConnectTab extends Activity {
 		}
 	};
 
-	
+
 	//  BindToService
 	//
 	private void BindToService() {
@@ -160,10 +177,10 @@ public class ConnectTab extends Activity {
 
 		// bind to the service 
 		Intent startIntent = new Intent(ConnectTab.this, PyLauncherService.class);
-		bindService(startIntent, mConnection, Context.BIND_AUTO_CREATE);
+		getApplicationContext().bindService(startIntent, mConnection, Context.BIND_AUTO_CREATE);
 	}
 
-	
+
 	//  UnbindFromService
 	void UnbindFromService() {
 		if (mService != null) {
@@ -171,16 +188,16 @@ public class ConnectTab extends Activity {
 			mService.RemoveHandler(mHandler);
 
 			// Detach our existing connection
-			unbindService(mConnection);
+			getApplicationContext().unbindService(mConnection);
 		}
 	}
 
-	
-	
+
+
 	/*
 	 * Message Handler for messages back from the service	
 	 */
-	
+
 	private final Handler mHandler = new Handler() {
 		@Override
 		public void handleMessage(Message msg) {
@@ -201,17 +218,17 @@ public class ConnectTab extends Activity {
 			}
 		}
 	};  
-	
+
 	/*
 	 * Open Connection to Server with address:port from settings
 	 */
-	
+
 	protected void openServerConnectionWithSettings()
 	{
 		//  get the IP address to connect to
 		//  TODO:  this should be replaced with zero conf networking ip address discovery
 		SharedPreferences sharedPrefs = PreferenceManager.getDefaultSharedPreferences(ConnectTab.this);
-		String ipAddress = "192.168.1.201"; // sharedPrefs.getString("pref_serveripaddress", "");
+		String ipAddress = sharedPrefs.getString("pref_serveripaddress", "");
 
 		int serverPort = 0;
 		try{
@@ -242,11 +259,11 @@ public class ConnectTab extends Activity {
 	}
 
 
-	
+
 	/*
 	 * Format User Interface State functions
 	 */
-	
+
 	//  SetNetworkStateUi
 	//
 	public void SetNetworkStateUi(){
@@ -265,7 +282,7 @@ public class ConnectTab extends Activity {
 
 	} 
 
-	
+
 	//  SetConnectedStateUi
 	//
 	public void SetConnectedStateUi(){
@@ -287,16 +304,16 @@ public class ConnectTab extends Activity {
 	}
 
 
-	
+
 	boolean D = true;
 	String TAG = "ConnectTab";
-	
 
-//	@Override
-//	public boolean onCreateOptionsMenu(Menu menu) {
-//		// Inflate the menu; this adds items to the action bar if it is present.
-//		getMenuInflater().inflate(R.menu.connect_tab, menu);
-//		return true;
-//	}
+
+	//	@Override
+	//	public boolean onCreateOptionsMenu(Menu menu) {
+	//		// Inflate the menu; this adds items to the action bar if it is present.
+	//		getMenuInflater().inflate(R.menu.connect_tab, menu);
+	//		return true;
+	//	}
 
 }
