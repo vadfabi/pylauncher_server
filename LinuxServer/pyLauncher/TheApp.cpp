@@ -3,6 +3,9 @@
 #include <sys/time.h>
 #include <algorithm>
 #include <future>
+#include <fstream>
+#include <iostream>
+#include <sys/stat.h>
 
 #include "TheApp.h"
 #include "../tcPIp_Sockets/Parser.h"
@@ -65,6 +68,20 @@ bool TheApp::InitializeInstance()
 	hostName.Execute();
 	mHostname = hostName.GetCommandResponseLine(0);
 
+	//  fill the dir list from the file
+	ifstream dirFile;
+	dirFile.open(DIRLISTFILE);
+	
+	string readLine;
+	while ( ! dirFile.eof() )
+	{
+		getline(dirFile, readLine);
+		mDirectoryList.push_back(readLine);
+	}
+
+	dirFile.close();
+
+
 	//  start the connection thread
 	mConnectionThread.Start();
 
@@ -74,6 +91,8 @@ bool TheApp::InitializeInstance()
 	mUpdateDisplay = true;
 
 	mBroadcastThread.Start();
+
+	
 
 	//  initialization successful
 	return true;
@@ -141,7 +160,7 @@ void TheApp::AddEvent(timeval eventTime, string eventSender, string eventDetails
 			newEvent->PrintLog(stdout);
 
 	}//  we are done modifying the event log, release access
-	
+
 	//  update display
 	SetUpdateDisplay();
 }
@@ -191,7 +210,7 @@ int TheApp::CreateClientConnection(const struct sockaddr_in &clientAddress, int 
 		ConnectedClient* newClient = new ConnectedClient(*this, clientAddress, clientListeningOnPortNumber);
 
 		//  open a port to serve this client
-		 servingClientOnPortNumber = newClient->OpenServerSocket(49000, false);
+		servingClientOnPortNumber = newClient->OpenServerSocket(49000, false);
 
 		if ( servingClientOnPortNumber < 0 )
 		{
@@ -206,7 +225,7 @@ int TheApp::CreateClientConnection(const struct sockaddr_in &clientAddress, int 
 		mConnectedClients[newClient->GetIpAddressOfClient()] =  newClient;
 
 	} //  unlock access to the client map
-	
+
 	return servingClientOnPortNumber;
 }
 
@@ -220,7 +239,7 @@ void TheApp::DisconnectClient(struct sockaddr_in &clientAddress)
 	//  we will be modifying the client map, lock access to it
 	{
 		LockMutex lockConnectedClients(mConnectedClientsMutex);
-		
+
 		//  our map uses dots and numbers address of client as a key
 		string clientKey = IpAddressString(clientAddress);
 
@@ -240,7 +259,7 @@ void TheApp::DisconnectClient(struct sockaddr_in &clientAddress)
 
 		//  remove client from map
 		mConnectedClients.erase(clientKey);
-	
+
 	}	//  release access to client map
 
 	//  update display
@@ -248,75 +267,58 @@ void TheApp::DisconnectClient(struct sockaddr_in &clientAddress)
 }
 
 
-
-//  HandleButtonPush
-//  this function is called from the connected client thread when we get a push button message
-//
-void TheApp::HandleButtonPush(timeval eventTime, string eventSender, string eventDetails)
+//  function to add a directory to the collection
+bool TheApp::HandleAddDirectory(timeval eventTime, std::string eventSender, std::string dirName)
 {
-	//  parse what was read
-	Parser readParser(eventDetails, ",");
-	string command = readParser.GetNextString();
+	//  make sure this directory exists
+	struct stat sb;
 
-	//  get the button number
-	string argument = readParser.GetNextString();
-	int buttonNumber = atoi(argument.c_str());
-
-	//  BUILD YOUR PROGRAM HERE
-	//
-
-	//  Here is where you could take action on receiving the button push
-	//  remember, this could be called from any of the n connected client threads, 
-	//  so make sure you wrap a lock around access to any shared memory collections
-	//
-	//
-
-	//  in this simple program, the response to button push from client is to check to see if message forwarding is turned on
-	//  if message forwarding is turned on, send the message to all of our clients
-
-	CMD pyLaunch("python program.py");
-	pyLaunch.Execute();
-
-	string eventResult;
-	for ( int i = 0; i < pyLaunch.GetCommandResponseSize(); i++ )
+	if ( stat(dirName.c_str(), &sb) == 0 && S_ISDIR(sb.st_mode) )
 	{
-		eventResult += ( pyLaunch.GetCommandResponseLine(i) + "\n" );
+		LockMutex lockFiles(mFilesListMutex);
+
+		if ( find(mDirectoryList.begin(), mDirectoryList.end(), dirName) != mDirectoryList.end() )
+		{
+			//  already in the list
+			return true;
+		}
+
+		mDirectoryList.push_back(dirName);
+
+		//  save out the new dir file
+		//  open file
+		FILE* outputFile = fopen ( DIRLISTFILE, "w" );
+		if ( outputFile == 0 )
+			return false;
+
+
+
+		//  print all the logs
+		list<string>::iterator nextString;
+		for( nextString = mDirectoryList.begin(); nextString != mDirectoryList.end(); ++nextString )
+		{
+			fprintf( outputFile, "%s\n", (*nextString).c_str());
+		}
+
+
+
 	}
 
-	//  log the event
-	AddEvent(eventTime, mCMDifconfig.mEth0Info.mInet4Address, eventResult);
+	return false;
 
-	//  forward message
-	if ( mForwardMessagesToAllClients )
-	{
-		mBroadcastThread.AddMessage(eventTime, mCMDifconfig.mEth0Info.mInet4Address, eventResult);
-	}
 }
 
-
-
-//  BroadcastMessage
-//  this function is called from the connected client thread when we get a broadcast message
-//
-void TheApp::HandleBroadcastMessage(timeval eventTime, string eventSender, string message)
+//  function to remove directory from the collection
+void TheApp::HandleRemoveDirectory(timeval eventTime, std::string eventSender, std::string dirName)
 {
-	//  BUILD YOUR PROGRAM HERE
-	//
-
-	//  Here is where you could take action on receiving a specific message
-	//  remember, this could be called from any of the n connected client threads, 
-	//  so make sure you wrap a lock around access to any shared memory collections
-	//
-	//
-
-	AddEvent(eventTime, eventSender, message);
-
-	if ( mForwardMessagesToAllClients )
-	{
-		mBroadcastThread.AddMessage(eventTime, eventSender, message);
-	}
+	return;
 }
 
+//  function to launch python file
+void TheApp::HandlePythonLaunch(timeval eventTime, std::string eventSender, std::string pathToFile)
+{
+	return;
+}
 
 
 //  SendMessageToAllClients
@@ -347,7 +349,7 @@ void TheApp::SendMessageToAllClients(list<LogEvent*>& eventsToSend)
 			sendString += (*nextEvent)->mEvent + "," + (*nextEvent)->mEventAddress + "\n";
 
 		}
-		
+
 		string response = nextClient->second->SendMessageToClient(sendString,  mForwardMessageWaitForClientResponse);
 
 		//  if we are waiting for responses, log the response as an event
@@ -408,6 +410,11 @@ string TheApp::GetIpAddress()
 //}
 
 
+void TheApp::FillFileList()
+{
+}
+
+
 
 
 
@@ -416,31 +423,6 @@ string TheApp::GetIpAddress()
 //  Command Line Functions
 //  handlers for command functions from arguments entered in main loop
 //
-
-
-void TheApp::BroadcastMessage(string input)
-{
-	// parse the message out of the input string
-
-	string message = input.substr(string("message").size()+1);
-
-	//  log event time
-	timeval eventTime;
-	gettimeofday(&eventTime, 0);
-
-	//  log event sender
-	//  todo  this assumes you are on wired, we should check for wifi here ?
-	string eventSender = mCMDifconfig.mEth0Info.mInet4Address;
-
-	string broadcastMessage = format("$TCP_MESSAGE,%s,%s,%s", eventSender.c_str(), FormatTime(eventTime).c_str(), message.c_str());
-
-	mBroadcastThread.AddMessage(eventTime, eventSender, broadcastMessage);
-
-	//  log the event
-	AddEvent(eventTime, eventSender, broadcastMessage);
-
-	return;
-}
 
 
 //  SaveLogs
@@ -470,7 +452,7 @@ bool TheApp::SaveLogs(string input)
 
 	//  close file
 	fclose( outputFile );
-	
+
 	return true;
 }
 
@@ -492,7 +474,7 @@ void TheApp::PrintLogs(FILE* stream)
 	//}
 
 
-	
+
 	//  very cool way to iterate through a list does it work for back to front?
 	for_each(  mEventLog.rbegin(), mEventLog.rend(), bind2nd(mem_fun(&LogEvent::PrintLog),stream) );
 
@@ -517,7 +499,7 @@ void TheApp::ClearLogs()
 	list<LogEvent*>::iterator nextEvent;
 	for ( nextEvent = mEventLog.begin(); nextEvent != mEventLog.end(); nextEvent++ )
 	{
-		delete *nextEvent;
+	delete *nextEvent;
 	}
 	*/
 
@@ -651,15 +633,15 @@ void TheApp::DisplayWriteClientConnections()
 	//LockMutex lockClients(mConnectedClientsMutex);
 	if ( mConnectedClientsMutex.try_lock() )
 	{
-	//  write out client connection state
-	map<string, ConnectedClient*>::iterator iter;
+		//  write out client connection state
+		map<string, ConnectedClient*>::iterator iter;
 
-	for ( iter = mConnectedClients.begin(); iter != mConnectedClients.end(); iter++ )
-	{
-		printf("/***   - Client at %s connected on port %d %s.\n", iter->second->GetIpAddressOfClient().c_str(), iter->second->GetConnectedOnPortNumber(), iter->second->IsActiveClient() ? "" : "(not active)" );
-	}
+		for ( iter = mConnectedClients.begin(); iter != mConnectedClients.end(); iter++ )
+		{
+			printf("/***   - Client at %s connected on port %d %s.\n", iter->second->GetIpAddressOfClient().c_str(), iter->second->GetConnectedOnPortNumber(), iter->second->IsActiveClient() ? "" : "(not active)" );
+		}
 
-	mConnectedClientsMutex.unlock();
+		mConnectedClientsMutex.unlock();
 
 	}
 }
@@ -712,7 +694,7 @@ void TheApp::DisplayUpdateClock()
 	fputs("\033[A\033[2K",stdout);
 	fputs("\033[A\033[2K",stdout);
 	rewind(stdout);
-	
+
 	//  write the time
 	DisplayWriteTime();
 }

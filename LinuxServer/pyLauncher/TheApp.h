@@ -36,6 +36,7 @@ protected:
 
 
 
+#define DIRLISTFILE "directoryList.txt"
 
 // TheApp
 // This class is the main application
@@ -67,12 +68,15 @@ public:
 	//  disconnect a client connection
 	void DisconnectClient(struct sockaddr_in &clientAddress);
 
+	//  function to add a directory to the collection
+	bool HandleAddDirectory(timeval eventTime, std::string eventSender, std::string dirName);
 
-	//  function to process the button push message from a connected client
-	void HandleButtonPush(timeval eventTime, std::string eventSender, std::string eventDetails);
+	//  function to remove directory from the collection
+	void HandleRemoveDirectory(timeval eventTime, std::string eventSender, std::string dirName);
+	 
+	//  function to launch python file
+	void HandlePythonLaunch(timeval eventTime, std::string eventSender, std::string pathToFile);
 
-	//  function to process the broadcast message from a connected client
-	void HandleBroadcastMessage(timeval eventTime, std::string eventSender, std::string message);
 
 	//  flags for broadcast of messages to clients
 	bool mForwardMessagesToAllClients;
@@ -96,7 +100,7 @@ public:
 	//  User Interface:  Input
 
 	//  command line input function handlers
-	void BroadcastMessage(std::string input);
+	
 	bool SaveLogs(std::string input);
 	void PrintLogs(FILE* stream);
 	void ClearLogs();
@@ -123,6 +127,15 @@ protected:
 
 	//  mutex to lock access to connected clients map
 	std::mutex mConnectedClientsMutex;
+
+	//  Directory and Files List
+	//
+	std::list<std::string> mDirectoryList;
+	std::list<std::string> mFilesList;
+	std::mutex mFilesListMutex;
+
+	void FillFileList();
+
 
 	BroadcastThread mBroadcastThread;
 

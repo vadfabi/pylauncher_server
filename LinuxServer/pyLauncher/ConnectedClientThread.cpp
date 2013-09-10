@@ -251,33 +251,42 @@ void ConnectedClient::RunFunction()
 
 	//  Look for recognized commands
 	//
-	if ( command.compare("$TCP_BUTTON") == 0 )  
+	if ( command.compare("$TCP_ADDDIR") == 0 )  
 	{
 		//  button n command
-		string argument = readParser.GetNextString();
-		string returnMessage = format("$TCP_BUTTON,ACK,%s", argument.c_str());
+		string arg = readParser.GetRemainingBuffer();
+		string returnMessage = format("$TCP_ADDDIR,ACK,%s", arg.c_str());
 
 		write(acceptFileDescriptor, returnMessage.c_str(), returnMessage.size());
 
-		mTheApp.HandleButtonPush(eventTime, eventSender, readFromSocket);
+		mTheApp.HandleAddDirectory(eventTime, eventSender, readParser.GetRemainingBuffer());
 	}
-	else if ( command.compare("$TCP_MESSAGE") == 0 )
+	else if ( command.compare("$TCP_RMDIR") == 0 )
 	{
 		//  message from client command
-		string argument = readParser.GetNextString();
-		string returnMessage = format("$TCP_MESSAGE,ACK,%s", argument.c_str());
+		string arg = readParser.GetRemainingBuffer();
+		string returnMessage = format("$TCP_RMDIR,ACK,%s", arg.c_str());
 		write(acceptFileDescriptor, returnMessage.c_str(), returnMessage.size());
 
 		//  broadcast this message to clients
-		mTheApp.HandleBroadcastMessage(eventTime, eventSender, readFromSocket);
+		mTheApp.HandleRemoveDirectory(eventTime, eventSender, arg);
 	}
-	else if ( command.compare("$TCP_ECHOTEST") == 0 )
+	else if ( command.compare("$TCP_GETDIR") == 0 )
 	{
-		//  echo back
-		write(acceptFileDescriptor, readFromSocket.c_str(), readFromSocket.size());
+		//  message from client command
+		string argument = readParser.GetNextString();
+		string returnMessage = format("$TCP_GETDIR,ACK,%s", argument.c_str());
+		write(acceptFileDescriptor, returnMessage.c_str(), returnMessage.size());
 
-		//  log the event
-		mTheApp.AddEvent(eventTime, eventSender, readFromSocket);
+		//theApp.HandleGetDirectory
+		
+	}
+	else if ( command.compare("$TCP_LAUNCH") == 0 )
+	{
+		//  message from client command
+		string arg = readParser.GetRemainingBuffer();
+		string returnMessage = format("LAUNCH,ACK,%s", arg.c_str());
+		write(acceptFileDescriptor, returnMessage.c_str(), returnMessage.size());
 	}
 	else
 	{
