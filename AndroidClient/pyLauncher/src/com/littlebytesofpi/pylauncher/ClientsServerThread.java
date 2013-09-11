@@ -178,18 +178,7 @@ public class ClientsServerThread extends Thread {
 			//  read what was sent on the socket
 			String inputRead = IpFunctions.ReadStringFromInputSocket(dataInputStream);
 
-			
-			//
-			//  BUILD YOUR PROGRAM HERE:
-			//  if you were going to do something with the message from the server, you would initiate it here
-			//  perhaps respond with a success or fail message back to the server that the command was received
-			//
-
-			
-			//  in this simple program, 
-			//  we will just respond with an respond with an echo in case the server is waiting for reply
 			String response = "";
-
 
 			//  time tag for this received event
 			long timeOfEvent = System.currentTimeMillis();

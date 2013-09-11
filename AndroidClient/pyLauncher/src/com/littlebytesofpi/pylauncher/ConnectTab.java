@@ -209,6 +209,10 @@ public class ConnectTab extends Activity {
 
 			case PyLauncherService.MESSAGE_CONNECTEDSTATECHANGE:
 				SetConnectedStateUi();
+				
+				if ( mService.IsConnectedToServer() )
+					mService.getDirectoryListFromServer();
+				
 				break;
 
 			case PyLauncherService.MESSAGE_NEWEVENT:

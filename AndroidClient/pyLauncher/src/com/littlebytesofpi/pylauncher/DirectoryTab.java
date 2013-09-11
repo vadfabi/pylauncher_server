@@ -125,18 +125,12 @@ public class DirectoryTab extends Activity {
 		public void handleMessage(Message msg) {
 			switch (msg.what) {
 
-			case PyLauncherService.MESSAGE_NETSTATECHANGE:
+			case PyLauncherService.MESSAGE_UPDATEDIRECTORIES:
+				
+				mService.GetDirectoryList(mDirectoryList);
+				mDirectoryAdapter.notifyDataSetChanged();
 				
 				break;
-
-			case PyLauncherService.MESSAGE_CONNECTEDSTATECHANGE:
-				
-				break;
-
-			case PyLauncherService.MESSAGE_NEWEVENT:
-				//mService.GetLogEvents(mLogEventList);
-				//mEventAdapter.notifyDataSetChanged();
-				//mListView.smoothScrollToPosition(0);
 			}
 		}
 	};  

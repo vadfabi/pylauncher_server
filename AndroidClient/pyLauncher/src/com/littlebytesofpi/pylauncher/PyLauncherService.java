@@ -34,6 +34,8 @@ public class PyLauncherService extends Service {
 	public static final int MESSAGE_EVENTRECEIVED = 2;
 	//
 	public static final int MESSAGE_NEWEVENT = 3;
+	//
+	public static final int MESSAGE_UPDATEDIRECTORIES = 4;
 
 	
 	public PyLauncherService(){
@@ -139,7 +141,7 @@ public class PyLauncherService extends Service {
 	//
 	public void showNotification() {
 
-		CharSequence text = "TCP Client";
+		CharSequence text = "pyLauncher";
 		// Set the icon, scrolling text and timestamp
 		Notification notification = new Notification(R.drawable.ic_launcher, text,	System.currentTimeMillis());
 
@@ -366,6 +368,75 @@ public class PyLauncherService extends Service {
 
 				Toast.makeText(PyLauncherService.this, "Failed to open server connection!", Toast.LENGTH_SHORT).show();
 				mConnectedToServerIp = "";
+			}
+
+			showNotification();
+		}
+	}
+	
+	
+	protected ArrayList<String> mDirectoryList = new ArrayList<String>();
+	public synchronized void GetDirectoryList(List<String> dirList)
+	{
+		dirList.clear();
+		dirList.addAll(mDirectoryList);
+	}
+	
+	public void getDirectoryListFromServer()
+	{
+	//  launch the connection task
+			new OpenConnectionTask().execute();
+	
+	}
+	//
+//  GetDirectoryListTask
+	private class GetDirectoryListTask extends AsyncTask<Void, Void, Integer> {
+
+		String readResponse = "";
+		protected Integer doInBackground(Void... param ) {
+
+			if ( IsConnectedToServer() )
+			{
+				readResponse = IpFunctions.SendStringToPort(mConnectedToServerIp, mConnectedToServerOnPort, "$TCP_LISTDIR");
+				return 1;
+			}
+			else
+				return 0;
+		}
+
+		//  Post Execute
+		protected void onPostExecute(Integer result ) {
+
+			if ( result == 1 && readResponse.contains("$TCP_LISTDIR,ACK") )
+			{
+				//  parse response:  
+				//  $TPC_LISTDIR,ACK,dir1,dir2,...
+			
+				Parser parser = new Parser(readResponse, ",");
+
+				String command = parser.GetNextString();
+				String pass = parser.GetNextString();
+
+				synchronized (PyLauncherService.this) {
+
+					//  update directory list
+					mDirectoryList.clear();
+					//
+					String nextDir = parser.GetNextString();
+					while ( nextDir.length() != 0 )
+					{
+						mDirectoryList.add(nextDir);
+						nextDir = parser.GetNextString();
+					}
+				}
+
+		
+				//  message success
+				PyLauncherService.this.SendMessage(MESSAGE_UPDATEDIRECTORIES);
+			}
+			else
+			{
+				Toast.makeText(PyLauncherService.this, "Failed to get list of directories!", Toast.LENGTH_SHORT).show();		
 			}
 
 			showNotification();
