@@ -128,15 +128,6 @@ int ProcessCommandModeInput(string input)
 		//  'resume'  -  break out of command mode
 		return 1;
 	}
-	else if ( input.substr(0, string("message").size()).compare("message") == 0 && input.size() > string("message").size() )
-	{
-		//  'broadcast'
-		theApp.BroadcastMessage(input);
-		
-		//  contiue in command mode
-		printf(" >");
-		return 0;
-	}
 	else if ( input.substr(0, string("forwarding").size()).compare("forwarding") == 0 && input.size() > string("forwarding").size() )
 	{
 		theApp.mForwardMessagesToAllClients = true;
