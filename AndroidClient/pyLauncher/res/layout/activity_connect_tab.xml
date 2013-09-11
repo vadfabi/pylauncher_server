@@ -64,23 +64,21 @@
         android:text="Server Listening on Port:" />
 
     <Button
-        android:id="@+id/buttonDisconnect"
-        android:layout_width="120dp"
-        android:layout_height="wrap_content"
-        android:layout_below="@+id/editText_Port"
-        android:layout_marginTop="15dp"
-        android:layout_toRightOf="@+id/buttonConnect"
-        android:text="Disconnect" />
-
-    <Button
         android:id="@+id/buttonConnect"
         android:layout_width="120dp"
         android:layout_height="wrap_content"
-        android:layout_alignBaseline="@+id/buttonDisconnect"
-        android:layout_alignBottom="@+id/buttonDisconnect"
-        android:layout_alignRight="@+id/textView_IpAddressTag"
+        android:layout_alignLeft="@+id/editText_Port"
+        android:layout_alignParentBottom="true"
         android:text="Connect" />
 
-
+    <Button
+        android:id="@+id/buttonDisconnect"
+        android:layout_width="120dp"
+        android:layout_height="wrap_content"
+        android:layout_alignBaseline="@+id/buttonConnect"
+        android:layout_alignBottom="@+id/buttonConnect"
+        android:layout_alignParentRight="true"
+        android:layout_marginRight="16dp"
+        android:text="Disconnect" />
 
 </RelativeLayout>

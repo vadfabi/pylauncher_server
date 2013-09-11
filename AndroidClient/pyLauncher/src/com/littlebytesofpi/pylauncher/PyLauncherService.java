@@ -385,7 +385,7 @@ public class PyLauncherService extends Service {
 	public void getDirectoryListFromServer()
 	{
 	//  launch the connection task
-			new OpenConnectionTask().execute();
+			new GetDirectoryListTask().execute();
 	
 	}
 	//

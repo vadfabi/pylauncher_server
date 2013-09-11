@@ -24,15 +24,15 @@
         android:layout_height="wrap_content"
         android:layout_alignBaseline="@+id/buttonAdd"
         android:layout_alignBottom="@+id/buttonAdd"
-        android:layout_alignRight="@+id/listView1"
-        android:text="Remove Directory" />
+        android:layout_alignRight="@+id/listViewDirectories"
+        android:text="Remove" />
 
     <Button
         android:id="@+id/buttonAdd"
         android:layout_width="120dp"
         android:layout_height="wrap_content"
-        android:layout_alignLeft="@+id/listView1"
+        android:layout_alignLeft="@+id/listViewDirectories"
         android:layout_alignParentBottom="true"
-        android:text="Add Directory" />
+        android:text="Add" />
 
 </RelativeLayout>
