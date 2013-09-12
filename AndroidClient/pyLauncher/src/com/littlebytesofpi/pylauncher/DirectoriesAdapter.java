@@ -1,7 +1,6 @@
 package com.littlebytesofpi.pylauncher;
 
-import java.util.List;
-
+import java.util.ArrayList;
 
 import android.content.Context;
 import android.view.LayoutInflater;
@@ -12,7 +11,7 @@ import android.widget.TextView;
 
 public class DirectoriesAdapter extends ListViewAdapter {
 
-	public DirectoriesAdapter(List<String> dataList, Context c)
+	public DirectoriesAdapter(ArrayList<PyFile> dataList, Context c)
 	{
 		super(dataList, c);
 	}
@@ -54,13 +53,37 @@ public class DirectoriesAdapter extends ListViewAdapter {
 			mViewHolder = (ViewHolder)convertView.getTag();
 		}
 
-		//  get the sensor for this row
-		final String event = (String) mDataList.get(position);
+		final int indexPosition = position;
+		//  get the directory for this row
+		PyFile directory = (PyFile) mDataList.get(indexPosition);
+
+		mViewHolder.checkBoxSelect.setChecked(directory.mSet);
+
+
+		//  create the click listener for this item
+		mViewHolder.checkBoxSelect.setOnClickListener(new View.OnClickListener() {
+
+			public void onClick(View v) {
+
+				PyFile dir = (PyFile)mDataList.get(indexPosition);
+
+				if(((CheckBox)v).isChecked())
+				{
+					dir.mSet = true;
+				}
+				else
+				{
+					dir.mSet = false;
+				}
+			}
+		});
+
+
+
 
 		//  format the data in the text views
-		mViewHolder.textViewName.setText(event.toString());
+		mViewHolder.textViewName.setText(directory.getPath());
 		
-				
 		//  set the check box current state from persistent data
 		return convertView;
 	}

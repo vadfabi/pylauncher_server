@@ -3,7 +3,7 @@
 <!-- Generated with http://android-holo-colors.com -->
 <resources xmlns:android="http://schemas.android.com/apk/res/android">
 
-  <style name="redcolors" parent="android:Theme.Black">
+  <style name="redcolors" parent="android:Theme.Holo">
 
     <item name="android:editTextStyle">@style/EditTextredcolors</item>
 
@@ -17,11 +17,11 @@
 
     <item name="android:imageButtonStyle">@style/ImageButtonredcolors</item>
 
-    <item name="android:spinnerStyle">@style/Spinnerredcolors</item>
+    <item name="android:spinnerStyle">@style/Spinnerredcolors</item> 
 
-    <!-- <item name="android:dropDownSpinnerStyle">@style/Spinnerredcolors.DropDown</item>  -->
+    <item name="android:dropDownSpinnerStyle">@style/Spinnerredcolors.DropDown</item>
 
-    <item name="android:spinnerDropDownItemStyle">@style/SpinnerDropDownItemredcolors</item>
+    <!--  <item name="android:spinnerDropDownItemStyle">@style/SpinnerDropDownItemredcolors</item>   -->
 
     <item name="android:progressBarStyleHorizontal">@style/ProgressBarredcolors</item>
 
@@ -40,6 +40,8 @@
     <item name="android:listViewWhiteStyle">@style/ListViewredcolors.White</item>
 
     <item name="android:spinnerItemStyle">@style/SpinnerItemredcolors</item>
+    
+     <item name="android:tabWidgetStyle">@style/TabWidgetredcolors</item>
 
   </style>
 

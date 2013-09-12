@@ -12,6 +12,7 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.SharedPreferences;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.net.wifi.WifiManager;
@@ -20,12 +21,14 @@ import android.os.Binder;
 import android.os.Handler;
 import android.os.IBinder;
 import android.os.Message;
+import android.preference.PreferenceManager;
 import android.widget.Toast;
 
 public class PyLauncherService extends Service {
 
 	/*
 	 * Messages
+	 * 
 	 */
 	public static final int MESSAGE_NETSTATECHANGE = 0;
 	//
@@ -38,6 +41,8 @@ public class PyLauncherService extends Service {
 	public static final int MESSAGE_UPDATEDIRECTORIES = 4;
 
 	
+	//  Constructor
+	//
 	public PyLauncherService(){
 		
 		//  This service will monitor network status, so setup a network state broadcast receiver
@@ -52,13 +57,9 @@ public class PyLauncherService extends Service {
 				}
 			}
 		};
-		
 	}
 	
 
-	/*
-	 * Service Lifecycle
-	 */
 
 	//  onDestroy
 	//
@@ -86,12 +87,6 @@ public class PyLauncherService extends Service {
 		return START_STICKY;
 	}
 
-
-
-
-	/*
-	 * Binding
-	 */
 
 	//  LocalBinder
 	//  this is a simple intraprocess application, so we use the LocalBinder method
@@ -124,16 +119,40 @@ public class PyLauncherService extends Service {
 
 		//  show notification
 		showNotification();
+		
+		//  setup default preferences
+		PreferenceManager.setDefaultValues(this,  R.xml.preferences,  false);
+
+		//  attempt connection to the server
+		if ( ! IsConnectedToServer() )
+		{
+
+			//  get the IP address to connect to
+			//  TODO:  this should be replaced with zero conf networking ip address discovery
+			SharedPreferences sharedPrefs = PreferenceManager.getDefaultSharedPreferences(this);
+			String ipAddress = sharedPrefs.getString("pref_serveripaddress", "");
+
+			int serverPort = 0;
+			try{
+				serverPort =  Integer.parseInt(sharedPrefs.getString("pref_serverport", "48888"));
+
+				if ( ipAddress != "" && ( serverPort > 1024 && serverPort < 65535) )
+				{
+					Toast.makeText(this, "Connecting to to server at: " + ipAddress + " on port: " + serverPort, Toast.LENGTH_SHORT).show();
+					openConnectionToServer(ipAddress, serverPort);
+				}
+			} 
+			catch (NumberFormatException e){
+			}
+		}
 
 		return mBinder;
 	}
 
 
 
-	/*
-	 * Notification Manager
-	 */
-
+	//  Notification Manager
+	//
 	private final int NOTIFICATION_ID = 99;
 	private NotificationManager mNM;
 
@@ -165,10 +184,11 @@ public class PyLauncherService extends Service {
 	}
 
 
-	/*
-	 * Message Handling
-	 */
-
+	
+	
+	//  Message Handling
+	//
+	
 	//  List of Handlers we will send messages to
 	private  ArrayList<Handler> mHandlerList = new ArrayList<Handler>(); 
 	//
@@ -219,24 +239,28 @@ public class PyLauncherService extends Service {
 	 */
 
 	//  List of events in the log
-	private ArrayList<LogEvent> mLogEventList = new ArrayList<LogEvent>();
+	private ArrayList<PyLaunchResult> mResultsList = new ArrayList<PyLaunchResult>();
 	//
-	public synchronized void AddLogEvent(LogEvent event){
+	public synchronized void AddLaunchResult(PyLaunchResult result){
 
-		mLogEventList.add(event);
+		mResultsList.add(result);
+		
+		if ( mResultsList.size() > 1 )
+			mResultsList.get(mResultsList.size()-2).mExpanded = false;
+		
 		//  message the UI
 		SendMessage(MESSAGE_NEWEVENT);
 	}
 	//
-	public synchronized void GetLogEvents(List<LogEvent> list){
+	public synchronized void GetLaunchResults(ArrayList<PyLaunchResult> list){
 
-		for ( int i = list.size(); i < mLogEventList.size(); i++ )
-			list.add(0, mLogEventList.get(i));
+		for ( int i = list.size(); i < mResultsList.size(); i++ )
+			list.add(0, mResultsList.get(i));
 	}
 	//
 	public synchronized void ClearLogs()
 	{
-		mLogEventList.clear();
+		mResultsList.clear();
 		SendMessage(MESSAGE_NEWEVENT);
 	}
 
@@ -273,7 +297,7 @@ public class PyLauncherService extends Service {
 
 	//  when connected we open a socket connection on this port for the server to send to us
 	//  and we run a socket accept thread
-	ClientsServerThread mClientsServerThread = null;
+	ClientsServer mClientsServerThread = null;
 	public int getClientListeningOnPort(){  
 		if ( mClientsServerThread != null )
 			return mClientsServerThread.GetClientListeningOnPort();
@@ -312,7 +336,7 @@ public class PyLauncherService extends Service {
 
 		mServerPort = connectPort;
 
-		mClientsServerThread = new ClientsServerThread(this);
+		mClientsServerThread = new ClientsServer(this);
 
 		//  launch the connection task
 		new OpenConnectionTask().execute(connectAddress);
@@ -329,38 +353,46 @@ public class PyLauncherService extends Service {
 				//  connect to server command:
 				// $TCP_CONNECT,clientsControlPort
 				mConnectedToServerIp = param[0];
-				readResponse = IpFunctions.SendStringToPort(mConnectedToServerIp, mServerPort, "$TCP_CONNECT," + getClientListeningOnPort());
-				return 1;
+				readResponse = IpFunctions.SendStringToPort(mConnectedToServerIp, mServerPort, ClientsServer.TCP_CONNECT +"," + getClientListeningOnPort());
+
+				if ( readResponse.contains(ClientsServer.TCP_CONNECT) && readResponse.contains(ClientsServer.TCP_ACK) )
+				{
+					//  parse response:  
+					//  $TPC_CONNECT,ACK,serversControlPort
+					Parser parser = new Parser(readResponse, ",");
+
+					String command = parser.GetNextString();	//  $TCP_CONNECT
+					String pass = parser.GetNextString();		//  $TCP_ACK
+					String serversControlPort = parser.GetNextString();		//  the server's listening port
+
+					try{
+						mConnectedToServerOnPort =  Integer.parseInt(serversControlPort);
+					} catch (NumberFormatException e){
+						Toast.makeText(PyLauncherService.this, "Error starting connection, unable to parse server control port number!", Toast.LENGTH_SHORT).show();
+						return 0;
+					}
+
+					//  start the client's listening server thread
+					mClientsServerThread.start();
+
+					return 1;
+				}
 			}
-			else
-				return 0;
+
+
+			return 0;
 		}
 
 		//  Post Execute
 		protected void onPostExecute(Integer result ) {
 
-			if ( result == 1 && readResponse.contains("$TCP_CONNECT,ACK") )
+			if ( result == 1 )
 			{
-				//  parse response:  
-				//  $TPC_CONNECT,ACK,serversControlPort
-				Parser parser = new Parser(readResponse, ",");
-
-				String command = parser.GetNextString();
-				String pass = parser.GetNextString();
-				String serversControlPort = parser.GetNextString();
-
-				try{
-					mConnectedToServerOnPort =  Integer.parseInt(serversControlPort);
-				} catch (NumberFormatException e){
-					Toast.makeText(PyLauncherService.this, "Error starting connection, unable to parse server control port number!", Toast.LENGTH_SHORT).show();
-					return;
-				}
-
-				//  start the client's listening server thread
-				mClientsServerThread.start();
-
 				//  message success
 				PyLauncherService.this.SendMessage(MESSAGE_CONNECTEDSTATECHANGE);
+				
+				//  update directories on new connect
+				new GetDirectoryListTask().execute();
 			}
 			else
 			{
@@ -370,79 +402,12 @@ public class PyLauncherService extends Service {
 				mConnectedToServerIp = "";
 			}
 
+			//  update android notification
 			showNotification();
 		}
 	}
 	
 	
-	protected ArrayList<String> mDirectoryList = new ArrayList<String>();
-	public synchronized void GetDirectoryList(List<String> dirList)
-	{
-		dirList.clear();
-		dirList.addAll(mDirectoryList);
-	}
-	
-	public void getDirectoryListFromServer()
-	{
-	//  launch the connection task
-			new GetDirectoryListTask().execute();
-	
-	}
-	//
-//  GetDirectoryListTask
-	private class GetDirectoryListTask extends AsyncTask<Void, Void, Integer> {
-
-		String readResponse = "";
-		protected Integer doInBackground(Void... param ) {
-
-			if ( IsConnectedToServer() )
-			{
-				readResponse = IpFunctions.SendStringToPort(mConnectedToServerIp, mConnectedToServerOnPort, "$TCP_LISTDIR");
-				return 1;
-			}
-			else
-				return 0;
-		}
-
-		//  Post Execute
-		protected void onPostExecute(Integer result ) {
-
-			if ( result == 1 && readResponse.contains("$TCP_LISTDIR,ACK") )
-			{
-				//  parse response:  
-				//  $TPC_LISTDIR,ACK,dir1,dir2,...
-			
-				Parser parser = new Parser(readResponse, ",");
-
-				String command = parser.GetNextString();
-				String pass = parser.GetNextString();
-
-				synchronized (PyLauncherService.this) {
-
-					//  update directory list
-					mDirectoryList.clear();
-					//
-					String nextDir = parser.GetNextString();
-					while ( nextDir.length() != 0 )
-					{
-						mDirectoryList.add(nextDir);
-						nextDir = parser.GetNextString();
-					}
-				}
-
-		
-				//  message success
-				PyLauncherService.this.SendMessage(MESSAGE_UPDATEDIRECTORIES);
-			}
-			else
-			{
-				Toast.makeText(PyLauncherService.this, "Failed to get list of directories!", Toast.LENGTH_SHORT).show();		
-			}
-
-			showNotification();
-		}
-	}
-
 
 	//  CloseConnectionToServer
 	//
@@ -471,7 +436,7 @@ public class PyLauncherService extends Service {
 			//  shut down the server thread
 			mClientsServerThread.cancel();
 
-			if ( readResponse.contains("$TCP_DISCONNECT,ACK") )
+			if ( readResponse.contains(ClientsServer.TCP_DISCONNECT) && readResponse.contains(ClientsServer.TCP_ACK) )
 				Toast.makeText(PyLauncherService.this, "Server closed connection.", Toast.LENGTH_SHORT).show();
 			else
 				Toast.makeText(PyLauncherService.this, "Error closing server connection", Toast.LENGTH_SHORT).show();
@@ -480,6 +445,255 @@ public class PyLauncherService extends Service {
 
 			//  update UI
 			PyLauncherService.this.SendMessage(MESSAGE_CONNECTEDSTATECHANGE);	
+		}
+	}
+
+	
+
+	/*
+	 * List of directories and files on the server
+	 * 
+	 */
+	
+	protected ArrayList<PyFile> mDirectoryList = new ArrayList<PyFile>();
+	public synchronized void GetDirectoryList(ArrayList<PyFile> dirList)
+	{
+		dirList.clear();
+		dirList.addAll(mDirectoryList);		
+	}
+	
+	protected ArrayList<PyFile> mFilesList = new ArrayList<PyFile>();
+	public synchronized void GetFilesList(ArrayList<PyFile> filesList)
+	{
+		filesList.clear();
+		filesList.addAll(mFilesList);
+	}
+	
+	
+	//  GetDirectoryListTask
+	//
+	private class GetDirectoryListTask extends AsyncTask<Void, Void, Integer> {
+
+		String readResponse = "";
+		protected Integer doInBackground(Void... param ) {
+
+			if ( IsConnectedToServer() )
+			{
+				readResponse = IpFunctions.SendStringToPort(mConnectedToServerIp, mConnectedToServerOnPort, "$TCP_LISTDIR");
+
+				if ( ! ParseListDir(readResponse) )
+					return 0;
+
+				//  get the list of files
+				readResponse = IpFunctions.SendStringToPort(mConnectedToServerIp, mConnectedToServerOnPort, "$TCP_LISTFILES");
+
+				if ( ! ParseListFiles(readResponse) )
+					return 0;
+				
+				return 1;
+			}
+			else
+				return 0;
+		}
+
+		//  Post Execute
+		protected void onPostExecute(Integer result ) {
+
+			if ( result == 1 )
+			{
+				//  message success
+				PyLauncherService.this.SendMessage(MESSAGE_UPDATEDIRECTORIES);
+			}
+			else
+			{
+				Toast.makeText(PyLauncherService.this, "Failed to get list of directories!", Toast.LENGTH_SHORT).show();		
+			}
+
+			showNotification();
+		}
+	}
+	
+	//  RemoveDirectory
+	//
+	public void RemoveDirectory()
+	{
+		new RemoveDirectoryTask().execute();
+	}
+	//
+	private class RemoveDirectoryTask extends AsyncTask<Void, Void, Integer> {
+
+		String readResponse = "";
+		protected Integer doInBackground(Void... param ) {
+
+			String removeCommand = ClientsServer.TCP_REMOVEDIR + ",";
+			synchronized (PyLauncherService.this) {
+			//  build a list of directories to remove
+				for ( PyFile nextFile : mDirectoryList )
+				{
+					if ( nextFile.mSet )
+						removeCommand += nextFile.getPath();
+				}
+			}
+			
+			readResponse = IpFunctions.SendStringToPort(mConnectedToServerIp, mConnectedToServerOnPort, removeCommand);
+
+			if ( readResponse.contains(ClientsServer.TCP_REMOVEDIR) && readResponse.contains(ClientsServer.TCP_ACK) )
+				return 1;
+			else
+				return 0;
+		}
+
+		//  Post Execute
+		protected void onPostExecute(Integer result ) {
+
+			if ( result == 0 )
+			{
+				Toast.makeText(PyLauncherService.this, "Failed to get list of directories!", Toast.LENGTH_SHORT).show();		
+			}
+
+			showNotification();
+		}
+	}
+	
+	
+//  RemoveDirectory
+	//
+	public void AddDirectory(String dirToAdd)
+	{
+		new AddDirectoryTask().execute(dirToAdd);
+	}
+	//
+	private class AddDirectoryTask extends AsyncTask<String, Void, Integer> {
+
+		String readResponse = "";
+		protected Integer doInBackground(String... param ) {
+
+			String addCommand = ClientsServer.TCP_ADDDIR + "," + param[0];
+			
+			
+			readResponse = IpFunctions.SendStringToPort(mConnectedToServerIp, mConnectedToServerOnPort, addCommand);
+
+			if ( readResponse.contains(ClientsServer.TCP_ADDDIR) && readResponse.contains(ClientsServer.TCP_ACK) )
+				return 1;
+			else
+				return 0;
+		}
+
+		//  Post Execute
+		protected void onPostExecute(Integer result ) {
+
+			if ( result == 0 )
+			{
+				Toast.makeText(PyLauncherService.this, "Failed to add directory!", Toast.LENGTH_SHORT).show();		
+			}
+
+			showNotification();
+		}
+	}
+
+	
+	//  ParseListDir
+	//  parses the response to $TCP_LISTDIR
+	//
+	synchronized boolean ParseListDir(String input)
+	{
+		//  $TPC_LISTDIR,ACK,dir1,dir2,...
+		Parser parser = new Parser(input, ",");
+
+		// parse $TPC_LISTDIR
+		if ( parser.GetNextString().compareTo(ClientsServer.TCP_LISTDIR) != 0 )
+			return false;		
+		
+		//  parse ACK
+		if ( parser.GetNextString().compareTo(ClientsServer.TCP_ACK) != 0 )
+			return false;
+
+		// update directory list
+		mDirectoryList.clear();
+		//
+		String nextDir = parser.GetNextString();
+		while ( nextDir.length() != 0 )
+		{
+			mDirectoryList.add(new PyFile(nextDir));
+			nextDir = parser.GetNextString();
+		}
+		
+		return true;
+	}
+
+
+	//  ParseListFiles
+	//  parses the response to $TPC_LISTFILES
+	//
+	synchronized boolean ParseListFiles(String input)
+	{
+		//  $TPC_LISTFILES,ACK,file1,file2,...
+		Parser parser = new Parser(input, ",");
+
+	//  parse out $TPC_LISTFILES
+		if ( parser.GetNextString().compareTo(ClientsServer.TCP_LISTFILES) != 0 )
+			return false;
+		
+	//  parse out ACK
+		if ( parser.GetNextString().compareTo(ClientsServer.TCP_ACK) != 0 )
+			return false;
+
+		//  update files list
+		mFilesList.clear();
+		//
+		String nextFile = parser.GetNextString();
+		while ( nextFile.length() != 0 )
+		{
+			mFilesList.add(new PyFile(nextFile));
+			nextFile = parser.GetNextString();
+		}
+		
+		return true;
+	}
+
+
+	/*
+	 * Launching Python Files on the Server
+	 * 
+	 */
+	
+	//  RunPyFile
+	//
+	public void RunPyFile(PyFile fileToRun)
+	{
+		new RunPyFileTask().execute(fileToRun.mFullPath);
+	}
+	
+	//
+	//  GetDirectoryListTask
+	private class RunPyFileTask extends AsyncTask<String, Void, Integer> {
+
+		String readResponse = "";
+		protected Integer doInBackground(String... param ) {
+
+			if ( IsConnectedToServer() )
+			{
+				readResponse = IpFunctions.SendStringToPort(mConnectedToServerIp, mConnectedToServerOnPort, "$TCP_PYLAUNCH," + param[0]);
+
+				if ( ! readResponse.contains("$TCP_PYLAUNCH,ACK") )
+					return 0;
+				
+				return 1;
+			}
+			else
+				return 0;
+		}
+
+		//  Post Execute
+		protected void onPostExecute(Integer result ) {
+
+			if ( result == 0 )
+			{
+				//  todo message from server in failure toast
+				Toast.makeText(PyLauncherService.this, "Failed to launch python file!", Toast.LENGTH_SHORT).show();		
+			}
+
+			showNotification();
 		}
 	}
 
@@ -535,66 +749,6 @@ public class PyLauncherService extends Service {
 
 		//  message the UI
 		SendMessage(MESSAGE_NETSTATECHANGE);
-	}
-
-
-
-
-	/*
-	 * Handle events from user interface
-	 */
-
-	//  PressButton
-	//  handles a button press event
-	public void PressButton(int buttonNumber){
-
-		new PressButtonTask().execute(buttonNumber);
-	}
-	//
-	//  PressButtonTask
-	private class PressButtonTask extends AsyncTask<Integer, Void, Integer> {
-
-		String readResponse = "";
-
-		protected Integer doInBackground(Integer... param ) {
-
-			readResponse = PyLauncherService.this.SendStringToConnectedOnCommandPort("$TCP_BUTTON,"+param[0]);
-
-			return 1;
-		}
-
-		protected void onPostExecute(Integer result ) {
-
-			//  Build Your Program Here
-			//  if you want to react to the server's response to your button press, do it here
-		}
-	}
-
-
-	//  SendMessageToServer
-	//  handles message send event
-	public void SendMessageToServer(String message){
-
-		new SendMessageToServerTask().execute(message);
-	}
-	//
-	//  SendMessageToServerTask
-	private class SendMessageToServerTask extends AsyncTask<String, Void, Integer> {
-
-		String readResponse = "";
-
-		protected Integer doInBackground(String... param ) {
-
-			readResponse = PyLauncherService.this.SendStringToConnectedOnCommandPort("$TCP_MESSAGE,"+ param[0]);
-
-			return 1;
-		}
-
-		protected void onPostExecute(Integer result ) {
-
-			//  Build Your Program Here
-			//  if you want to react to the server's response to your button press, do it here
-		}
 	}
 
 

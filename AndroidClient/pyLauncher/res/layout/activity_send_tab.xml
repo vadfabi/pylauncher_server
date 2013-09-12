@@ -8,9 +8,40 @@
     android:paddingTop="@dimen/activity_vertical_margin"
     tools:context=".SendTab" >
 
+    <ListView
+        android:id="@+id/listViewEvents"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_alignParentLeft="true"
+        android:layout_below="@+id/buttonRunFile" >
+
+    </ListView>
+
     <TextView
+        android:id="@+id/textViewInstructions"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="send tab" />
+        android:layout_alignParentLeft="true"
+        android:layout_alignParentTop="true"
+        android:layout_marginTop="2dp"
+        android:text="Select a Python file to run:" />
+
+    <Spinner
+        android:id="@+id/spinnerFile"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignLeft="@+id/listViewEvents"
+        android:layout_alignRight="@+id/listViewEvents"
+        android:layout_below="@+id/textViewInstructions"
+        android:layout_marginTop="21dp" />
+
+    <Button
+        android:id="@+id/buttonRunFile"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignTop="@+id/spinnerFile"
+        android:layout_centerHorizontal="true"
+        android:layout_marginTop="35dp"
+        android:text="Run File" />
 
 </RelativeLayout>

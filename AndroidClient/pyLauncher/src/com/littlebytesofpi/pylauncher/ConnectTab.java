@@ -34,8 +34,6 @@ public class ConnectTab extends Activity {
 
 	//  Button Handler
 	//
-
-	//
 	View.OnClickListener ButtonOnClickListener = new View.OnClickListener() {
 
 		@Override
@@ -50,8 +48,7 @@ public class ConnectTab extends Activity {
 				editPref.putString("pref_serveripaddress", editTextIpAddress.getText().toString());
 				editPref.putString("pref_serverport", editTextPort.getText().toString());
 
-
-				// Commit the edits!
+				// Commit the edits
 				editPref.commit();
 				
 				openServerConnectionWithSettings();
@@ -69,6 +66,8 @@ public class ConnectTab extends Activity {
 
 
 
+	//  onCreate
+	//
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
@@ -96,6 +95,7 @@ public class ConnectTab extends Activity {
 
 	}
 
+	
 	//  onStart
 	//
 	@Override
@@ -116,6 +116,7 @@ public class ConnectTab extends Activity {
 		SetConnectedStateUi();
 	}
 
+	
 	//  onDestroy
 	@Override
 	public void onDestroy(){
@@ -130,6 +131,8 @@ public class ConnectTab extends Activity {
 	 * Service Handling
 	 * 
 	 */
+	
+	//  reference to the service
 	PyLauncherService mService = null;
 
 	//  ServiceConnection
@@ -143,29 +146,14 @@ public class ConnectTab extends Activity {
 			mService = binder.getService();
 			mService.AddHandler(mHandler);
 
-			//  attempt automatic connection to the server
-			if ( ! mService.IsConnectedToServer() )
-			{
-				if ( ! mService.IsConnectedToServer() )
-					openServerConnectionWithSettings();
-			}
-			else
-			{
-				SetNetworkStateUi();
-				SetConnectedStateUi();
-
-				//mService.GetLogEvents(mLogEventList);
-				//mEventAdapter.notifyDataSetChanged();
-				//mListView.smoothScrollToPosition(0);	
-
-			}
+			SetNetworkStateUi();
+			SetConnectedStateUi();
 		}
 
 
 		public void onServiceDisconnected(ComponentName className) {
 			// This is called when the connection with the service has been
 			// unexpectedly disconnected -- that is, its process crashed.
-
 		}
 	};
 
@@ -182,6 +170,7 @@ public class ConnectTab extends Activity {
 
 
 	//  UnbindFromService
+	//
 	void UnbindFromService() {
 		if (mService != null) {
 
@@ -193,11 +182,8 @@ public class ConnectTab extends Activity {
 	}
 
 
-
-	/*
-	 * Message Handler for messages back from the service	
-	 */
-
+	//  Message Handler
+	//
 	private final Handler mHandler = new Handler() {
 		@Override
 		public void handleMessage(Message msg) {
@@ -208,25 +194,17 @@ public class ConnectTab extends Activity {
 				break;
 
 			case PyLauncherService.MESSAGE_CONNECTEDSTATECHANGE:
+				
 				SetConnectedStateUi();
-				
-				if ( mService.IsConnectedToServer() )
-					mService.getDirectoryListFromServer();
-				
 				break;
-
-			case PyLauncherService.MESSAGE_NEWEVENT:
-				//mService.GetLogEvents(mLogEventList);
-				//mEventAdapter.notifyDataSetChanged();
-				//mListView.smoothScrollToPosition(0);
 			}
 		}
 	};  
 
-	/*
-	 * Open Connection to Server with address:port from settings
-	 */
-
+	
+	
+	//  Open Connection to Server with address:port from settings
+	//
 	protected void openServerConnectionWithSettings()
 	{
 		//  get the IP address to connect to

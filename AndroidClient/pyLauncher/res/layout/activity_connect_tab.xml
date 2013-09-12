@@ -23,7 +23,7 @@
         android:layout_height="wrap_content"
         android:layout_alignLeft="@+id/textView_PortTag"
         android:layout_below="@+id/textView_PortTag"
-        android:layout_marginTop="5dp"
+        android:layout_marginTop="1dp"
         android:ems="10"
         android:inputType="number" />
 
@@ -41,7 +41,7 @@
         android:layout_height="wrap_content"
         android:layout_alignLeft="@+id/textView_ServerStatus"
         android:layout_below="@+id/textView_ServerStatus"
-        android:layout_marginTop="5dp"
+        android:layout_marginTop="10dp"
         android:text="IP Address of Server:" />
 
     <EditText
@@ -50,7 +50,7 @@
         android:layout_height="wrap_content"
         android:layout_alignLeft="@+id/textView_IpAddressTag"
         android:layout_below="@+id/textView_IpAddressTag"
-        android:layout_marginTop="5dp"
+        android:layout_marginTop="1dp"
         android:ems="10" 
         android:inputType="phone"/>
 
@@ -60,7 +60,7 @@
         android:layout_height="wrap_content"
         android:layout_alignLeft="@+id/editText_IpAddress"
         android:layout_below="@+id/editText_IpAddress"
-        android:layout_marginTop="10dp"
+        android:layout_marginTop="5dp"
         android:text="Server Listening on Port:" />
 
     <Button

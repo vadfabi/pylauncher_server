@@ -9,35 +9,50 @@ import java.net.Socket;
 import android.util.Log;
 
 
-public class ClientsServerThread extends Thread {
+public class ClientsServer extends Thread {
 
 	/*
-	 * ClientsServerThread 
+	 * ClientsServer 
 	 * 
 	 * This thread is running while we are connected
 	 * this is the client's ServerSocket accept thread, listening for control messages from the server
 	 *  
 	 */
 
-	//  ClientServerThread
-	//  Constructor
-	//
-	public ClientsServerThread(PyLauncherService service) {
-		mService = service;
-	}
+	
+	/*
+	 * Client <=> Server Commands
+	 */
+	public static final String TCP_CONNECT = "$TCP_CONNECT";
+	public static final String TCP_DISCONNECT = "$TCP_DISCONNECT";
+	public static final String TCP_LISTDIR = "$TCP_LISTDIR";
+	public static final String TCP_LISTFILES = "$TCP_LISTFILES";
+	public static final String TCP_PYLAUNCH = "$TCP_PYLAUNCH";
+	public static final String TCP_PYRESULT = "$TCP_PYRESULT";
+	public static final String TCP_CLIENTACCEPT = "$TCP_CLIENTACCEPT";
+	public static final String TCP_REMOVEDIR = "$TCP_REMOVEDIR";
+	public static final String TCP_ADDDIR = "$TCP_ADDDIR";
+	public static final String TCP_ACK = "ACK";
+	
 
+	
 	//  reference to the service
 	private PyLauncherService mService;
 
+	
+	//  ClientServerThread
+	//  Constructor
+	//
+	public ClientsServer(PyLauncherService service) {
+		mService = service;
+	}
 
-
-	/*
-	 * Socket Port Handling
-	 */
-
+	
+	
+	//  Socket
 	private ServerSocket mServerSocket = null; 
 	private Socket mSocket = null;
-
+	
 	//  GetClientListeningOnPort
 	//  return port number that client is listening on (client's server port)
 	//
@@ -54,8 +69,6 @@ public class ClientsServerThread extends Thread {
 	public boolean IsConnected(){
 		return (mThreadRunning  && mServerSocket != null );
 	}
-
-
 
 
 	//  OpenSocketConnection
@@ -89,7 +102,6 @@ public class ClientsServerThread extends Thread {
 	private boolean mThreadRunning = false;
 	private boolean mThreadExit = false;
 
-	
 	//  Thread run function
 	//
 	public void run() {
@@ -178,9 +190,18 @@ public class ClientsServerThread extends Thread {
 			//  read what was sent on the socket
 			String inputRead = IpFunctions.ReadStringFromInputSocket(dataInputStream);
 
-			String response = "";
+			//  write the response right away in case server is waiting to read
+			String response = TCP_CLIENTACCEPT + "," + TCP_ACK;
+			dataOutputStream.writeBytes(response);
+			dataOutputStream.flush();
+			
+			//  and close the socket so the server can get back to its business
+			dataOutputStream.close();
+			dataOutputStream = null;
+			dataInputStream.close();
+			dataInputStream = null;
 
-			//  time tag for this received event
+			//  Process this input
 			long timeOfEvent = System.currentTimeMillis();
 			
 			//  parse the read string into individual event strings, separated by newline
@@ -188,24 +209,45 @@ public class ClientsServerThread extends Thread {
 			String nextMessage = inputParser.GetNextString();
 			while ( nextMessage.length() > 0 )
 			{
-				response += "$TPC_RECEIVED," + nextMessage + "\n";
+				if ( nextMessage.contains(TCP_PYRESULT) )
+				{
+					//  $TCP_PYRESULT,pyFileName,ipOfRequester,timeOfRequest,timeOfLaunch,timeComplete,outputLine1,outputLine2,...
+					Parser nextMessageParser = new Parser(nextMessage, ",");
+					String command = nextMessageParser.GetNextString();		// $TCP_PYRESULT
 
-				//  log the event
-				Parser nextMessageParser = new Parser(nextMessage, ",");
-				String command = nextMessageParser.GetNextString();
-				String arguments = nextMessageParser.GetRemainingBuffer();
-				//
-				LogEvent logEvent = new LogEvent(timeOfEvent, command, arguments);
-				logEvent.mIpAddressOfSender = mSocket.getInetAddress().toString().substring(1);
-				mService.AddLogEvent(logEvent);
+					String fileName = nextMessageParser.GetNextString();		//  full path of python file launched
+					String ipOfRequest = nextMessageParser.GetNextString();		//  ip address of client requesting launch
+					String timeRequest = nextMessageParser.GetNextString();		//  time launch request was received at server
+					String timeLaunch = nextMessageParser.GetNextString();		//  time launch was started by server
+					String timeComplete = nextMessageParser.GetNextString();	//  time pyton script was completed
+
+					//  create an object to hold the info about this result
+					PyLaunchResult lanuchResult = new PyLaunchResult(fileName, ipOfRequest, timeRequest, timeLaunch, timeComplete);
+
+					//  now get outputLine1 to outputLine_n
+					String result = nextMessageParser.GetNextString();
+					while ( result.length() != 0 )
+					{
+						lanuchResult.mResults.add(result);
+						result = nextMessageParser.GetNextString();
+					}
+
+					mService.AddLaunchResult(lanuchResult);
+					
+				}
+				else if ( nextMessage.contains(TCP_LISTDIR) )
+				{
+					if ( mService.ParseListDir(nextMessage) )
+						mService.SendMessage(PyLauncherService.MESSAGE_UPDATEDIRECTORIES);
+				}
+				else if ( nextMessage.contains(TCP_LISTFILES) )
+				{
+					if ( mService.ParseListFiles(nextMessage) )
+						mService.SendMessage(PyLauncherService.MESSAGE_UPDATEDIRECTORIES);
+				}
 
 				nextMessage = inputParser.GetNextString();
 			}
-
-			//  write the response
-			dataOutputStream.writeBytes(response);
-			dataOutputStream.flush();
-
 
 		} catch(IOException e){
 			Log.e(TAG, "Exception in ProcessControlInput:" + e.toString());
@@ -234,6 +276,6 @@ public class ClientsServerThread extends Thread {
 
 	//  debug flags
 	private final boolean D = true;
-	private final String TAG = "ClientsServerThread";
+	private final String TAG = "ClientsServer";
 
 }
