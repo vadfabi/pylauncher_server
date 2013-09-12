@@ -6,10 +6,12 @@
 #include <fstream>
 #include <iostream>
 #include <sys/stat.h>
+#include <dirent.h>
 
 #include "TheApp.h"
 #include "../tcPIp_Sockets/Parser.h"
 #include "ConnectedClientThread.h"
+#include "../tcPIp_Sockets/UtilityFn.h"
 #include "../tcPIp_Sockets/UtilityFn.h"
 
 using namespace std;
@@ -26,7 +28,7 @@ using namespace std;
 //  Constructor
 //
 TheApp::TheApp() :
-	mConnectionThread(*this),  mDisplayThread(*this), mBroadcastThread(*this)
+	mConnectionThread(*this),   mBroadcastThread(*this), mPyLaunchThread(*this)
 {
 	mVersionString = "1.0.2";
 
@@ -34,7 +36,7 @@ TheApp::TheApp() :
 	mLogSysEvents = true;
 
 	mDisplayUpdatesOn = true;
-	mUpdateDisplay = true;
+	
 
 	mForwardMessagesToAllClients = true;
 	mForwardMessageWaitForClientResponse = true;
@@ -71,28 +73,34 @@ bool TheApp::InitializeInstance()
 	//  fill the dir list from the file
 	ifstream dirFile;
 	dirFile.open(DIRLISTFILE);
-	
-	string readLine;
-	while ( ! dirFile.eof() )
+
+	if (  dirFile.is_open() )
 	{
-		getline(dirFile, readLine);
-		mDirectoryList.push_back(readLine);
+		string readLine;
+		while ( ! dirFile.eof() )
+		{
+			getline(dirFile, readLine);
+			if ( readLine.size() != 0 )
+				mDirectoryList.push_back(readLine);
+		}
+
+		dirFile.close();
+
 	}
 
-	dirFile.close();
+
+	UpdatePythonFilesList();
 
 
 	//  start the connection thread
 	mConnectionThread.Start();
 
-	//  start the display thread
-	mDisplayThread.Start();
-	//  flag for update on first pass
-	mUpdateDisplay = true;
 
 	mBroadcastThread.Start();
 
-	
+	mPyLaunchThread.Start();
+
+	DisplayWriteHeader();
 
 	//  initialization successful
 	return true;
@@ -109,9 +117,12 @@ void TheApp::ShutDown()
 	if ( mBroadcastThread.IsRunning() )
 		mBroadcastThread.Cancel();
 
+	if ( mPyLaunchThread.IsRunning() )
+		mPyLaunchThread.Cancel();
+
 	//  disconnect all of our clients
 	map<string, ConnectedClient*>::iterator nextClient;
-	for ( nextClient = mConnectedClients.begin(); nextClient != mConnectedClients.end(); nextClient++ )
+	for ( nextClient = mConnectedClients.begin(); nextClient != mConnectedClients.end(); ++nextClient )
 	{
 		nextClient->second->Cancel();
 		delete nextClient->second;
@@ -123,14 +134,53 @@ void TheApp::ShutDown()
 	if ( mConnectionThread.IsRunning() )
 		mConnectionThread.Cancel();
 
-	//  stop the display thread
-	if ( mDisplayThread.IsRunning() )
-		mDisplayThread.Cancel();
+	
 
 	//  delete the log event objects in the mEventLog list
 	//  this method uses the helper function deleteLogEvent( )
 	mEventLog.remove_if(deleteLogEvent);
 }
+
+
+void TheApp::UpdatePythonFilesList()
+{
+	LockMutex lockFiles(mFilesListMutex);
+
+	mFilesList.clear();
+
+	list<string>::iterator nextDir;
+	for ( nextDir = mDirectoryList.begin(); nextDir != mDirectoryList.end(); ++nextDir )
+	{
+		DIR *dir;
+		struct dirent *ent;
+		if ( (dir = opendir((*nextDir).c_str())) != 0 ) 
+		{
+			//  look for all the .py files in the directories
+			while ((ent = readdir (dir)) != 0) 
+			{
+				string fileName = ent->d_name;
+				if ( fileName.size() < 4 )
+					continue;	//  skip files too small to have .py
+
+				if ( fileName.find(".py", 3) == (fileName.size() -3) )
+				{
+					string fileFullPath = *nextDir + "/" + fileName;
+					mFilesList.push_back(fileFullPath);
+				}
+
+				//printf ("%s\n", ent->d_name);
+			}
+			closedir (dir);
+		} 
+		else 
+		{
+			/* could not open directory */
+			continue;
+		}
+	}
+}
+
+
 
 
 
@@ -155,14 +205,12 @@ void TheApp::AddEvent(timeval eventTime, string eventSender, string eventDetails
 			mEventLog.pop_back();
 		}
 
-		//  if we are in listing logs mode, all logs get printed to stdout
-		if ( mListingLogs )
-			newEvent->PrintLog(stdout);
+		//  update display
+		DisplayWriteEvent(*newEvent);
 
 	}//  we are done modifying the event log, release access
 
-	//  update display
-	SetUpdateDisplay();
+
 }
 
 
@@ -226,6 +274,8 @@ int TheApp::CreateClientConnection(const struct sockaddr_in &clientAddress, int 
 
 	} //  unlock access to the client map
 
+	DisplayWriteConnectionStatus();
+
 	return servingClientOnPortNumber;
 }
 
@@ -262,9 +312,50 @@ void TheApp::DisconnectClient(struct sockaddr_in &clientAddress)
 
 	}	//  release access to client map
 
-	//  update display
-	SetUpdateDisplay();
+	DisplayWriteConnectionStatus();
+
 }
+
+
+//  return a comma delimited string of all directories in collection
+string TheApp::BuildDirList()
+{
+	LockMutex lockFiles(mFilesListMutex);
+
+	//  print list out to file
+	string listOfDir = "";
+	list<string>::iterator nextString;
+	for( nextString = mDirectoryList.begin(); nextString != mDirectoryList.end(); ++nextString )
+	{
+		if ( nextString != mDirectoryList.begin() && nextString != mDirectoryList.end() )
+			listOfDir += ",";
+		listOfDir += *nextString;
+	}
+
+	return listOfDir;
+
+}
+
+string TheApp::BuildFileList()
+{
+	LockMutex lockFiles(mFilesListMutex);
+
+	//  print list out to file
+	string listOfFiles = "";
+	list<string>::iterator nextString;
+	for( nextString = mFilesList.begin(); nextString != mFilesList.end(); ++nextString )
+	{
+		if ( nextString != mFilesList.begin() && nextString != mFilesList.end() )
+			listOfFiles += ",";
+		listOfFiles += *nextString;
+	}
+
+	return listOfFiles;
+}
+
+
+
+
 
 
 //  function to add a directory to the collection
@@ -291,18 +382,28 @@ bool TheApp::HandleAddDirectory(timeval eventTime, std::string eventSender, std:
 		if ( outputFile == 0 )
 			return false;
 
-
-
-		//  print all the logs
+		//  print list out to file
 		list<string>::iterator nextString;
 		for( nextString = mDirectoryList.begin(); nextString != mDirectoryList.end(); ++nextString )
 		{
-			fprintf( outputFile, "%s\n", (*nextString).c_str());
+			fprintf( outputFile, "%s\n", nextString->c_str());
 		}
 
-
-
+		fclose(outputFile);
 	}
+
+	UpdatePythonFilesList();
+
+	string listOfDir = BuildDirList();
+	string dirMessage = format("$TCP_LISTDIR,ACK,%s", listOfDir.c_str());
+
+	BroadcastMessage(eventTime, GetIpAddress(), dirMessage);
+
+	listOfDir = BuildFileList();
+	dirMessage = format("$TCP_LISTFILES,ACK,%s", listOfDir.c_str());
+
+	BroadcastMessage(eventTime, eventSender, dirMessage);
+
 
 	return false;
 
@@ -311,12 +412,53 @@ bool TheApp::HandleAddDirectory(timeval eventTime, std::string eventSender, std:
 //  function to remove directory from the collection
 void TheApp::HandleRemoveDirectory(timeval eventTime, std::string eventSender, std::string dirName)
 {
+	{
+		LockMutex lockFiles(mFilesListMutex);
+
+		Parser dirNameParser(dirName, ",");
+		string nextDir = dirNameParser.GetNextString();
+		while (nextDir.size() != 0 )
+		{
+			mDirectoryList.remove(nextDir);
+			nextDir = dirNameParser.GetNextString();
+		}
+
+		//  open file
+		FILE* outputFile = fopen ( DIRLISTFILE, "w" );
+		if ( outputFile == 0 )
+			return;
+
+		list<string>::iterator nextString;
+		for ( nextString = mDirectoryList.begin(); nextString != mDirectoryList.end(); ++nextString )
+		{
+			fprintf( outputFile, "%s\n", nextString->c_str());
+		}
+	
+
+		//  close file
+		fclose( outputFile );
+	}
+
+	UpdatePythonFilesList();
+
+	string listOfDir = BuildDirList();
+	string dirMessage = format("$TCP_LISTDIR,ACK,%s", listOfDir.c_str());
+
+	BroadcastMessage(eventTime, GetIpAddress(), dirMessage);
+
+	listOfDir = BuildFileList();
+	dirMessage = format("$TCP_LISTFILES,ACK,%s", listOfDir.c_str());
+
+	BroadcastMessage(eventTime, eventSender, dirMessage);
+
 	return;
 }
 
 //  function to launch python file
 void TheApp::HandlePythonLaunch(timeval eventTime, std::string eventSender, std::string pathToFile)
 {
+	mPyLaunchThread.AddLaunchEvent(eventTime, eventSender, pathToFile);
+
 	return;
 }
 
@@ -346,7 +488,7 @@ void TheApp::SendMessageToAllClients(list<LogEvent*>& eventsToSend)
 			if ( nextClient->second->GetIpAddressOfClient().compare((*nextEvent)->mEventAddress) == 0 )
 				continue;
 
-			sendString += (*nextEvent)->mEvent + "," + (*nextEvent)->mEventAddress + "\n";
+			sendString += (*nextEvent)->mEvent + "\n";
 
 		}
 
@@ -410,8 +552,29 @@ string TheApp::GetIpAddress()
 //}
 
 
-void TheApp::FillFileList()
+
+
+
+//  BroadcastMessage
+//  this function is called from the connected client thread when we get a broadcast message
+//
+void TheApp::BroadcastMessage(timeval eventTime, string eventSender, string message)
 {
+	//  BUILD YOUR PROGRAM HERE
+	//
+
+	//  Here is where you could take action on receiving a specific message
+	//  remember, this could be called from any of the n connected client threads, 
+	//  so make sure you wrap a lock around access to any shared memory collections
+	//
+	//
+
+	AddEvent(eventTime, eventSender, message);
+
+	if ( mForwardMessagesToAllClients )
+	{
+		mBroadcastThread.AddMessage(eventTime, eventSender, message);
+	}
 }
 
 
@@ -513,14 +676,7 @@ void TheApp::ClearLogs()
 //
 
 
-//  SetUpdateDisplay
-//  set the flag that the display is to be updated on the next pass
-//
-void TheApp::SetUpdateDisplay()
-{
-	LockMutex lockDisplay(mDisplayUpdateMutex);
-	mUpdateDisplay = true;
-}
+
 
 
 //  SuspendDisplayUpdates
@@ -540,99 +696,55 @@ void TheApp::ResumeDisplayUpdates()
 {
 	//  no need to lock the mutex here, since no display updates are running in this state
 
-	// force refresh
-	mUpdateDisplay = true;
-
 	//  turn updates back on
 	mDisplayUpdatesOn = true; 
 }
 
 
 
-//  The display output runs on it own thread, this class deffinition is here
-//  
-DisplayThread::DisplayThread(TheApp& theApp) : mTheApp(theApp)
-{
-}
-
-void DisplayThread::RunFunction()
-{
-	//  TODO:  room for improvement
-	//  using a constant polling is inefficient
-	//  this thread should be refactored to block on waiting for a message (or signal ?) to indicate that display updates need to happen
-	Sleep(50);
-
-	//  update display
-	mTheApp.DisplayUpdate();
-}
-
-
-
-//  DisplayUpdate
-//  the master function to call all the display update parts
-//
-void TheApp::DisplayUpdate()
-{
-	//  if updates are suspended, then just return
-	if ( ! mDisplayUpdatesOn )
-		return;
-
-	//  time tag
-	timeval timeNow;
-	gettimeofday(&timeNow, 0);
-
-	if ( mUpdateDisplay )
-	{
-		//  lock the display update
-		LockMutex lockDisplay(mDisplayUpdateMutex);
-
-		//  Redraw the whole display
-		system("clear");
-
-		DisplayWriteHeader();
-		//
-		DisplayWriteClientConnections();
-		//
-		DisplayWriteLogs();
-		// 
-		DisplayWriteTime();
-		mTimeOfLastClockUpdate = timeNow;
-
-		mUpdateDisplay = false;
-	}
-	else
-	{
-		//  do we need to update system clock
-		if ( DurationMilliseconds(mTimeOfLastClockUpdate, timeNow) > 1000 )
-		{
-			DisplayUpdateClock();
-			mTimeOfLastClockUpdate = timeNow;
-		}
-	}
-}
 
 
 
 void TheApp::DisplayWriteHeader()
 {
+	if ( ! mDisplayUpdatesOn )
+		return;
+
+	//  lock the display update
+	LockMutex lockDisplay(mDisplayUpdateMutex);
+
 	printf("/***********************************************************************************\n");
-	printf("/*** tcPIp Sockets - by LittleBytesOfPi \n");
+	printf("/*** pyLauncher - by LittleBytesOfPi \n");
 	printf("/***   version %s:\n", mVersionString.c_str());
 	printf("/***\n");
 	printf("/***   Connected on eth0: %s\n",mCMDifconfig.mEth0Info.mInet4Address.size() == 0 ? "not enabled " : mCMDifconfig.mEth0Info.mInet4Address.c_str());
 	printf("/***   Connected on wlan: %s\n",mCMDifconfig.mWlanInfo.mInet4Address.size() == 0 ? "not enabled " : mCMDifconfig.mWlanInfo.mInet4Address.c_str());
 	printf("/***   Server is listening on port: %d\n", mConnectionServerPort);	
-	printf("/***   Message forwarding is %s with %s for response.\n", mForwardMessagesToAllClients ? "on" : "off", mForwardMessageWaitForClientResponse ? "wait" : "no wait");	
+	printf("/***\n");
 
+	
 
 }
 
 
-void TheApp::DisplayWriteClientConnections()
+void TheApp::DisplayWriteConnectionStatus()
 {
+	if ( ! mDisplayUpdatesOn )
+		return;
+
 	//LockMutex lockClients(mConnectedClientsMutex);
 	if ( mConnectedClientsMutex.try_lock() )
 	{
+		LockMutex lockDisplay(mDisplayUpdateMutex);
+
+		printf("/*\n");
+		printf("/*\n");
+
+		CMD dateCommand("date");
+		dateCommand.Execute();
+
+		printf("/***   Client Connection Status at %s:\n", dateCommand.GetCommandResponseLine(0).c_str() );
+
 		//  write out client connection state
 		map<string, ConnectedClient*>::iterator iter;
 
@@ -647,57 +759,48 @@ void TheApp::DisplayWriteClientConnections()
 }
 
 
-void TheApp::DisplayWriteLogs()
-{
-	printf("/***\n");
-	printf("/***    > Event Time   : Address      : Event\n");
-
-	LockMutex lockEvents(mEventLogMutex);
-
-	//  write out the last 10 logs
-	int logSize = mEventLog.size();
-	for ( int i = 9; i >= 0; i-- )
-	{
-		if ( i < logSize )
-		{
-			list<LogEvent*>::iterator it = mEventLog.begin();
-			advance(it, i);
-			printf("/***    > %s : %s : %s\n", FormatTime((*it)->mEventTime).c_str(), (*it)->mEventAddress.c_str(), (*it)->mEvent.c_str());
-		}
-		else
-			printf("/***    >\n");
-	}
-
-	printf("/***\n");
-}
-
-
-void TheApp::DisplayWriteTime()
-{
-	//  put the time as last line of display
-	CMD dateCommand("date");
-	dateCommand.Execute();
-	printf("/*** Time:      %s\n", dateCommand.GetCommandResponseLine(0).c_str());
-	printf("/*** Press Enter to enable command mode:\n");
-}
-
-
-void TheApp::DisplayUpdateClock()
+void TheApp::DisplayWriteEvent(LogEvent event)
 {
 	if ( ! mDisplayUpdatesOn )
 		return;
 
 	LockMutex lockDisplay(mDisplayUpdateMutex);
 
-	//  this function is called when there is nothing on the display to update except the clock
-	//  use this little trick to rewind stdout two lines to reset to start of date string output and avoid redraw entire display
-	fputs("\033[A\033[2K",stdout);
-	fputs("\033[A\033[2K",stdout);
-	rewind(stdout);
+	if ( mListingLogs )
+		event.PrintLog(stdout);
+	else
+	{
+		if ( event.mEvent.substr(0, string("$TCP_PYRESULT").size()).compare("$TCP_PYRESULT") == 0  )
+		{
+			Parser resultParser(event.mEvent, ",");
+			
+			//  strip off $TCP_PYRESULT
+			resultParser.GetNextString();		
+			
+			//   get the details
 
-	//  write the time
-	DisplayWriteTime();
+			string file = resultParser.GetNextString();
+			string ipRequestor = resultParser.GetNextString();
+			string timeRequest = resultParser.GetNextString();
+			string timeLaunch = resultParser.GetNextString();
+			string timeComplete = resultParser.GetNextString();
+		
+			printf("/*\n");
+			printf("/*\n");
+			printf("/===  Python File %s run at %s.", file.c_str(), timeLaunch.c_str());
+
+			string nextResult =  resultParser.GetNextString();
+			while ( nextResult.size() != 0 )
+			{
+				printf("\n> %s", nextResult.c_str());
+				nextResult = resultParser.GetNextString();
+			}
+
+			printf("\n");
+		}
+	}
 }
+
 
 
 

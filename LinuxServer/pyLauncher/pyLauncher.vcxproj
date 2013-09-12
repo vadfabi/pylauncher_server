@@ -70,6 +70,7 @@
     <ClCompile Include="..\tcPIp_Sockets\Thread.cpp" />
     <ClCompile Include="ConnectedClientThread.cpp" />
     <ClCompile Include="main.cpp" />
+    <ClCompile Include="PyLaunchThread.cpp" />
     <ClCompile Include="TheApp.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -87,6 +88,7 @@
     <ClInclude Include="..\tcPIp_Sockets\Thread.h" />
     <ClInclude Include="..\tcPIp_Sockets\UtilityFn.h" />
     <ClInclude Include="ConnectedClientThread.h" />
+    <ClInclude Include="PyLaunchThread.h" />
     <ClInclude Include="TheApp.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

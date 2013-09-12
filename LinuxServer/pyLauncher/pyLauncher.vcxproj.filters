@@ -49,6 +49,9 @@
     <ClCompile Include="main.cpp">
       <Filter>Source files</Filter>
     </ClCompile>
+    <ClCompile Include="PyLaunchThread.cpp">
+      <Filter>Source files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="Makefile" />
@@ -88,6 +91,9 @@
       <Filter>Header files</Filter>
     </ClInclude>
     <ClInclude Include="..\tcPIp_Sockets\UtilityFn.h">
+      <Filter>Header files</Filter>
+    </ClInclude>
+    <ClInclude Include="PyLaunchThread.h">
       <Filter>Header files</Filter>
     </ClInclude>
   </ItemGroup>

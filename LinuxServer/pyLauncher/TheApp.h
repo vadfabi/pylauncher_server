@@ -13,26 +13,9 @@
 #include "../tcPIp_Sockets/UtilityFn.h"
 
 #include "ConnectedClientThread.h"
+#include "PyLaunchThread.h"
 
-//  Helper classe for the main app
-//
 
-//  DisplayThread
-//  The display output runs on it own thread
-//
-class DisplayThread : public Thread
-{
-public:
-	// this class takes a reference to the TheApp class
-	// this is a quick and dirty (and easy) way for classes to communicate without using singletons or global variables
-	DisplayThread(TheApp& theApp);
-	
-	virtual void RunFunction();
-
-protected:
-	//  reference to TheApp object so we can call its functions
-	TheApp& mTheApp;
-};
 
 
 
@@ -68,6 +51,9 @@ public:
 	//  disconnect a client connection
 	void DisconnectClient(struct sockaddr_in &clientAddress);
 
+	std::string BuildDirList();
+	std::string BuildFileList();
+
 	//  function to add a directory to the collection
 	bool HandleAddDirectory(timeval eventTime, std::string eventSender, std::string dirName);
 
@@ -84,6 +70,8 @@ public:
 
 	//  send an event message to all clients
 	void SendMessageToAllClients(std::list<LogEvent*>& eventsToSend);
+
+	void BroadcastMessage(timeval eventTime, std::string eventSender, std::string message);
 
 
 
@@ -134,10 +122,13 @@ protected:
 	std::list<std::string> mFilesList;
 	std::mutex mFilesListMutex;
 
-	void FillFileList();
+	void UpdatePythonFilesList();
+	
 
 
 	BroadcastThread mBroadcastThread;
+
+	PyLaunchThread mPyLaunchThread;
 
 
 	//  the event log
@@ -147,9 +138,6 @@ protected:
 	bool mLogSysEvents;
 
 	//  The display output
-	//  this happens on its own thread
-	DisplayThread mDisplayThread;
-	friend class DisplayThread;
 	std::mutex mDisplayUpdateMutex;
 	
 	bool mDisplayUpdatesOn;
@@ -160,8 +148,10 @@ protected:
 	//  update display function, 
 	void DisplayUpdate();
 	void DisplayWriteHeader();
-	void DisplayWriteClientConnections();
-	void DisplayWriteLogs();
+public:
+	void DisplayWriteConnectionStatus();
+protected:
+	void DisplayWriteEvent(LogEvent event);
 	void DisplayWriteTime();
 	void DisplayUpdateClock();
 

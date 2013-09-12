@@ -31,6 +31,12 @@ BroadcastThread::~BroadcastThread()
 	{
 		Cancel();
 	}
+
+	while ( ! mMessageQueue.empty() )
+	{
+		delete mMessageQueue.front();
+		mMessageQueue.pop();
+	}
 }
 
 void BroadcastThread::AddMessage(timeval eventTime, string eventSender, string message)

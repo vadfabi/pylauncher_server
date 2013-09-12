@@ -251,42 +251,52 @@ void ConnectedClient::RunFunction()
 
 	//  Look for recognized commands
 	//
-	if ( command.compare("$TCP_ADDDIR") == 0 )  
+	if ( command.compare("$TCP_LISTDIR") == 0 )
+	{
+		string listOfDir = mTheApp.BuildDirList();
+		string returnMessage = format("$TCP_LISTDIR,ACK,%s", listOfDir.c_str());
+
+		write(acceptFileDescriptor, returnMessage.c_str(), returnMessage.size());
+	}
+	else if ( command.compare("$TCP_LISTFILES") == 0 )
+	{
+		string listOfFiles = mTheApp.BuildFileList();
+		string returnMessage = format("$TCP_LISTFILES,ACK,%s", listOfFiles.c_str());
+
+		write(acceptFileDescriptor, returnMessage.c_str(), returnMessage.size());
+	}
+	else if ( command.compare("$TCP_ADDDIR") == 0 )  
 	{
 		//  button n command
 		string arg = readParser.GetRemainingBuffer();
-		string returnMessage = format("$TCP_ADDDIR,ACK,%s", arg.c_str());
+		
+		string returnMessage; 
 
-		write(acceptFileDescriptor, returnMessage.c_str(), returnMessage.size());
+		if ( mTheApp.HandleAddDirectory(eventTime, eventSender, arg) ) 
+			returnMessage = format("$TCP_ADDDIR,ACK,%s", arg.c_str());
+		else
+			returnMessage = format("$TCP_ADDDIR,NAK,%s is in the map already", arg.c_str());
 
-		mTheApp.HandleAddDirectory(eventTime, eventSender, readParser.GetRemainingBuffer());
+		write(acceptFileDescriptor, returnMessage.c_str(), returnMessage.size());		
 	}
-	else if ( command.compare("$TCP_RMDIR") == 0 )
+	else if ( command.compare("$TCP_REMOVEDIR") == 0 )
 	{
 		//  message from client command
 		string arg = readParser.GetRemainingBuffer();
-		string returnMessage = format("$TCP_RMDIR,ACK,%s", arg.c_str());
+		string returnMessage = format("$TCP_REMOVEDIR,ACK,%s", arg.c_str());
 		write(acceptFileDescriptor, returnMessage.c_str(), returnMessage.size());
 
 		//  broadcast this message to clients
 		mTheApp.HandleRemoveDirectory(eventTime, eventSender, arg);
 	}
-	else if ( command.compare("$TCP_GETDIR") == 0 )
-	{
-		//  message from client command
-		string argument = readParser.GetNextString();
-		string returnMessage = format("$TCP_GETDIR,ACK,%s", argument.c_str());
-		write(acceptFileDescriptor, returnMessage.c_str(), returnMessage.size());
-
-		//theApp.HandleGetDirectory
-		
-	}
-	else if ( command.compare("$TCP_LAUNCH") == 0 )
+	else if ( command.compare("$TCP_PYLAUNCH") == 0 )
 	{
 		//  message from client command
 		string arg = readParser.GetRemainingBuffer();
-		string returnMessage = format("LAUNCH,ACK,%s", arg.c_str());
+		string returnMessage = format("$TCP_PYLAUNCH,ACK,%s", arg.c_str());
 		write(acceptFileDescriptor, returnMessage.c_str(), returnMessage.size());
+
+		mTheApp.HandlePythonLaunch(eventTime, eventSender, arg);
 	}
 	else
 	{

@@ -128,42 +128,12 @@ int ProcessCommandModeInput(string input)
 		//  'resume'  -  break out of command mode
 		return 1;
 	}
-	else if ( input.substr(0, string("forwarding").size()).compare("forwarding") == 0 && input.size() > string("forwarding").size() )
+	else if ( input.compare("connection") == 0 )
 	{
-		theApp.mForwardMessagesToAllClients = true;
-		Parser inputParser(input, " ");
-		inputParser.GetNextString();
-		string argument = inputParser.GetNextString();
-		
-		if ( argument.compare("on") == 0 )
-		{
-			theApp.mForwardMessagesToAllClients = true;
-			printf(" > message forwarding on\n");
-		}
-		else if (argument.compare("off") == 0 )
-			{
-				theApp.mForwardMessagesToAllClients = false;
-				printf(" > message forwarding off\n");
-		}
-		else if ( argument.compare("wait") == 0 )
-		{
-			theApp.mForwardMessageWaitForClientResponse = true;
-			printf(" > wait for response on\n");
-		}
-		else if ( argument.compare("nowait") == 0 )
-		{
-			theApp.mForwardMessageWaitForClientResponse = false;
-			printf(" > wait for response off\n");
-		}
-		else
-		{
-			printf(" > input error, you must enter 'on' or 'off'\n");
-		}
-
+		theApp.DisplayWriteConnectionStatus();
 		//  contiue in command mode
 		printf(" >");
 		return 0;
-
 	}
 	else if ( input.substr(0, string("savelogs").size()).compare("savelogs") == 0 && input.size() > string("savelogs").size()  )
 	{
@@ -222,11 +192,11 @@ int ProcessCommandModeInput(string input)
 
 void PrintCommandHelp()
 {
-	printf("\n/***\n");
+	printf("/***********************************************************************************\n");
+	printf("/*** pyLauncher - by LittleBytesOfPi \n");
+	printf("/***\n");
 	printf("/***   Commands:\n");
-	printf("/***     - message toSend           -  sends toSend to all connected clients\n");
-	printf("/***     - forwarding arg           -  arg = on | off to control forwarding of messages\n");
-	printf("/***     - forwarding arg           -  arg = wait | nowait to control wait for forwarded response\n");
+	printf("/***     - connection               -  prints out the current connection status\n");
 	printf("/***     - savelogs filename [-c]   -  saves the event log to filename, -c to clear logs after save.\n");
 	printf("/***     - listlogs                 -  prints all logged events to monitor.\n");
 	printf("/***     - clearlogs                -  clears the event log.\n");

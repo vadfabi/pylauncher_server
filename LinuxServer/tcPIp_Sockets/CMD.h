@@ -45,7 +45,7 @@ public:
 	//  get a specific line of the command response
 	std::string	GetCommandResponseLine(int i);
 
-
+	
 protected:
 
 	std::string	Command;

@@ -140,7 +140,7 @@ protected:
 	std::mutex mDisplayUpdateMutex;
 	
 	bool mDisplayUpdatesOn;
-	bool mUpdateDisplay;
+	
 
 	timeval mTimeOfLastClockUpdate;
 	
