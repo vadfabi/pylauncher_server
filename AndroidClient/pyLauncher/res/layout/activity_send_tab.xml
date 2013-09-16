@@ -12,18 +12,19 @@
         android:id="@+id/listViewEvents"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_alignParentLeft="true"
-        android:layout_below="@+id/buttonRunFile" >
+        android:layout_alignParentRight="true"
+        android:layout_below="@+id/editTextArgs" >
 
     </ListView>
 
     <TextView
         android:id="@+id/textViewInstructions"
-        android:layout_width="wrap_content"
+        android:layout_width="160dp"
         android:layout_height="wrap_content"
         android:layout_alignParentLeft="true"
         android:layout_alignParentTop="true"
-        android:layout_marginTop="2dp"
+        android:layout_alignRight="@+id/buttonRunFile"
+        android:layout_marginTop="0dp"
         android:text="Select a Python file to run:" />
 
     <Spinner
@@ -31,17 +32,34 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_alignLeft="@+id/listViewEvents"
-        android:layout_alignRight="@+id/listViewEvents"
         android:layout_below="@+id/textViewInstructions"
-        android:layout_marginTop="21dp" />
+        android:layout_marginTop="2dp"
+        android:layout_toLeftOf="@+id/buttonRunFile" />
+
+    <EditText
+        android:id="@+id/editTextArgs"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignLeft="@+id/listViewEvents"
+        android:layout_alignRight="@+id/listViewEvents"
+        android:layout_below="@+id/textViewCmdLineTag"
+        android:ems="10" />
+
+    <TextView
+        android:id="@+id/textViewCmdLineTag"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignLeft="@+id/editTextArgs"
+        android:layout_below="@+id/spinnerFile"
+        android:layout_marginTop="3dp"
+        android:text="Additional Arguments:" />
 
     <Button
         android:id="@+id/buttonRunFile"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_alignTop="@+id/spinnerFile"
-        android:layout_centerHorizontal="true"
-        android:layout_marginTop="35dp"
-        android:text="Run File" />
+        android:layout_above="@+id/textViewCmdLineTag"
+        android:layout_alignParentRight="true"
+        android:text="Run" />
 
 </RelativeLayout>

@@ -7,22 +7,26 @@ import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.ServiceConnection;
+import android.content.SharedPreferences;
+import android.content.SharedPreferences.Editor;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.IBinder;
 import android.os.Message;
+import android.preference.PreferenceManager;
 import android.util.Log;
 import android.view.Menu;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
+import android.widget.EditText;
 import android.widget.ListView;
 import android.widget.Spinner;
 
 import com.littlebytesofpi.pylauncher.PyLauncherService.LocalBinder;
 
-public class SendTab extends Activity {
+public class SendTab extends Activity implements  AdapterView.OnItemSelectedListener {
 
 	
 	//  User interface elements
@@ -44,9 +48,20 @@ public class SendTab extends Activity {
 			//  get the file and send it
 		//  get the selected sensor
 			PyFile selectedFile = (PyFile)mSpinnerFileSelector.getSelectedItem();
-			mService.RunPyFile(selectedFile);
+			String args = mEditTextArgs.getText().toString();
+			
+			//  save arguments for this file
+			Editor editPref = PreferenceManager.getDefaultSharedPreferences(SendTab.this).edit();
+			editPref.putString(selectedFile.mFullPath, args);
+			// Commit the edits
+			editPref.commit();
+			
+			mService.RunPyFile(selectedFile, args);
 		}
 	};
+	
+	//  arguments edit text
+	EditText mEditTextArgs;
 	
 	//  Results adapter
 	//
@@ -66,9 +81,12 @@ public class SendTab extends Activity {
 		mAdapter = new ArrayAdapter(this, android.R.layout.simple_spinner_item,  mFilesList);
 		mAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
 		mSpinnerFileSelector.setAdapter(mAdapter);
+		mSpinnerFileSelector.setOnItemSelectedListener(SendTab.this);
 
 		mButtonRunFile = (Button)findViewById(R.id.buttonRunFile);
 		mButtonRunFile.setOnClickListener(ButtonOnClickListener);
+		
+		mEditTextArgs = (EditText)findViewById(R.id.editTextArgs);
 
 		mListViewResults = (ListView)findViewById(R.id.listViewEvents);
 		mListViewResults.setAdapter(mResultsAdapter);
@@ -80,11 +98,14 @@ public class SendTab extends Activity {
 
 				PyLaunchResult thisResult = mResultsList.get(position);
 				thisResult.mExpanded = ! thisResult.mExpanded;
-			
+
 
 				mResultsAdapter.notifyDataSetChanged();
 			}
 		});
+
+		//  setup default preferences
+		PreferenceManager.setDefaultValues(this,  R.xml.preferences,  false);
 	}
 
 	//  onStart
@@ -103,13 +124,22 @@ public class SendTab extends Activity {
 	public void onResume(){
 		super.onResume();
 
+		if ( mService != null )
+		{
+			mService.GetFilesList(mFilesList);
+			mAdapter.notifyDataSetChanged();
+
+			mService.GetLaunchResults(mResultsList);
+			mResultsAdapter.notifyDataSetChanged();
+		}
+
 	}
 
 	
 	//  onDestroy
 	@Override
 	public void onDestroy(){
-		//  if we are connected to server, start the service so it stays connected
+		
 		UnbindFromService();
 		
 		super.onDestroy();
@@ -191,6 +221,28 @@ public class SendTab extends Activity {
 		}
 	};  
 
+//  select a sensor from the spinner
+	@Override
+	public void onItemSelected(AdapterView<?> parent, View view, 
+			int pos, long id) {
+
+		if ( parent.getId() == R.id.spinnerFile )
+		{
+			PyFile selectedFile = mFilesList.get(pos);
+			
+			//  see if we have some arguments for this
+			SharedPreferences sharedPrefs = PreferenceManager.getDefaultSharedPreferences(SendTab.this);
+			
+			//  initialize edit fields
+			mEditTextArgs.setText(sharedPrefs.getString(selectedFile.mFullPath, ""));
+		}
+	}
+	
+	@Override
+	public void onNothingSelected(AdapterView<?> parent) {
+		// Another interface callback
+	}
+	
 	
 
 	@Override

@@ -375,6 +375,17 @@ public class PyLauncherService extends Service {
 					//  start the client's listening server thread
 					mClientsServerThread.start();
 
+					//  wait until our connected condition is true
+					long timeStartWait = System.currentTimeMillis();
+					while ( ! IsConnectedToServer() && (System.currentTimeMillis() - timeStartWait) < 2000 )
+					{
+						try{
+							Thread.sleep(500);
+						}
+						catch(InterruptedException e){
+						}
+					}
+
 					return 1;
 				}
 			}
@@ -441,6 +452,9 @@ public class PyLauncherService extends Service {
 			else
 				Toast.makeText(PyLauncherService.this, "Error closing server connection", Toast.LENGTH_SHORT).show();
 
+			//  TODO:  clear out file and dir list
+			
+			
 			showNotification();
 
 			//  update UI
@@ -659,9 +673,9 @@ public class PyLauncherService extends Service {
 	
 	//  RunPyFile
 	//
-	public void RunPyFile(PyFile fileToRun)
+	public void RunPyFile(PyFile fileToRun, String args)
 	{
-		new RunPyFileTask().execute(fileToRun.mFullPath);
+		new RunPyFileTask().execute(fileToRun.mFullPath, args);
 	}
 	
 	//
@@ -673,7 +687,7 @@ public class PyLauncherService extends Service {
 
 			if ( IsConnectedToServer() )
 			{
-				readResponse = IpFunctions.SendStringToPort(mConnectedToServerIp, mConnectedToServerOnPort, "$TCP_PYLAUNCH," + param[0]);
+				readResponse = IpFunctions.SendStringToPort(mConnectedToServerIp, mConnectedToServerOnPort, "$TCP_PYLAUNCH," + param[0] + "," + param[1]);
 
 				if ( ! readResponse.contains("$TCP_PYLAUNCH,ACK") )
 					return 0;
