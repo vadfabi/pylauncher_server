@@ -22,6 +22,8 @@ import android.widget.TabHost.TabSpec;
 
 public class PyLauncher extends TabActivity {
 
+	TabHost mTabHost;
+	
 	//  onCreate
 	//
 	@Override
@@ -31,29 +33,29 @@ public class PyLauncher extends TabActivity {
 
 		//  setup the tabs
 		Resources ressources = getResources(); 
-		TabHost tabHost = getTabHost();
+		mTabHost = getTabHost();
 
 		// Connect Tab
 		Intent intentConnect = new Intent().setClass(this, ConnectTab.class);
-		TabSpec tabSpecConnect = tabHost.newTabSpec("Connect")
+		TabSpec tabSpecConnect = mTabHost.newTabSpec("Connect")
 				.setIndicator("Connect", ressources.getDrawable(R.drawable.ic_connect))
 				.setContent(intentConnect);
 
 		// Directory Tab
 		Intent intentDirectory = new Intent().setClass(this, DirectoryTab.class);
-		TabSpec tabSpecDirectory = tabHost.newTabSpec("Directory")
+		TabSpec tabSpecDirectory = mTabHost.newTabSpec("Directory")
 				.setIndicator("Directory", ressources.getDrawable(R.drawable.ic_directory))
 				.setContent(intentDirectory);
 
 		// Launch Tab
 		Intent intentSend = new Intent().setClass(this, SendTab.class);
-		TabSpec tabSpecSend = tabHost.newTabSpec("Launch")
+		TabSpec tabSpecSend = mTabHost.newTabSpec("Launch")
 				.setIndicator("Launch", ressources.getDrawable(R.drawable.ic_send))
 				.setContent(intentSend);
 
-		tabHost.addTab(tabSpecConnect);
-		tabHost.addTab(tabSpecDirectory);
-		tabHost.addTab(tabSpecSend);
+		mTabHost.addTab(tabSpecConnect);
+		mTabHost.addTab(tabSpecDirectory);
+		mTabHost.addTab(tabSpecSend);
 	}
 
 
@@ -72,7 +74,12 @@ public class PyLauncher extends TabActivity {
 	@Override
 	public void onResume(){
 		super.onResume();
-
+		
+		if ( mService != null )
+		{
+			if ( mService.IsConnectedToServer() )
+				mTabHost.setCurrentTabByTag("Launch");
+		}
 
 	}
 
@@ -109,8 +116,9 @@ public class PyLauncher extends TabActivity {
 			LocalBinder binder = (LocalBinder) service;
 			mService = binder.getService();
 			mService.AddHandler(mHandler);
-
-
+			
+			if ( mService.IsConnectedToServer() )
+				mTabHost.setCurrentTabByTag("Launch");
 		}
 
 

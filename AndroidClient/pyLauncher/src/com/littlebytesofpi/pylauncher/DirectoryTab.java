@@ -113,6 +113,12 @@ public class DirectoryTab extends Activity {
 	public void onResume(){
 		super.onResume();
 
+		if ( mService != null )
+		{
+			mService.GetDirectoryList(mDirectoryList);
+			mDirectoryAdapter.notifyDataSetChanged();
+		}
+
 	}
 
 	
