@@ -275,7 +275,7 @@ void ConnectedClient::RunFunction()
 		if ( mTheApp.HandleAddDirectory(eventTime, eventSender, arg) ) 
 			returnMessage = format("$TCP_ADDDIR,ACK,%s", arg.c_str());
 		else
-			returnMessage = format("$TCP_ADDDIR,NAK,%s is in the map already", arg.c_str());
+			returnMessage = "$TCP_ADDDIR,NAK,failed to write to directory file";
 
 		write(acceptFileDescriptor, returnMessage.c_str(), returnMessage.size());		
 	}
@@ -283,11 +283,15 @@ void ConnectedClient::RunFunction()
 	{
 		//  message from client command
 		string arg = readParser.GetRemainingBuffer();
-		string returnMessage = format("$TCP_REMOVEDIR,ACK,%s", arg.c_str());
-		write(acceptFileDescriptor, returnMessage.c_str(), returnMessage.size());
 
-		//  broadcast this message to clients
-		mTheApp.HandleRemoveDirectory(eventTime, eventSender, arg);
+		string returnMessage;
+
+		if ( mTheApp.HandleRemoveDirectory(eventTime, eventSender, arg) )
+			returnMessage = format("$TCP_REMOVEDIR,ACK,%s", arg.c_str());
+		else
+			returnMessage = "$TCP_ADDDIR,NAK,failed to write to directory file";
+
+		write(acceptFileDescriptor, returnMessage.c_str(), returnMessage.size());
 	}
 	else if ( command.compare("$TCP_PYLAUNCH") == 0 )
 	{

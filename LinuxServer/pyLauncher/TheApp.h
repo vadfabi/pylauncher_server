@@ -11,9 +11,12 @@
 #include "../tcPIp_Sockets/BroadcastThread.h"
 #include "../tcPIp_Sockets/CMDifconfig.h"
 #include "../tcPIp_Sockets/UtilityFn.h"
+#include "../tcPIp_Sockets/TerminalDisplay.h"
+
 
 #include "ConnectedClientThread.h"
 #include "PyLaunchThread.h"
+
 
 
 
@@ -58,10 +61,10 @@ public:
 	bool HandleAddDirectory(timeval eventTime, std::string eventSender, std::string dirName);
 
 	//  function to remove directory from the collection
-	void HandleRemoveDirectory(timeval eventTime, std::string eventSender, std::string dirName);
+	bool HandleRemoveDirectory(timeval eventTime, std::string eventSender, std::string dirName);
 	 
 	//  function to launch python file
-	void HandlePythonLaunch(timeval eventTime, std::string eventSender, std::string pathToFile);
+	void HandlePythonLaunch(timeval eventTime, std::string eventSender, std::string args);
 
 
 	//  flags for broadcast of messages to clients
@@ -88,10 +91,11 @@ public:
 	//  User Interface:  Input
 
 	//  command line input function handlers
-	
+	void RefreshFiles();
 	bool SaveLogs(std::string input);
 	void PrintLogs(FILE* stream);
 	void ClearLogs();
+	void ShowConnectionStatus();
 
 	bool mListingLogs;
 		
@@ -122,7 +126,11 @@ protected:
 	std::list<std::string> mFilesList;
 	std::mutex mFilesListMutex;
 
-	void UpdatePythonFilesList();
+	void LoadPythonFileDirectoryFile();
+	void LoadPythonFilesList();
+
+	void LiveUpdatePythonFiles();
+	
 	
 
 
@@ -138,19 +146,19 @@ protected:
 	bool mLogSysEvents;
 
 	//  The display output
+	TerminalDisplay mTerminalDisplay;
+	//
 	std::mutex mDisplayUpdateMutex;
-	
+	//
 	bool mDisplayUpdatesOn;
 	bool mUpdateDisplay;
-
+	//
 	timeval mTimeOfLastClockUpdate;
 	
 	//  update display function, 
 	void DisplayUpdate();
 	void DisplayWriteHeader();
-public:
 	void DisplayWriteConnectionStatus();
-protected:
 	void DisplayWriteEvent(LogEvent event);
 	void DisplayWriteTime();
 	void DisplayUpdateClock();

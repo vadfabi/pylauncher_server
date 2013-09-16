@@ -8,11 +8,13 @@
 #include <sys/stat.h>
 #include <dirent.h>
 
+
 #include "TheApp.h"
 #include "../tcPIp_Sockets/Parser.h"
 #include "ConnectedClientThread.h"
 #include "../tcPIp_Sockets/UtilityFn.h"
 #include "../tcPIp_Sockets/UtilityFn.h"
+
 
 using namespace std;
 
@@ -30,7 +32,7 @@ using namespace std;
 TheApp::TheApp() :
 	mConnectionThread(*this),   mBroadcastThread(*this), mPyLaunchThread(*this)
 {
-	mVersionString = "1.0.2";
+	mVersionString = "1.0.3";
 
 	mMaxEventsToLog = 99999;
 	mLogSysEvents = true;
@@ -70,26 +72,8 @@ bool TheApp::InitializeInstance()
 	hostName.Execute();
 	mHostname = hostName.GetCommandResponseLine(0);
 
-	//  fill the dir list from the file
-	ifstream dirFile;
-	dirFile.open(DIRLISTFILE);
-
-	if (  dirFile.is_open() )
-	{
-		string readLine;
-		while ( ! dirFile.eof() )
-		{
-			getline(dirFile, readLine);
-			if ( readLine.size() != 0 )
-				mDirectoryList.push_back(readLine);
-		}
-
-		dirFile.close();
-
-	}
-
-
-	UpdatePythonFilesList();
+	LoadPythonFileDirectoryFile();
+	LoadPythonFilesList();
 
 
 	//  start the connection thread
@@ -141,8 +125,32 @@ void TheApp::ShutDown()
 	mEventLog.remove_if(deleteLogEvent);
 }
 
+void TheApp::LoadPythonFileDirectoryFile()
+{
+	LockMutex lockFiles(mFilesListMutex);
 
-void TheApp::UpdatePythonFilesList()
+	mDirectoryList.clear();
+
+	//  fill the dir list from the file
+	ifstream dirFile;
+	dirFile.open(DIRLISTFILE);
+
+	if (  dirFile.is_open() )
+	{
+		string readLine;
+		while ( ! dirFile.eof() )
+		{
+			getline(dirFile, readLine);
+			if ( readLine.size() != 0 )
+				mDirectoryList.push_back(readLine);
+		}
+
+		dirFile.close();
+	}
+}
+
+
+void TheApp::LoadPythonFilesList()
 {
 	LockMutex lockFiles(mFilesListMutex);
 
@@ -168,7 +176,6 @@ void TheApp::UpdatePythonFilesList()
 					mFilesList.push_back(fileFullPath);
 				}
 
-				//printf ("%s\n", ent->d_name);
 			}
 			closedir (dir);
 		} 
@@ -181,6 +188,26 @@ void TheApp::UpdatePythonFilesList()
 }
 
 
+
+void TheApp::LiveUpdatePythonFiles()
+{
+	LoadPythonFilesList();
+
+	timeval eventTime;
+	gettimeofday(&eventTime, 0);
+
+	string listOfDir = BuildDirList();
+	string dirMessage = format("$TCP_LISTDIR,ACK,%s", listOfDir.c_str());
+
+	BroadcastMessage(eventTime, GetIpAddress(), dirMessage);
+
+	listOfDir = BuildFileList();
+	dirMessage = format("$TCP_LISTFILES,ACK,%s", listOfDir.c_str());
+
+	
+	BroadcastMessage(eventTime, GetIpAddress(), dirMessage);
+
+}
 
 
 
@@ -392,25 +419,14 @@ bool TheApp::HandleAddDirectory(timeval eventTime, std::string eventSender, std:
 		fclose(outputFile);
 	}
 
-	UpdatePythonFilesList();
+	LiveUpdatePythonFiles();
 
-	string listOfDir = BuildDirList();
-	string dirMessage = format("$TCP_LISTDIR,ACK,%s", listOfDir.c_str());
-
-	BroadcastMessage(eventTime, GetIpAddress(), dirMessage);
-
-	listOfDir = BuildFileList();
-	dirMessage = format("$TCP_LISTFILES,ACK,%s", listOfDir.c_str());
-
-	BroadcastMessage(eventTime, eventSender, dirMessage);
-
-
-	return false;
+	return true;
 
 }
 
 //  function to remove directory from the collection
-void TheApp::HandleRemoveDirectory(timeval eventTime, std::string eventSender, std::string dirName)
+bool TheApp::HandleRemoveDirectory(timeval eventTime, std::string eventSender, std::string dirName)
 {
 	{
 		LockMutex lockFiles(mFilesListMutex);
@@ -426,7 +442,7 @@ void TheApp::HandleRemoveDirectory(timeval eventTime, std::string eventSender, s
 		//  open file
 		FILE* outputFile = fopen ( DIRLISTFILE, "w" );
 		if ( outputFile == 0 )
-			return;
+			return false;
 
 		list<string>::iterator nextString;
 		for ( nextString = mDirectoryList.begin(); nextString != mDirectoryList.end(); ++nextString )
@@ -439,25 +455,15 @@ void TheApp::HandleRemoveDirectory(timeval eventTime, std::string eventSender, s
 		fclose( outputFile );
 	}
 
-	UpdatePythonFilesList();
+	LiveUpdatePythonFiles();
 
-	string listOfDir = BuildDirList();
-	string dirMessage = format("$TCP_LISTDIR,ACK,%s", listOfDir.c_str());
-
-	BroadcastMessage(eventTime, GetIpAddress(), dirMessage);
-
-	listOfDir = BuildFileList();
-	dirMessage = format("$TCP_LISTFILES,ACK,%s", listOfDir.c_str());
-
-	BroadcastMessage(eventTime, eventSender, dirMessage);
-
-	return;
+	return true;
 }
 
 //  function to launch python file
-void TheApp::HandlePythonLaunch(timeval eventTime, std::string eventSender, std::string pathToFile)
+void TheApp::HandlePythonLaunch(timeval eventTime, std::string eventSender, std::string args)
 {
-	mPyLaunchThread.AddLaunchEvent(eventTime, eventSender, pathToFile);
+	mPyLaunchThread.AddLaunchEvent(eventTime, eventSender, args);
 
 	return;
 }
@@ -588,6 +594,14 @@ void TheApp::BroadcastMessage(timeval eventTime, string eventSender, string mess
 //
 
 
+//  RefreshFiles
+//  reloads dir list and broadcasts to clients
+void TheApp::RefreshFiles()
+{
+	LoadPythonFileDirectoryFile();
+	LiveUpdatePythonFiles();
+}
+
 //  SaveLogs
 //  save logs out to a log file
 //
@@ -668,6 +682,11 @@ void TheApp::ClearLogs()
 
 }
 
+void TheApp::ShowConnectionStatus()
+{
+	DisplayWriteConnectionStatus();
+}
+
 
 
 
@@ -686,6 +705,7 @@ void TheApp::SuspendDisplayUpdates()
 {
 	LockMutex lockDisplay(mDisplayUpdateMutex);
 	mDisplayUpdatesOn = false; 
+	mTerminalDisplay.SetColour(BRIGHT,WHITE,BLACK);
 }
 
 
@@ -698,6 +718,9 @@ void TheApp::ResumeDisplayUpdates()
 
 	//  turn updates back on
 	mDisplayUpdatesOn = true; 
+
+	DisplayWriteHeader();
+	DisplayWriteConnectionStatus();
 }
 
 
@@ -710,20 +733,28 @@ void TheApp::DisplayWriteHeader()
 	if ( ! mDisplayUpdatesOn )
 		return;
 
+	system("clear");
+
+	mTerminalDisplay.InitDimensions();
+	mTerminalDisplay.SetBackground(BLACK);
+
 	//  lock the display update
 	LockMutex lockDisplay(mDisplayUpdateMutex);
 
-	printf("/***********************************************************************************\n");
-	printf("/*** pyLauncher - by LittleBytesOfPi \n");
-	printf("/***   version %s:\n", mVersionString.c_str());
-	printf("/***\n");
-	printf("/***   Connected on eth0: %s\n",mCMDifconfig.mEth0Info.mInet4Address.size() == 0 ? "not enabled " : mCMDifconfig.mEth0Info.mInet4Address.c_str());
-	printf("/***   Connected on wlan: %s\n",mCMDifconfig.mWlanInfo.mInet4Address.size() == 0 ? "not enabled " : mCMDifconfig.mWlanInfo.mInet4Address.c_str());
-	printf("/***   Server is listening on port: %d\n", mConnectionServerPort);	
-	printf("/***\n");
+	mTerminalDisplay.PrintAcross ("**", BLACK,RED);
 
-	
-
+	mTerminalDisplay.PrintLine("**", BLACK,RED, "",RED,BLACK);
+	mTerminalDisplay.PrintLine("**", BLACK,RED, "  pyLauncher, by LittleBytesOfPi.com",RED,BLACK);
+	mTerminalDisplay.PrintLine("**", BLACK,RED, format("  version: %s", mVersionString.c_str()), RED,BLACK);
+	mTerminalDisplay.PrintLine("**", BLACK,RED, "",RED,BLACK);
+	mTerminalDisplay.PrintAcross("**", BLACK,RED, "*",RED,BLACK);
+	mTerminalDisplay.PrintLine("**", BLACK,RED, "",RED,BLACK);
+	mTerminalDisplay.PrintLine("**", BLACK,RED, "  Network Connection Status", RED,BLACK);
+	mTerminalDisplay.PrintLine("**", BLACK,RED, format("   - Connected on eth0: %s",mCMDifconfig.mEth0Info.mInet4Address.size() == 0 ? "not enabled " : mCMDifconfig.mEth0Info.mInet4Address.c_str()), RED,BLACK);
+	mTerminalDisplay.PrintLine("**", BLACK,RED, format("   - Connected on wlan: %s",mCMDifconfig.mWlanInfo.mInet4Address.size() == 0 ? "not enabled " : mCMDifconfig.mWlanInfo.mInet4Address.c_str()), RED,BLACK);
+	mTerminalDisplay.PrintLine("**", BLACK,RED, format("   - Server is listening on port %d", mConnectionServerPort), RED,BLACK);
+	mTerminalDisplay.PrintLine("**", BLACK,RED, "", RED,BLACK);
+	mTerminalDisplay.PrintAcross("**", BLACK,RED, "-",RED,BLACK);
 }
 
 
@@ -737,24 +768,34 @@ void TheApp::DisplayWriteConnectionStatus()
 	{
 		LockMutex lockDisplay(mDisplayUpdateMutex);
 
-		printf("/*\n");
-		printf("/*\n");
-
 		CMD dateCommand("date");
 		dateCommand.Execute();
 
-		printf("/***   Client Connection Status at %s:\n", dateCommand.GetCommandResponseLine(0).c_str() );
 
-		//  write out client connection state
-		map<string, ConnectedClient*>::iterator iter;
+		mTerminalDisplay.PrintAcross("**", BLACK,RED, "-",RED,BLACK);
+		mTerminalDisplay.PrintLine("**", BLACK,RED, "",RED,BLACK);
+		mTerminalDisplay.PrintLine("**", BLACK,RED, format("  Client Connection Status at %s:", dateCommand.GetCommandResponseLine(0).c_str()).c_str(), RED,BLACK);
 
-		for ( iter = mConnectedClients.begin(); iter != mConnectedClients.end(); iter++ )
+		if ( mConnectedClients.size() == 0 )
 		{
-			printf("/***   - Client at %s connected on port %d %s.\n", iter->second->GetIpAddressOfClient().c_str(), iter->second->GetConnectedOnPortNumber(), iter->second->IsActiveClient() ? "" : "(not active)" );
+			mTerminalDisplay.PrintLine("**", BLACK,RED, "   - None connected", RED,BLACK);
+		}
+		else
+		{
+			//  write out client connection state
+			map<string, ConnectedClient*>::iterator iter;
+
+			for ( iter = mConnectedClients.begin(); iter != mConnectedClients.end(); iter++ )
+			{
+				mTerminalDisplay.PrintLine("**", BLACK,RED, format("   - Client at %s connected on port %d %s.", iter->second->GetIpAddressOfClient().c_str(), iter->second->GetConnectedOnPortNumber(), iter->second->IsActiveClient() ? "" : "(not active)" ).c_str(), RED,BLACK);
+
+			}
 		}
 
 		mConnectedClientsMutex.unlock();
 
+		mTerminalDisplay.PrintLine("**", BLACK,RED, "",RED,BLACK);
+		mTerminalDisplay.PrintAcross("**", BLACK,RED, "-",RED,BLACK);
 	}
 }
 
@@ -784,19 +825,23 @@ void TheApp::DisplayWriteEvent(LogEvent event)
 			string timeRequest = resultParser.GetNextString();
 			string timeLaunch = resultParser.GetNextString();
 			string timeComplete = resultParser.GetNextString();
-		
-			printf("/*\n");
-			printf("/*\n");
-			printf("/===  Python File %s run at %s.", file.c_str(), timeLaunch.c_str());
+	
+			mTerminalDisplay.PrintAcross("**", BLACK,GREEN, "-",GREEN,BLACK);
+			mTerminalDisplay.PrintLine("**", BLACK,GREEN, "",GREEN,BLACK);
+			mTerminalDisplay.PrintLine("**", BLACK,GREEN, format("  Python File: %s", file.c_str()), GREEN,BLACK);
+			mTerminalDisplay.PrintLine("**", BLACK,GREEN, format("   - Launched at: %s", timeLaunch.c_str()), GREEN,BLACK);
 
 			string nextResult =  resultParser.GetNextString();
 			while ( nextResult.size() != 0 )
 			{
-				printf("\n> %s", nextResult.c_str());
+				mTerminalDisplay.PrintLine(nextResult.c_str(), BLACK,WHITE);
+
 				nextResult = resultParser.GetNextString();
 			}
 
-			printf("\n");
+			mTerminalDisplay.PrintLine("**", BLACK,GREEN, format("   - Run completed at: %s", timeComplete.c_str()),GREEN,BLACK);
+			mTerminalDisplay.PrintLine("**", BLACK,GREEN, "",GREEN,BLACK);
+			mTerminalDisplay.PrintAcross("**", BLACK,GREEN, "-",GREEN,BLACK);
 		}
 	}
 }

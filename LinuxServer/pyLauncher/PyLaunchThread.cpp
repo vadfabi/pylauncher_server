@@ -8,6 +8,16 @@ using namespace std;
 
 
 
+	PyLaunch::PyLaunch(timeval eventTime, std::string eventAddress, std::string args)
+	{ 
+		mEventTime = eventTime;
+		mEventAddress = eventAddress;
+
+		Parser argParser(args,",");
+		mFileName = argParser.GetNextString();
+		mArguments = argParser.GetNextString();
+	}
+
 /////////////////////////////////////////////////////////////////////////////
 //  PyLaunchThread
 //  runs a continuous thread waiting for messages to be put into queue
@@ -39,9 +49,9 @@ PyLaunchThread::~PyLaunchThread()
 	}
 }
 
-void PyLaunchThread::AddLaunchEvent(timeval eventTime, string eventSender, string message)
+void PyLaunchThread::AddLaunchEvent(timeval eventTime, string eventSender, string args)
 {
-	PyLaunch* newEvent = new PyLaunch(eventTime, eventSender, message);
+	PyLaunch* newEvent = new PyLaunch(eventTime, eventSender, args);
 
 	{
 		LockMutex lockMessageQueue(mQueueMutex);
@@ -92,7 +102,11 @@ void PyLaunchThread::RunFunction()
 		}
 
 		gettimeofday(&nextEvent->mStartLaunch, 0);
-		CMD command("python " + nextEvent->mFileName);
+		string launchCommand = "python " + nextEvent->mFileName;
+		if ( nextEvent->mArguments.size() > 0 )
+			launchCommand += (" " + nextEvent->mArguments);
+
+		CMD command(launchCommand);
 		command.Execute();
 		gettimeofday(&nextEvent->mEndLaunch, 0);
 

@@ -52,6 +52,9 @@
     <ClCompile Include="PyLaunchThread.cpp">
       <Filter>Source files</Filter>
     </ClCompile>
+    <ClCompile Include="..\tcPIp_Sockets\TerminalDisplay.cpp">
+      <Filter>Source files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="Makefile" />
@@ -94,6 +97,9 @@
       <Filter>Header files</Filter>
     </ClInclude>
     <ClInclude Include="PyLaunchThread.h">
+      <Filter>Header files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\tcPIp_Sockets\TerminalDisplay.h">
       <Filter>Header files</Filter>
     </ClInclude>
   </ItemGroup>

@@ -13,15 +13,15 @@ OBJCOPY := objcopy
 
 #Additional flags
 PREPROCESSOR_MACROS := NDEBUG RELEASE
-INCLUDE_DIRS := 
-LIBRARY_DIRS := 
-LIBRARY_NAMES := 
-ADDITIONAL_LINKER_INPUTS := 
-MACOS_FRAMEWORKS := 
+INCLUDE_DIRS :=
+LIBRARY_DIRS :=
+LIBRARY_NAMES :=pthread
+ADDITIONAL_LINKER_INPUTS :=
+MACOS_FRAMEWORKS :=
 
-CFLAGS := -ggdb -ffunction-sections -O3
-CXXFLAGS := -ggdb -ffunction-sections -O3
-ASFLAGS := 
+CFLAGS := -ggdb -ffunction-sections -O3 -std=c++0x
+CXXFLAGS := -ggdb -ffunction-sections -O3 -std=c++0x
+ASFLAGS :=
 LDFLAGS := -Wl,-gc-sections
 COMMONFLAGS := 
 

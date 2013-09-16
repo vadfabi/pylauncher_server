@@ -89,6 +89,7 @@ int main(int argc, char *argv[])
 
 			case 1:		//  break out of command mode (user typed 'resume')
 				inCommandMode = false;
+
 				break;
 
 			case -1:	//  application exit (user typed 'quit')
@@ -123,15 +124,21 @@ int ProcessCommandModeInput(string input)
 		printf("Exiting program ...\n");
 		return -1;
 	}
-	else if ( input.compare("resume") == 0 )
+	else if ( input.compare("resume") == 0 || input.size() == 0  )
 	{
 		//  'resume'  -  break out of command mode
 		return 1;
 	}
 	else if ( input.compare("connection") == 0 )
 	{
-		theApp.DisplayWriteConnectionStatus();
+		theApp.ShowConnectionStatus();
 		//  contiue in command mode
+		printf(" >");
+		return 0;
+	}
+	else if ( input.compare("refresh") == 0 )
+	{
+		theApp.RefreshFiles();
 		printf(" >");
 		return 0;
 	}
@@ -155,6 +162,8 @@ int ProcessCommandModeInput(string input)
 		theApp.PrintLogs(stdout);
 		theApp.mListingLogs = true;
 	
+		//  contiue in command mode
+		printf(" >");
 		return 0;
 	}
 	else if ( input.compare("clearlogs") == 0 )
@@ -193,13 +202,14 @@ int ProcessCommandModeInput(string input)
 void PrintCommandHelp()
 {
 	printf("/***********************************************************************************\n");
-	printf("/*** pyLauncher - by LittleBytesOfPi \n");
+	printf("/*** pyLauncher - by LittleBytesOfPi.com \n");
 	printf("/***\n");
 	printf("/***   Commands:\n");
-	printf("/***     - connection               -  prints out the current connection status\n");
-	printf("/***     - savelogs filename [-c]   -  saves the event log to filename, -c to clear logs after save.\n");
-	printf("/***     - listlogs                 -  prints all logged events to monitor.\n");
-	printf("/***     - clearlogs                -  clears the event log.\n");
-	printf("/***     - resume                   -  exits command mode, resume display updates.\n");
+	printf("/***     - connection               -  print out the current connection status\n");
+	printf("/***     - refresh                  -  refresh list of python files from directoryList.txt\n");
+	printf("/***     - savelogs filename [-c]   -  save the event log to filename, -c clears after save\n");
+	printf("/***     - listlogs                 -  print all logged events to monitor\n");
+	printf("/***     - clearlogs                -  clear the event log\n");
+	printf("/***     - resume                   -  done with command mode, resume display updates\n");
 	printf("/***     - quit                     -  exit the program\n");
 }

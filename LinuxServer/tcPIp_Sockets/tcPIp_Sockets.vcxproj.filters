@@ -58,6 +58,9 @@
     <ClCompile Include="CMDifconfig.cpp">
       <Filter>Source files</Filter>
     </ClCompile>
+    <ClCompile Include="TerminalDisplay.cpp">
+      <Filter>Source files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="BroadcastThread.h">
@@ -88,6 +91,9 @@
       <Filter>Header files</Filter>
     </ClInclude>
     <ClInclude Include="CMDifconfig.h">
+      <Filter>Header files</Filter>
+    </ClInclude>
+    <ClInclude Include="TerminalDisplay.h">
       <Filter>Header files</Filter>
     </ClInclude>
   </ItemGroup>

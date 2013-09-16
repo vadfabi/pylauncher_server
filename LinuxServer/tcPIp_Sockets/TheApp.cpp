@@ -25,7 +25,7 @@ using namespace std;
 TheApp::TheApp() :
 	mConnectionThread(*this),  mDisplayThread(*this), mBroadcastThread(*this)
 {
-	mVersionString = "1.0.2";
+	mVersionString = "1.0.3";
 
 	mMaxEventsToLog = 99999;
 	mLogSysEvents = true;

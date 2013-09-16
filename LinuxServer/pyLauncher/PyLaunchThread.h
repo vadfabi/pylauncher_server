@@ -6,6 +6,7 @@
 
 #include "../tcPIp_Sockets/Thread.h"
 #include "../tcPIp_Sockets/UtilityFn.h"
+#include "../tcPIp_Sockets/Parser.h"
 
 class TheApp;
 
@@ -20,16 +21,13 @@ class PyLaunch
 {
 public:
 	PyLaunch();
-	PyLaunch(timeval eventTime, std::string eventAddress, std::string fileName)
-	{ 
-		mEventTime = eventTime;
-		mEventAddress = eventAddress;
-		mFileName = fileName;
-	}
+	PyLaunch(timeval eventTime, std::string eventAddress, std::string args);
+	
 
 	timeval mEventTime;
 	std::string mEventAddress;
 	std::string mFileName;
+	std::string mArguments;
 
 	timeval mStartLaunch;
 	timeval mEndLaunch;
@@ -57,7 +55,7 @@ public:
 	virtual ~PyLaunchThread();
 
 	//  add a message to the broadcast queue, and signal thread to wake up
-	void AddLaunchEvent(timeval eventTime, std::string eventSender, std::string message);
+	void AddLaunchEvent(timeval eventTime, std::string eventSender, std::string args);
 
 	//  override of Thread::Cancel so we can wake thread up before stopping run function
 	virtual void Cancel();

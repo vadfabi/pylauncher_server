@@ -14,7 +14,7 @@ OBJCOPY := objcopy
 #Additional flags
 PREPROCESSOR_MACROS := DEBUG
 INCLUDE_DIRS :=,,\tcpip_Sockets
-LIBRARY_DIRS :=..\tcpip_Sockets
+LIBRARY_DIRS :=
 LIBRARY_NAMES :=pthread
 ADDITIONAL_LINKER_INPUTS :=
 MACOS_FRAMEWORKS :=

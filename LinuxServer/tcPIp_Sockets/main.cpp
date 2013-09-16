@@ -123,7 +123,7 @@ int ProcessCommandModeInput(string input)
 		printf("Exiting program ...\n");
 		return -1;
 	}
-	else if ( input.compare("resume") == 0 )
+	else if ( input.compare("resume") == 0 || input.size() == 0 )
 	{
 		//  'resume'  -  break out of command mode
 		return 1;
