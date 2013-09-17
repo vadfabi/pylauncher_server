@@ -9,9 +9,9 @@ simple framework you can use for a system where you want an Android
 application as a remote control for a C++ program running on 
 your Linux computer, such as the Raspberry Pi.
 
-This program is offered so that anyone who needs a simple TCP/IP 
-socket server/client system for local area network remote control 
-of an application running on a Linux machine can start here.
+This program is offered so that anyone who needs a simple TCP/IP socket
+server/client system between Android and a Linux machine can start here.
+
 
 Note:  This program is suitable for use on a secure local network only.  
 This program does not implement any security for the connection, 
