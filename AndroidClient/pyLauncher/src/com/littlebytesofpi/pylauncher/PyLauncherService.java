@@ -545,7 +545,7 @@ public class PyLauncherService extends Service {
 				for ( PyFile nextFile : mDirectoryList )
 				{
 					if ( nextFile.mSet )
-						removeCommand += nextFile.getPath();
+						removeCommand += "," + nextFile.getPath();
 				}
 			}
 			
@@ -570,7 +570,7 @@ public class PyLauncherService extends Service {
 	}
 	
 	
-//  RemoveDirectory
+	//  AddDirectory
 	//
 	public void AddDirectory(String dirToAdd)
 	{

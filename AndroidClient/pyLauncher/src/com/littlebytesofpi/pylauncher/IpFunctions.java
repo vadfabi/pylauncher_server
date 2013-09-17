@@ -30,7 +30,7 @@ public class IpFunctions {
 
 		try {
 			socket = new Socket(ipAddress, portNumber);
-			socket.setSoTimeout(5000);		//  TODO:  remove hard coded wait time, pass in wait time as parameter
+			socket.setSoTimeout(10000);		//  10 second network timeout		
 			dataOutputStream = new DataOutputStream(socket.getOutputStream());
 			dataInputStream = new DataInputStream(socket.getInputStream());
 			

@@ -183,7 +183,7 @@ public class ClientsServer extends Thread {
 		try{
 			
 			//  setup socket read and write streams
-			mSocket.setSoTimeout(2000);
+			mSocket.setSoTimeout(5000);
 			dataInputStream = new DataInputStream(mSocket.getInputStream());
 			dataOutputStream = new DataOutputStream(mSocket.getOutputStream());
 
