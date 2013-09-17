@@ -57,13 +57,13 @@ public:
 	std::string BuildDirList();
 	std::string BuildFileList();
 
-	//  function to add a directory to the collection
+	//  add a directory to the collection, save the directoryList.txt file when done
 	bool HandleAddDirectory(timeval eventTime, std::string eventSender, std::string dirName);
 
-	//  function to remove directory from the collection
+	//  remove directory from the collection, save the directoryList.txt file when done
 	bool HandleRemoveDirectory(timeval eventTime, std::string eventSender, std::string dirName);
 	 
-	//  function to launch python file
+	//  launch python file, args is "filename,arguments"
 	void HandlePythonLaunch(timeval eventTime, std::string eventSender, std::string args);
 
 

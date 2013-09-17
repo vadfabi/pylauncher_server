@@ -77,7 +77,7 @@ bool CMDifconfig::Parse()
 				//  done with this connection
 				break;
 			}
-			else if ( getString == "wlan" )
+			else if ( getString == "wlan0" )
 			{
 				mWlanInfo.mType = getString;
 

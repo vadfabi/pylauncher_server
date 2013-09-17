@@ -7,6 +7,8 @@
 #include <iostream>
 #include <sys/stat.h>
 #include <dirent.h>
+#include <limits.h>
+#include <unistd.h>
 
 
 #include "TheApp.h"
@@ -147,6 +149,42 @@ void TheApp::LoadPythonFileDirectoryFile()
 
 		dirFile.close();
 	}
+	else
+	{
+		//  There is no directory list file
+		char result[ PATH_MAX ];
+		ssize_t count = readlink( "/proc/self/exe", result, PATH_MAX );
+
+		//  remove pyLauncher from path
+		string path = string(result, count > 0 ? count : 0);
+		path = path.substr(0, path.find_last_of("/"));
+		//  open file
+		FILE* outputFile = fopen ( DIRLISTFILE, "w" );
+		if ( outputFile == 0 )
+			return;
+
+		fprintf( outputFile, "%s\n", path.c_str());
+		
+		mDirectoryList.push_back(path);
+	
+		fclose(outputFile);
+
+		//  create the help file
+		outputFile = fopen ( "programHelp.py", "w" );
+		if ( outputFile == 0 )
+			return;
+
+		fprintf( outputFile, "print \"pyLauncher Program Help\"\n", path.c_str());
+		fprintf( outputFile, "print \"1) Register python file locations on the Directory tab.\"\n", path.c_str());
+		fprintf( outputFile, "print \"2) Select python file on Launch Tab.\"\n", path.c_str());
+		fprintf( outputFile, "print \"3) Input command line arguments (optional).\"\n", path.c_str());
+		fprintf( outputFile, "print \"4) Tap [Run] to launch file\"\n", path.c_str());
+
+	
+		fclose(outputFile);
+
+
+	}
 }
 
 
@@ -170,7 +208,10 @@ void TheApp::LoadPythonFilesList()
 				if ( fileName.size() < 4 )
 					continue;	//  skip files too small to have .py
 
-				if ( fileName.find(".py", 3) == (fileName.size() -3) )
+				if ( (int)fileName.find("._",0,2) >= 0 )
+					continue;
+
+				if ( fileName.find(".py",0,3) == (fileName.size() -3) )
 				{
 					string fileFullPath = *nextDir + "/" + fileName;
 					mFilesList.push_back(fileFullPath);
@@ -344,7 +385,8 @@ void TheApp::DisconnectClient(struct sockaddr_in &clientAddress)
 }
 
 
-//  return a comma delimited string of all directories in collection
+//  BuildDirList
+//
 string TheApp::BuildDirList()
 {
 	LockMutex lockFiles(mFilesListMutex);
@@ -363,6 +405,9 @@ string TheApp::BuildDirList()
 
 }
 
+
+//  BuildFileList
+//
 string TheApp::BuildFileList()
 {
 	LockMutex lockFiles(mFilesListMutex);
@@ -381,11 +426,8 @@ string TheApp::BuildFileList()
 }
 
 
-
-
-
-
-//  function to add a directory to the collection
+//  HandleAddDirectory
+//
 bool TheApp::HandleAddDirectory(timeval eventTime, std::string eventSender, std::string dirName)
 {
 	//  make sure this directory exists
@@ -460,7 +502,8 @@ bool TheApp::HandleRemoveDirectory(timeval eventTime, std::string eventSender, s
 	return true;
 }
 
-//  function to launch python file
+//  HandlePythonLaunch
+//
 void TheApp::HandlePythonLaunch(timeval eventTime, std::string eventSender, std::string args)
 {
 	mPyLaunchThread.AddLaunchEvent(eventTime, eventSender, args);
@@ -566,15 +609,6 @@ string TheApp::GetIpAddress()
 //
 void TheApp::BroadcastMessage(timeval eventTime, string eventSender, string message)
 {
-	//  BUILD YOUR PROGRAM HERE
-	//
-
-	//  Here is where you could take action on receiving a specific message
-	//  remember, this could be called from any of the n connected client threads, 
-	//  so make sure you wrap a lock around access to any shared memory collections
-	//
-	//
-
 	AddEvent(eventTime, eventSender, message);
 
 	if ( mForwardMessagesToAllClients )
