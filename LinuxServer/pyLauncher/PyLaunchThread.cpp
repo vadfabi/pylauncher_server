@@ -106,6 +106,8 @@ void PyLaunchThread::RunFunction()
 		if ( nextEvent->mArguments.size() > 0 )
 			launchCommand += (" " + nextEvent->mArguments);
 
+		launchCommand += " 2>&1";
+
 		CMD command(launchCommand);
 		command.Execute();
 		gettimeofday(&nextEvent->mEndLaunch, 0);

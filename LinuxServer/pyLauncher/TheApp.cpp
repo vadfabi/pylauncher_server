@@ -32,7 +32,10 @@ using namespace std;
 //  Constructor
 //
 TheApp::TheApp() :
-	mConnectionThread(*this),   mBroadcastThread(*this), mPyLaunchThread(*this)
+	mConnectionThread(*this),   
+	mBroadcastThread(*this), 
+	mPyLaunchThread(*this), 
+	mDisplayThread(*this)
 {
 	mVersionString = "1.0.3";
 
@@ -86,7 +89,8 @@ bool TheApp::InitializeInstance()
 
 	mPyLaunchThread.Start();
 
-	DisplayWriteHeader();
+	mDisplayThread.Start();
+	mDisplayThread.UpdateEverything();
 
 	//  initialization successful
 	return true;
@@ -105,6 +109,9 @@ void TheApp::ShutDown()
 
 	if ( mPyLaunchThread.IsRunning() )
 		mPyLaunchThread.Cancel();
+
+	if ( mDisplayThread.IsRunning() )
+		mDisplayThread.Cancel();
 
 	//  disconnect all of our clients
 	map<string, ConnectedClient*>::iterator nextClient;
@@ -274,7 +281,7 @@ void TheApp::AddEvent(timeval eventTime, string eventSender, string eventDetails
 		}
 
 		//  update display
-		DisplayWriteEvent(*newEvent);
+		mDisplayThread.AddEvent(newEvent);
 
 	}//  we are done modifying the event log, release access
 
@@ -342,7 +349,7 @@ int TheApp::CreateClientConnection(const struct sockaddr_in &clientAddress, int 
 
 	} //  unlock access to the client map
 
-	DisplayWriteConnectionStatus();
+	mDisplayThread.UpdateConnections();
 
 	return servingClientOnPortNumber;
 }
@@ -380,7 +387,7 @@ void TheApp::DisconnectClient(struct sockaddr_in &clientAddress)
 
 	}	//  release access to client map
 
-	DisplayWriteConnectionStatus();
+	mDisplayThread.UpdateConnections();
 
 }
 
@@ -562,12 +569,6 @@ void TheApp::SendMessageToAllClients(list<LogEvent*>& eventsToSend)
 }
 
 
-string TheApp::GetIpAddress()
-{
-	return mCMDifconfig.mEth0Info.mInet4Address;
-}
-
-
 //  SendMessageToAllClients
 //  this function is called from the broadcast thread to send a message to all clients
 //  this implementation uses async, but it is not stable, too many failures to connect on socket with error code EINTR
@@ -599,6 +600,20 @@ string TheApp::GetIpAddress()
 //	}
 //
 //}
+
+
+
+//  GetIpAddress
+//  
+string TheApp::GetIpAddress()
+{
+	if ( mCMDifconfig.mEth0Info.mInet4Address.size() > 0 )
+		return mCMDifconfig.mEth0Info.mInet4Address;
+	else if ( mCMDifconfig.mWlanInfo.mInet4Address.size() > 0 )
+		return mCMDifconfig.mWlanInfo.mInet4Address;
+	else
+		return "Not connected";
+}
 
 
 
@@ -716,9 +731,12 @@ void TheApp::ClearLogs()
 
 }
 
+
+
+// Show connection status
 void TheApp::ShowConnectionStatus()
 {
-	DisplayWriteConnectionStatus();
+	mDisplayThread.UpdateConnections();
 }
 
 
@@ -731,13 +749,12 @@ void TheApp::ShowConnectionStatus()
 
 
 
-
 //  SuspendDisplayUpdates
 //  set flag to suspend display updtes, this is used when main( ) enters command mode for terminal input
 //
 void TheApp::SuspendDisplayUpdates() 
 {
-	LockMutex lockDisplay(mDisplayUpdateMutex);
+
 	mDisplayUpdatesOn = false; 
 	mTerminalDisplay.SetColour(BRIGHT,WHITE,BLACK);
 }
@@ -748,13 +765,11 @@ void TheApp::SuspendDisplayUpdates()
 //
 void TheApp::ResumeDisplayUpdates()
 {
-	//  no need to lock the mutex here, since no display updates are running in this state
 
 	//  turn updates back on
 	mDisplayUpdatesOn = true; 
 
-	DisplayWriteHeader();
-	DisplayWriteConnectionStatus();
+	mDisplayThread.UpdateEverything();
 }
 
 
@@ -767,13 +782,11 @@ void TheApp::DisplayWriteHeader()
 	if ( ! mDisplayUpdatesOn )
 		return;
 
-	system("clear");
+	CMD clear("clear");
+	clear.Execute();
 
 	mTerminalDisplay.InitDimensions();
 	mTerminalDisplay.SetBackground(BLACK);
-
-	//  lock the display update
-	LockMutex lockDisplay(mDisplayUpdateMutex);
 
 	mTerminalDisplay.PrintAcross ("**", BLACK,RED);
 
@@ -800,11 +813,8 @@ void TheApp::DisplayWriteConnectionStatus()
 	//LockMutex lockClients(mConnectedClientsMutex);
 	if ( mConnectedClientsMutex.try_lock() )
 	{
-		LockMutex lockDisplay(mDisplayUpdateMutex);
-
 		CMD dateCommand("date");
 		dateCommand.Execute();
-
 
 		mTerminalDisplay.PrintAcross("**", BLACK,RED, "-",RED,BLACK);
 		mTerminalDisplay.PrintLine("**", BLACK,RED, "",RED,BLACK);
@@ -838,8 +848,6 @@ void TheApp::DisplayWriteEvent(LogEvent event)
 {
 	if ( ! mDisplayUpdatesOn )
 		return;
-
-	LockMutex lockDisplay(mDisplayUpdateMutex);
 
 	if ( mListingLogs )
 		event.PrintLog(stdout);

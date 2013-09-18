@@ -53,8 +53,11 @@ bool CMD::Execute()
 
 
 //  System
-//  calls system(yourCommand)
+//  calls popen(yourCommand)
 //  puts response into a std::string list (with newlines stripped off)
+//
+//  TODO - refactor usage with fork or select ? 
+//  see:  http://stackoverflow.com/questions/478898/how-to-execute-a-command-and-get-output-of-command-within-c
 //
 bool CMD::System()
 {

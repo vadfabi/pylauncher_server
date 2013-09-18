@@ -13,7 +13,7 @@ OBJCOPY := objcopy
 
 #Additional flags
 PREPROCESSOR_MACROS := NDEBUG RELEASE
-INCLUDE_DIRS :=,,\tcpip_Sockets
+INCLUDE_DIRS :=,,\tcPIp_Sockets
 LIBRARY_DIRS :=
 LIBRARY_NAMES :=pthread
 ADDITIONAL_LINKER_INPUTS :=

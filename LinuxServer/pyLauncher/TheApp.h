@@ -16,6 +16,7 @@
 
 #include "ConnectedClientThread.h"
 #include "PyLaunchThread.h"
+#include "DisplayThread.h"
 
 
 
@@ -102,6 +103,8 @@ public:
 	//  function to return IP address of server
 	std::string GetIpAddress();
 
+
+
 protected:
 
 	//  remember ifconfig properties
@@ -131,9 +134,6 @@ protected:
 
 	void LiveUpdatePythonFiles();
 	
-	
-
-
 	BroadcastThread mBroadcastThread;
 
 	PyLaunchThread mPyLaunchThread;
@@ -147,22 +147,23 @@ protected:
 
 	//  The display output
 	TerminalDisplay mTerminalDisplay;
+	DisplayThread mDisplayThread;
+	friend class DisplayThread;
 	//
-	std::mutex mDisplayUpdateMutex;
+
 	//
 	bool mDisplayUpdatesOn;
 	bool mUpdateDisplay;
 	//
-	timeval mTimeOfLastClockUpdate;
-	
-	//  update display function, 
+
+		//  Display Output
 	void DisplayUpdate();
 	void DisplayWriteHeader();
 	void DisplayWriteConnectionStatus();
 	void DisplayWriteEvent(LogEvent event);
-	void DisplayWriteTime();
-	void DisplayUpdateClock();
-
+	
+	
+	//  Version
 	std::string mVersionString;
 };
 

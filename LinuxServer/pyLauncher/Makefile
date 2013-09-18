@@ -4,7 +4,7 @@
 #Visit http://visualgdb.com/makefiles for more details
 
 #VisualGDB: AutoSourceFiles		#<--- remove this line to disable auto-updating of SOURCEFILES and EXTERNAL_LIBS
-SOURCEFILES := ../tcPIp_Sockets/BroadcastThread.cpp ../tcPIp_Sockets/CMD.cpp ../tcPIp_Sockets/CMDifconfig.cpp ../tcPIp_Sockets/ConnectionThread.cpp ../tcPIp_Sockets/Parser.cpp ../tcPIp_Sockets/TCPServerThread.cpp ../tcPIp_Sockets/TerminalDisplay.cpp ../tcPIp_Sockets/Thread.cpp ConnectedClientThread.cpp main.cpp PyLaunchThread.cpp TheApp.cpp
+SOURCEFILES := ../tcPIp_Sockets/BroadcastThread.cpp ../tcPIp_Sockets/CMD.cpp ../tcPIp_Sockets/CMDifconfig.cpp ../tcPIp_Sockets/ConnectionThread.cpp ../tcPIp_Sockets/Parser.cpp ../tcPIp_Sockets/TCPServerThread.cpp ../tcPIp_Sockets/TerminalDisplay.cpp ../tcPIp_Sockets/Thread.cpp ConnectedClientThread.cpp DisplayThread.cpp main.cpp PyLaunchThread.cpp TheApp.cpp
 
 TARGETNAME := pyLauncher
 #TARGETTYPE can be APP, STATIC or SHARED
