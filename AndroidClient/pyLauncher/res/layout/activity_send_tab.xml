@@ -24,7 +24,6 @@
         android:layout_alignParentLeft="true"
         android:layout_alignParentTop="true"
         android:layout_alignRight="@+id/buttonRunFile"
-        android:layout_marginTop="0dp"
         android:text="Select a Python file to run:" />
 
     <Spinner
@@ -43,7 +42,8 @@
         android:layout_alignLeft="@+id/listViewEvents"
         android:layout_alignRight="@+id/listViewEvents"
         android:layout_below="@+id/textViewCmdLineTag"
-        android:ems="10" />
+        android:ems="10" 
+        />
 
     <TextView
         android:id="@+id/textViewCmdLineTag"
@@ -58,7 +58,7 @@
         android:id="@+id/buttonRunFile"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_above="@+id/textViewCmdLineTag"
+        android:layout_alignBottom="@+id/spinnerFile"
         android:layout_alignParentRight="true"
         android:text="Run" />
 

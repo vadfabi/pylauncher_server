@@ -1,13 +1,12 @@
 package com.littlebytesofpi.pylauncher;
 
-import com.littlebytesofpi.pylauncher.PyLauncherService.LocalBinder;
-
-import android.app.Activity;
 import android.app.TabActivity;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.ServiceConnection;
+import android.content.pm.ActivityInfo;
+import android.content.res.Configuration;
 import android.content.res.Resources;
 import android.os.Bundle;
 import android.os.Handler;
@@ -17,6 +16,8 @@ import android.util.Log;
 import android.view.Menu;
 import android.widget.TabHost;
 import android.widget.TabHost.TabSpec;
+
+import com.littlebytesofpi.pylauncher.PyLauncherService.LocalBinder;
 
 
 
@@ -165,6 +166,12 @@ public class PyLauncher extends TabActivity {
 		}
 	};  
 
+	@Override
+	public void onConfigurationChanged(Configuration newConfig) {
+	    super.onConfigurationChanged(newConfig);
+	    setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
+	}
+	
 
 	@Override
 	public boolean onCreateOptionsMenu(Menu menu) {

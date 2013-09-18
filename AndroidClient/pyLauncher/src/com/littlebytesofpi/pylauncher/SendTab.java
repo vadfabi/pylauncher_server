@@ -17,6 +17,7 @@ import android.preference.PreferenceManager;
 import android.util.Log;
 import android.view.Menu;
 import android.view.View;
+import android.view.WindowManager;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
@@ -106,6 +107,8 @@ public class SendTab extends Activity implements  AdapterView.OnItemSelectedList
 
 		//  setup default preferences
 		PreferenceManager.setDefaultValues(this,  R.xml.preferences,  false);
+		
+		getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_PAN);
 	}
 
 	//  onStart
@@ -165,6 +168,9 @@ public class SendTab extends Activity implements  AdapterView.OnItemSelectedList
 
 			mService.GetFilesList(mFilesList);
 			mAdapter.notifyDataSetChanged();
+			
+			mService.GetLaunchResults(mResultsList);
+			mResultsAdapter.notifyDataSetChanged();
 		}
 
 
