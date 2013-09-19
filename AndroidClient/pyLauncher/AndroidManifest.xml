@@ -29,25 +29,32 @@
          
         <activity
             android:name="com.littlebytesofpi.pylauncher.PyLauncher"
-            android:label="@string/app_name" >
-            <intent-filter>
-                <action android:name="android.intent.action.MAIN" />
-
-                <category android:name="android.intent.category.LAUNCHER" />
-            </intent-filter>
+            android:label="@string/app_name" 
+             android:launchMode="singleTask">
+           
+            
         </activity>
         <activity
             android:name="com.littlebytesofpi.pylauncher.SendTab"
-            android:label="@string/title_activity_send_tab" 
-            android:windowSoftInputMode="stateUnchanged|adjustResize">
+            android:label="@string/title_activity_send_tab"  
+             android:launchMode="singleTask">
+            
+             <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+
+                <category android:name="android.intent.category.LAUNCHER" />
+                </intent-filter>
+           
         </activity>
         <activity
             android:name="com.littlebytesofpi.pylauncher.ConnectTab"
-            android:label="@string/title_activity_connect_tab" >
+            android:label="@string/title_activity_connect_tab"
+             android:launchMode="singleTask" >
         </activity>
         <activity
             android:name="com.littlebytesofpi.pylauncher.DirectoryTab"
-            android:label="@string/title_activity_directory_tab" >
+            android:label="@string/title_activity_directory_tab" 
+             android:launchMode="singleTask">
         </activity>
     </application>
 

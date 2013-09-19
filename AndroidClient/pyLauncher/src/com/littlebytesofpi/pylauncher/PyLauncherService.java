@@ -166,7 +166,7 @@ public class PyLauncherService extends Service {
 
 		// The PendingIntent to launch our activity if the user selects this notification
 		PendingIntent contentIntent = null;
-		contentIntent = PendingIntent.getActivity(this, 0, new Intent(this, PyLauncher.class), 0);
+		contentIntent = PendingIntent.getActivity(this, 0, new Intent(this, SendTab.class), 0);
 
 		//  set string with state info
 		String notificationText;
@@ -184,6 +184,14 @@ public class PyLauncherService extends Service {
 	}
 
 
+	public void ShutDown(){
+		
+		if ( mClientsServerThread != null )
+			mClientsServerThread.cancel();
+		mClientsServerThread = null;
+		
+		stopSelf();
+	}
 	
 	
 	//  Message Handling
@@ -456,9 +464,13 @@ public class PyLauncherService extends Service {
 			
 			
 			showNotification();
+			
+			mFilesList.clear();
+			mDirectoryList.clear();
 
 			//  update UI
 			PyLauncherService.this.SendMessage(MESSAGE_CONNECTEDSTATECHANGE);	
+			PyLauncherService.this.SendMessage(MESSAGE_UPDATEDIRECTORIES);
 		}
 	}
 

@@ -48,15 +48,15 @@ public class PyLauncher extends TabActivity {
 				.setIndicator("Directory", ressources.getDrawable(R.drawable.ic_directory))
 				.setContent(intentDirectory);
 
-		// Launch Tab
-		Intent intentSend = new Intent().setClass(this, SendTab.class);
-		TabSpec tabSpecSend = mTabHost.newTabSpec("Launch")
-				.setIndicator("Launch", ressources.getDrawable(R.drawable.ic_send))
-				.setContent(intentSend);
+//		// Launch Tab
+//		Intent intentSend = new Intent().setClass(this, SendTab.class);
+//		TabSpec tabSpecSend = mTabHost.newTabSpec("Launch")
+//				.setIndicator("Launch", ressources.getDrawable(R.drawable.ic_send))
+//				.setContent(intentSend);
 
 		mTabHost.addTab(tabSpecConnect);
 		mTabHost.addTab(tabSpecDirectory);
-		mTabHost.addTab(tabSpecSend);
+		//mTabHost.addTab(tabSpecSend);
 	}
 
 
@@ -76,12 +76,6 @@ public class PyLauncher extends TabActivity {
 	public void onResume(){
 		super.onResume();
 		
-		if ( mService != null )
-		{
-			if ( mService.IsConnectedToServer() )
-				mTabHost.setCurrentTabByTag("Launch");
-		}
-
 	}
 
 	//  onDestroy
@@ -89,13 +83,7 @@ public class PyLauncher extends TabActivity {
 	public void onDestroy(){
 		super.onDestroy();
 
-		//  if we are connected to server, start the service so it stays connected
-
-		if ( mService.IsConnectedToServer() )
-		{
-			Intent startIntent = new Intent(this, PyLauncherService.class);
-			this.startService(startIntent);
-		}
+	
 
 		UnbindFromService();
 	}

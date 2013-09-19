@@ -30,7 +30,7 @@
   </style>
 
   <style name="ImageButtonredcolors" parent="android:Widget.ImageButton">
-	  <item name="android:background">@drawable/btn_default_holo_dark</item>
+	  <item name="android:background">#80000000</item>
   </style>
 
   <style name="Spinnerredcolors" parent="android:Widget.Spinner">

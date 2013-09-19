@@ -3,6 +3,7 @@ package com.littlebytesofpi.pylauncher;
 import java.util.ArrayList;
 
 import android.content.Context;
+import android.graphics.Color;
 import android.graphics.Typeface;
 import android.opengl.Visibility;
 import android.view.LayoutInflater;
@@ -83,6 +84,15 @@ public class ResultAdapter extends ListViewAdapter {
 		
 		
 		mViewHolder.textViewResults.setText(formatResult);
+		
+		if ( position % 2 == 0 )
+		{
+			convertView.setBackgroundColor(Color.parseColor("#383838"));
+		}
+		else
+		{
+			convertView.setBackgroundColor(Color.parseColor("#282828"));
+		}
 		
 		
 	
