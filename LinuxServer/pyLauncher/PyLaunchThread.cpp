@@ -49,6 +49,9 @@ PyLaunchThread::~PyLaunchThread()
 	}
 }
 
+
+//  AddLaunchEvent
+//
 void PyLaunchThread::AddLaunchEvent(timeval eventTime, string eventSender, string args)
 {
 	PyLaunch* newEvent = new PyLaunch(eventTime, eventSender, args);
@@ -63,6 +66,8 @@ void PyLaunchThread::AddLaunchEvent(timeval eventTime, string eventSender, strin
 }
 
 
+//  Cancel
+//
 void PyLaunchThread::Cancel()
 {
 	mThreadRunning = false;
@@ -73,6 +78,8 @@ void PyLaunchThread::Cancel()
 }
 
 
+//  RunFunction
+//
 void PyLaunchThread::RunFunction()
 {
 	
@@ -94,7 +101,6 @@ void PyLaunchThread::RunFunction()
 	while ( ! mLaunchQueue.empty() )
 	{
 		PyLaunch* nextEvent = 0;
-
 		{
 			LockMutex lockQueue(mQueueMutex);
 			nextEvent = mLaunchQueue.front();

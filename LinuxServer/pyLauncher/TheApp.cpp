@@ -37,9 +37,9 @@ TheApp::TheApp() :
 	mPyLaunchThread(*this), 
 	mDisplayThread(*this)
 {
-	mVersionString = "1.0.3";
+	mVersionString = "1.0.4";
 
-	mMaxEventsToLog = 99999;
+	mMaxEventsToLog = 9999;
 	mLogSysEvents = true;
 
 	mDisplayUpdatesOn = true;
@@ -871,6 +871,7 @@ void TheApp::DisplayWriteEvent(LogEvent event)
 			mTerminalDisplay.PrintAcross("**", BLACK,GREEN, "-",GREEN,BLACK);
 			mTerminalDisplay.PrintLine("**", BLACK,GREEN, "",GREEN,BLACK);
 			mTerminalDisplay.PrintLine("**", BLACK,GREEN, format("  Python File: %s", file.c_str()), GREEN,BLACK);
+			mTerminalDisplay.PrintLine("**", BLACK,GREEN, format("   - Launched by: %s", ipRequestor.c_str()), GREEN,BLACK);
 			mTerminalDisplay.PrintLine("**", BLACK,GREEN, format("   - Launched at: %s", timeLaunch.c_str()), GREEN,BLACK);
 
 			string nextResult =  resultParser.GetNextString();
