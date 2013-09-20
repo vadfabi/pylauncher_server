@@ -135,7 +135,7 @@ public class ClientsServer extends Thread {
 						mSocket.close();
 				}
 				catch(IOException e){
-					Log.e(TAG, "Exception in Connected Control Thread: " + e.toString());
+					if ( D ) Log.e(TAG, "Exception in Connected Control Thread: " + e.toString());
 				}
 			}
 		}
@@ -162,7 +162,7 @@ public class ClientsServer extends Thread {
 					Sleep(100);
 
 			} catch(IOException e){
-				Log.e(TAG, "Exception in Connected Control Thread: " + e.toString());
+				if ( D ) Log.e(TAG, "Exception in Connected Control Thread: " + e.toString());
 			} finally {
 				mServerSocket = null;
 			}
@@ -250,7 +250,7 @@ public class ClientsServer extends Thread {
 			}
 
 		} catch(IOException e){
-			Log.e(TAG, "Exception in ProcessControlInput:" + e.toString());
+			if ( D ) Log.e(TAG, "Exception in ProcessControlInput:" + e.toString());
 		}
 		finally{
 			try{
@@ -261,7 +261,7 @@ public class ClientsServer extends Thread {
 					dataInputStream.close();
 
 			} catch(IOException e){
-				Log.e(TAG, "Exception in ProcessControlInput:" + e.toString());
+				if ( D ) Log.e(TAG, "Exception in ProcessControlInput:" + e.toString());
 			}
 		}
 	}

@@ -122,7 +122,7 @@ public class PyLauncher extends TabActivity {
 	//  BindToService
 	//
 	private void BindToService() {
-		Log.d(TAG, "bindToService()");
+		if ( D ) Log.d(TAG, "bindToService()");
 
 		// bind to the service 
 		Intent startIntent = new Intent(PyLauncher.this, PyLauncherService.class);

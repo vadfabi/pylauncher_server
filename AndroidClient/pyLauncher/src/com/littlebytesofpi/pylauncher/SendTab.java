@@ -263,7 +263,7 @@ public class SendTab extends Activity implements  AdapterView.OnItemSelectedList
 	//  BindToService
 	//
 	private void BindToService() {
-		Log.d(TAG, "bindToService()");
+		if ( D ) Log.d(TAG, "bindToService()");
 
 		// bind to the service 
 		Intent startIntent = new Intent(SendTab.this, PyLauncherService.class);

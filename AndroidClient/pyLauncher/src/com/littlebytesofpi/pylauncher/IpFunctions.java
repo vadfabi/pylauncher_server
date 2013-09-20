@@ -120,7 +120,7 @@ public class IpFunctions {
 
 
 		} catch (Exception e){
-			Log.e(TAG, "Exception in getLocalIpAddress: " + e.toString());
+			if ( D ) Log.e(TAG, "Exception in getLocalIpAddress: " + e.toString());
 		}
 
 		return "";

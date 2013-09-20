@@ -165,7 +165,7 @@ public class DirectoryTab extends Activity {
 	//  BindToService
 	//
 	private void BindToService() {
-		Log.d(TAG, "bindToService()");
+		if ( D ) Log.d(TAG, "bindToService()");
 
 		// bind to the service 
 		Intent startIntent = new Intent(DirectoryTab.this, PyLauncherService.class);
