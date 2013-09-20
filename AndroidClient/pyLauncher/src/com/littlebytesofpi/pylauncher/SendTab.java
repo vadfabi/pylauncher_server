@@ -341,14 +341,7 @@ public class SendTab extends Activity implements  AdapterView.OnItemSelectedList
 	}
 	
 	
-
-	@Override
-	public boolean onCreateOptionsMenu(Menu menu) {
-		
-		//  no menu bar
-		
-		return true;
-	}
+	
 
 	boolean D = true;
 	String TAG = "SendTab";
