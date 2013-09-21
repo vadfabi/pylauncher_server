@@ -183,14 +183,11 @@ void TheApp::LoadPythonFileDirectoryFile()
 
 		fprintf( outputFile, "print \"pyLauncher Program Help\"\n", path.c_str());
 		fprintf( outputFile, "print \"1) Register python file locations on the Directory tab.\"\n", path.c_str());
-		fprintf( outputFile, "print \"2) Select python file on Launch Tab.\"\n", path.c_str());
+		fprintf( outputFile, "print \"2) Select a python file to launch.\"\n", path.c_str());
 		fprintf( outputFile, "print \"3) Input command line arguments (optional).\"\n", path.c_str());
 		fprintf( outputFile, "print \"4) Tap [Run] to launch file\"\n", path.c_str());
-
 	
 		fclose(outputFile);
-
-
 	}
 }
 
