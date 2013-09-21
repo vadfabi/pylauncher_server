@@ -112,6 +112,7 @@ void PyLaunchThread::RunFunction()
 		if ( nextEvent->mArguments.size() > 0 )
 			launchCommand += (" " + nextEvent->mArguments);
 
+		//  specify to direct stderr to stdout
 		launchCommand += " 2>&1";
 
 		CMD command(launchCommand);
@@ -135,6 +136,10 @@ void PyLaunchThread::RunFunction()
 		launchResult += results;
 
 		mTheApp.BroadcastMessage( nextEvent->mEndLaunch,  mTheApp.GetIpAddress(), launchResult);
+
+		//  if we have more, sleep for a slice to let system process
+		if ( ! mLaunchQueue.empty() )
+			Sleep(10);
 
 
 		delete nextEvent;
