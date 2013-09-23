@@ -11,7 +11,7 @@ public class PyFile {
 	
 	//  flag to keep track of state in list views
 	boolean mSet;
-	
+	  
 	public PyFile(String fullPath){
 			
 		mFullPath = fullPath;
