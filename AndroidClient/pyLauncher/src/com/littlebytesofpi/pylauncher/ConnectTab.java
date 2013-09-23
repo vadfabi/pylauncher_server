@@ -222,8 +222,7 @@ public class ConnectTab extends Activity {
 			{
 				//  open connection with default
 				//  message the user that we have initiated a connection
-				Toast.makeText(this, "Connecting to to server at: " + ipAddress + " on port: " + serverPort, Toast.LENGTH_SHORT).show();
-				mService.openConnectionToServer(ipAddress, serverPort);
+					mService.openConnectionToServer(ipAddress, serverPort);
 			}
 			else
 			{

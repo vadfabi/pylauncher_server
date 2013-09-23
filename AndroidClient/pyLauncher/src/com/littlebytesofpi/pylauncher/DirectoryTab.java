@@ -51,7 +51,7 @@ public class DirectoryTab extends Activity {
 				
 				//  set default file name based on date / time
 			
-				input.setText("/home/grahambriggs/Source/Python3/");
+				input.setText("");
 				alert.setView(input);
 				
 				//  alert dialog button handlers

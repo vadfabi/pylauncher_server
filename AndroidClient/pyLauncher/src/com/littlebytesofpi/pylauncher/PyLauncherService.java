@@ -330,11 +330,24 @@ public class PyLauncherService extends Service {
 		return IpFunctions.SendStringToPort(mConnectedToServerIp, mConnectedToServerOnPort, message);
 	}
 
+	
+	boolean mConnectingToServer = false;
 
 	//  OpenConnectionToServer
 	//
 	public void openConnectionToServer(String connectAddress, int connectPort)
 	{
+		if ( mConnectingToServer )
+		{
+			Toast.makeText(this,  "Connection to server is in progress, please be patient.",  Toast.LENGTH_SHORT).show();
+			return;
+		}
+		
+		mConnectingToServer = true;
+		
+		Toast.makeText(this, "Connecting to to server at: " + connectAddress + " on port: " + connectPort, Toast.LENGTH_SHORT).show();
+		
+		
 		//  close previous connection to the server if it is open
 		if ( mClientsServerThread != null )
 		{
@@ -423,6 +436,8 @@ public class PyLauncherService extends Service {
 
 			//  update android notification
 			showNotification();
+			
+			mConnectingToServer = false;
 		}
 	}
 	

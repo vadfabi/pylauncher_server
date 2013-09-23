@@ -27,6 +27,7 @@ import android.widget.ImageButton;
 import android.widget.ListView;
 import android.widget.Spinner;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.littlebytesofpi.pylauncher.PyLauncherService.LocalBinder;
 
@@ -54,9 +55,22 @@ public class SendTab extends Activity implements  AdapterView.OnItemSelectedList
 
 			case R.id.buttonRunFile:
 			{
+				if ( ! mService.IsConnectedToServer() )
+				{
+					Toast.makeText(SendTab.this,  "You must be connected to the server.",  Toast.LENGTH_SHORT).show();
+					return;
+				}
+				
 				//  get the file and send it
 				//  get the selected sensor
 				PyFile selectedFile = (PyFile)mSpinnerFileSelector.getSelectedItem();
+				
+				if ( selectedFile == null )
+				{
+					Toast.makeText(SendTab.this,  "No python file selected.", Toast.LENGTH_SHORT).show();
+					return;
+				}
+				
 				String args = mEditTextArgs.getText().toString();
 
 				//  save arguments for this file
@@ -233,6 +247,12 @@ public class SendTab extends Activity implements  AdapterView.OnItemSelectedList
 	class WaitForConnectionTask extends AsyncTask<Void, Void, Void> {
 
 		protected Void doInBackground(Void... param ) {
+			
+			SharedPreferences sharedPrefs = PreferenceManager.getDefaultSharedPreferences(SendTab.this);
+			String ipAddress = sharedPrefs.getString("pref_serveripaddress", "");
+
+			if ( ipAddress.length() == 0 )
+				return null;
 			
 			long timeStartWait = System.currentTimeMillis();
 			while ( ! mService.IsConnectedToServer() && (System.currentTimeMillis() - timeStartWait < 3000) )
