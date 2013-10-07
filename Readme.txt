@@ -23,9 +23,9 @@ There are two parts to this project:
 Linux server (C++) and Android client (Java) to send and receive messages 
 using TCP/IP sockets.
 
-> pyLauncher: an example program using most of the tcPIp_Sockets code as a framework. 
-This program launches python scripts on the Linux server using the Android 
-client for a remote control.
+> pyLauncher: an example program using most of the tcPIp_Sockets code 
+as a framework. This program launches python scripts on the Linux 
+server using the Android client for a remote control.
 
 
 Full details and technical specifications can be found at: 
