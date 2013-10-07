@@ -105,9 +105,6 @@ public class PyLauncher extends TabActivity {
 			LocalBinder binder = (LocalBinder) service;
 			mService = binder.getService();
 			mService.AddHandler(mHandler);
-			
-			if ( mService.IsConnectedToServer() )
-				mTabHost.setCurrentTabByTag("Launch");
 		}
 
 
@@ -168,7 +165,7 @@ public class PyLauncher extends TabActivity {
 		return true;
 	}
 
-	boolean D = true;
+	boolean D = false;
 	String TAG = "PyLauncher";
 
 }

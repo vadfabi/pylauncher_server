@@ -363,7 +363,7 @@ public class SendTab extends Activity implements  AdapterView.OnItemSelectedList
 	
 	
 
-	boolean D = true;
+	boolean D = false;
 	String TAG = "SendTab";
 
 }

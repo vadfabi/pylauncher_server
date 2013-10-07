@@ -419,6 +419,6 @@ public class TcpConnect extends Activity {
 	//  Debug Flags
 	//
 	private final String TAG = "TcpConnect";
-	private final boolean D = true;
+	private final boolean D = false;
 
 }
