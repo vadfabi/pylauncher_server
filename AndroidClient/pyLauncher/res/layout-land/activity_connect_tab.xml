@@ -49,12 +49,15 @@
                 android:text="IP Address of Server:" />
 
             <EditText
-                android:id="@+id/editText_Port"
+                android:id="@+id/editText_IpAddress"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="1dp"
                 android:ems="10"
-                android:inputType="number" />
+                android:inputType="phone" >
+
+                <requestFocus />
+            </EditText>
 
             <TextView
                 android:id="@+id/textView_PortTag"
@@ -64,12 +67,13 @@
                 android:text="Server Listening on Port:" />
 
             <EditText
-                android:id="@+id/editText_IpAddress"
+                android:id="@+id/editText_Port"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="1dp"
                 android:ems="10"
-                android:inputType="phone" />
+                android:inputType="number" />
+
         </LinearLayout>
     </LinearLayout>
 

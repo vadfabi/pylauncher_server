@@ -9,6 +9,8 @@ import android.content.Intent;
 import android.content.ServiceConnection;
 import android.content.SharedPreferences;
 import android.content.SharedPreferences.Editor;
+import android.graphics.Color;
+import android.graphics.Paint;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Handler;
@@ -16,7 +18,6 @@ import android.os.IBinder;
 import android.os.Message;
 import android.preference.PreferenceManager;
 import android.util.Log;
-import android.view.Menu;
 import android.view.View;
 import android.view.WindowManager;
 import android.widget.AdapterView;
@@ -110,6 +111,8 @@ public class SendTab extends Activity implements  AdapterView.OnItemSelectedList
 	private ArrayList<PyLaunchResult> mResultsList = new ArrayList<PyLaunchResult>();
 	private ResultAdapter mResultsAdapter = new ResultAdapter(mResultsList,  this);
 	
+	private boolean PaidVersion = true;
+	private TextView mTextViewSupportUs;
 	
 	//  onCreate
 	//
@@ -150,6 +153,22 @@ public class SendTab extends Activity implements  AdapterView.OnItemSelectedList
 			}
 		});
 
+		mTextViewSupportUs = (TextView)findViewById(R.id.textView1);
+		mTextViewSupportUs.setTextColor(Color.parseColor("#FF0000"));
+		mTextViewSupportUs.setPaintFlags(mTextViewSupportUs.getPaintFlags() |   Paint.UNDERLINE_TEXT_FLAG);
+		mTextViewSupportUs.setOnClickListener( new View.OnClickListener() {
+			
+			@Override
+			public void onClick(View v) {
+				
+				Intent intent = new Intent(SendTab.this, Support.class);
+				startActivity(intent);
+			}
+		});
+		
+		if ( PaidVersion )
+			mTextViewSupportUs.setVisibility(View.GONE);
+		
 		//  setup default preferences
 		PreferenceManager.setDefaultValues(this,  R.xml.preferences,  false);
 		

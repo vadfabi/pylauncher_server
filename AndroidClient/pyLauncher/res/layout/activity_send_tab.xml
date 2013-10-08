@@ -1,4 +1,4 @@
- <RelativeLayout 
+<RelativeLayout 
     xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
@@ -11,11 +11,12 @@
     <ListView
         android:id="@+id/listViewEvents"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
+        android:layout_height="match_parent"
+        android:layout_above="@+id/textView1"
         android:layout_alignParentRight="true"
-        android:layout_below="@+id/editTextArgs" 
+        android:layout_below="@+id/editTextArgs"
         android:divider="#660000"
-         android:dividerHeight="2px">
+        android:dividerHeight="2px" >
 
     </ListView>
 
@@ -52,7 +53,7 @@
         android:layout_width="40dp"
         android:layout_height="40dp"
         android:layout_alignRight="@+id/buttonRunFile"
-        android:layout_alignTop="@+id/textView1"
+    
         android:src="@drawable/ic_settings" />
 
     <TextView
@@ -83,5 +84,13 @@
         android:layout_marginLeft="20dp"
         android:text="Not connected to the server please hit the settings button:" />
 
-</RelativeLayout>
+    <TextView
+        android:id="@+id/textView1"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_centerHorizontal="true"
+        android:layout_alignParentBottom="true"
+        android:text="Support Us"
+        android:textAppearance="?android:attr/textAppearanceMedium" />
 
+</RelativeLayout>
