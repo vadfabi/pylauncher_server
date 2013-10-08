@@ -360,7 +360,7 @@ public class PyLauncherService extends Service {
 
 		mClientsServerThread = new ClientsServer(this);
 
-		if ( mConnectedToServerIp != "" )
+		if ( mConnectedToServerIp.length() != 0 )
 			//  starting connection, tell user
 			Toast.makeText(PyLauncherService.this, "Connecting to to server at: " + mConnectedToServerIp + " on port: " + mServerPort, Toast.LENGTH_SHORT).show();
 		
@@ -375,7 +375,7 @@ public class PyLauncherService extends Service {
 		protected Integer doInBackground(Void... param ) {
 
 			//  if we have never connected, bail out so we can show the settings page as first action
-			if ( mConnectedToServerIp == "" || mServerPort == 0 )
+			if ( mConnectedToServerIp.length() == 0 || mServerPort == 0 )
 				return 2;
 			
 			if ( mClientsServerThread.OpenSocketConnection() )
