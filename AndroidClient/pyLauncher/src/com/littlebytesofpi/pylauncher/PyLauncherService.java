@@ -127,23 +127,9 @@ public class PyLauncherService extends Service {
 		if ( ! IsConnectedToServer() )
 		{
 
-			//  get the IP address to connect to
-			//  TODO:  this should be replaced with zero conf networking ip address discovery
-			SharedPreferences sharedPrefs = PreferenceManager.getDefaultSharedPreferences(this);
-			String ipAddress = sharedPrefs.getString("pref_serveripaddress", "");
-
-			int serverPort = 0;
-			try{
-				serverPort =  Integer.parseInt(sharedPrefs.getString("pref_serverport", "48888"));
-
-				if ( ipAddress != "" && ( serverPort > 1024 && serverPort < 65535) )
-				{
-					Toast.makeText(this, "Connecting to to server at: " + ipAddress + " on port: " + serverPort, Toast.LENGTH_SHORT).show();
-					openConnectionToServer(ipAddress, serverPort);
-				}
-			} 
-			catch (NumberFormatException e){
-			}
+			openConnectionToServer();
+			
+			
 		}
 
 		return mBinder;
@@ -335,19 +321,33 @@ public class PyLauncherService extends Service {
 
 	//  OpenConnectionToServer
 	//
-	public void openConnectionToServer(String connectAddress, int connectPort)
+	public void openConnectionToServer()
 	{
+		//  are we trying to connect already
 		if ( mConnectingToServer )
 		{
 			Toast.makeText(this,  "Connection to server is in progress, please be patient.",  Toast.LENGTH_SHORT).show();
 			return;
 		}
-		
+		//  we are connecting now, lock out other attempts
 		mConnectingToServer = true;
 		
-		Toast.makeText(this, "Connecting to to server at: " + connectAddress + " on port: " + connectPort, Toast.LENGTH_SHORT).show();
 		
-		
+		//  get the IP address to connect to
+		//  TODO:  this should be replaced with zero conf networking ip address discovery
+		SharedPreferences sharedPrefs = PreferenceManager.getDefaultSharedPreferences(this);
+		String ipAddress = sharedPrefs.getString("pref_serveripaddress", "");
+		String serverPortString = sharedPrefs.getString("pref_serverport", "48888");
+
+		int serverPort = 0;
+		try{
+			serverPort =  Integer.parseInt(serverPortString);
+		} 
+		catch (NumberFormatException e){
+			Toast.makeText(PyLauncherService.this, "Error starting connection, unable to parse server control port number!", Toast.LENGTH_SHORT).show();
+			serverPort = 0;
+		}
+
 		//  close previous connection to the server if it is open
 		if ( mClientsServerThread != null )
 		{
@@ -355,25 +355,34 @@ public class PyLauncherService extends Service {
 			mClientsServerThread = null;
 		}
 
-		mServerPort = connectPort;
+		mServerPort = serverPort;
+		mConnectedToServerIp = ipAddress;
 
 		mClientsServerThread = new ClientsServer(this);
 
+		if ( mConnectedToServerIp.length() != 0 )
+			//  starting connection, tell user
+			Toast.makeText(PyLauncherService.this, "Connecting to to server at: " + mConnectedToServerIp + " on port: " + mServerPort, Toast.LENGTH_SHORT).show();
+		
 		//  launch the connection task
-		new OpenConnectionTask().execute(connectAddress);
+		new OpenConnectionTask().execute();
 	}
 	//
 	//  OpenConnectionTask
-	private class OpenConnectionTask extends AsyncTask<String, Void, Integer> {
+	private class OpenConnectionTask extends AsyncTask<Void, Void, Integer> {
 
 		String readResponse = "";
-		protected Integer doInBackground(String... param ) {
+		protected Integer doInBackground(Void... param ) {
 
+			//  if we have never connected, bail out so we can show the settings page as first action
+			if ( mConnectedToServerIp.length() == 0 || mServerPort == 0 )
+				return 2;
+			
 			if ( mClientsServerThread.OpenSocketConnection() )
 			{
 				//  connect to server command:
 				// $TCP_CONNECT,clientsControlPort
-				mConnectedToServerIp = param[0];
+			
 				readResponse = IpFunctions.SendStringToPort(mConnectedToServerIp, mServerPort, ClientsServer.TCP_CONNECT +"," + getClientListeningOnPort());
 
 				if ( readResponse.contains(ClientsServer.TCP_CONNECT) && readResponse.contains(ClientsServer.TCP_ACK) )
@@ -389,7 +398,7 @@ public class PyLauncherService extends Service {
 					try{
 						mConnectedToServerOnPort =  Integer.parseInt(serversControlPort);
 					} catch (NumberFormatException e){
-						Toast.makeText(PyLauncherService.this, "Error starting connection, unable to parse server control port number!", Toast.LENGTH_SHORT).show();
+						
 						return 0;
 					}
 
@@ -425,6 +434,13 @@ public class PyLauncherService extends Service {
 				
 				//  update directories on new connect
 				new GetDirectoryListTask().execute();
+			}
+			else if ( result == 2 )
+			{
+
+				//  There is nothing to make a connection with
+				mConnectingToServer = false;
+				return;
 			}
 			else
 			{
@@ -797,7 +813,7 @@ public class PyLauncherService extends Service {
 
 	//  Debug Flags
 	//
-	private final boolean D = true;
+	private final boolean D = false;
 	private final String TAG = "PyLauncherService";
 
 }

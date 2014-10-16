@@ -222,7 +222,7 @@ public class ConnectTab extends Activity {
 			{
 				//  open connection with default
 				//  message the user that we have initiated a connection
-					mService.openConnectionToServer(ipAddress, serverPort);
+					mService.openConnectionToServer();
 			}
 			else
 			{
@@ -289,7 +289,7 @@ public class ConnectTab extends Activity {
 	
 
 
-	boolean D = true;
+	boolean D = false;
 	String TAG = "ConnectTab";
 
 

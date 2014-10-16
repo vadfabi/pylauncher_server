@@ -205,6 +205,6 @@ public class DirectoryTab extends Activity {
 	
 
 
-	boolean D = true;
+	boolean D = false;
 	String TAG = "DirectoryTab";
 }

@@ -537,7 +537,7 @@ public class TCPConnectService extends Service {
 
 	//  Debug Flags
 	//
-	private final boolean D = true;
+	private final boolean D = false;
 	private final String TAG = "TCPConnectService";
 
 }

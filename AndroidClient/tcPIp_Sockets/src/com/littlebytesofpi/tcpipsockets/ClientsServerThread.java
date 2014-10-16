@@ -244,7 +244,7 @@ public class ClientsServerThread extends Thread {
 	}
 
 	//  debug flags
-	private final boolean D = true;
+	private final boolean D = false;
 	private final String TAG = "ClientsServerThread";
 
 }
