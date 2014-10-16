@@ -7,19 +7,19 @@
       <PathStyle>RemoteUnix</PathStyle>
     </CustomSourceDirectories>
     <BuildHost>
-      <HostName>192.168.1.191</HostName>
+      <HostName>192.168.1.128</HostName>
       <Transport>SSH</Transport>
-      <UserName>grahambriggs</UserName>
+      <UserName>pi</UserName>
     </BuildHost>
     <MainSourceTransferCommand>
       <SkipWhenRunningCommandList>false</SkipWhenRunningCommandList>
       <RemoteHost>
-        <HostName>192.168.1.191</HostName>
+        <HostName>192.168.1.128</HostName>
         <Transport>SSH</Transport>
-        <UserName>grahambriggs</UserName>
+        <UserName>pi</UserName>
       </RemoteHost>
       <LocalDirectory>$(ProjectDir)</LocalDirectory>
-      <RemoteDirectory>/home/grahambriggs/Source/LBP_tcpipsockets/tcPIp_Sockets</RemoteDirectory>
+      <RemoteDirectory>/home/pi/Source/LBP_tcpipsockets/tcPIp_Sockets</RemoteDirectory>
       <FileMasks>
         <string>*.cpp</string>
         <string>*.h</string>
@@ -112,6 +112,7 @@
       <DisableDisassembly>false</DisableDisassembly>
       <ExamineMemoryWithXCommand>false</ExamineMemoryWithXCommand>
       <StepIntoNewInstanceEntry>main</StepIntoNewInstanceEntry>
+      <ExamineRegistersInRawFormat>true</ExamineRegistersInRawFormat>
     </AdditionalGDBSettings>
     <LaunchGDBSettings xsi:type="GDBLaunchParametersNewInstance">
       <GDBEnvironment>
@@ -143,5 +144,9 @@
     <PostDebugActions />
     <BreakMode>Default</BreakMode>
   </CustomDebug>
+  <CustomShortcuts>
+    <Shortcuts />
+    <ShowMessageAfterExecuting>true</ShowMessageAfterExecuting>
+  </CustomShortcuts>
   <UserDefinedVariables />
 </VisualGDBProjectSettings2>
