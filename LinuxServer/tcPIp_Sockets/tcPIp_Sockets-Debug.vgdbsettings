@@ -7,14 +7,14 @@
       <PathStyle>RemoteUnix</PathStyle>
     </CustomSourceDirectories>
     <BuildHost>
-      <HostName>192.168.1.191</HostName>
+      <HostName>getac9</HostName>
       <Transport>SSH</Transport>
       <UserName>grahambriggs</UserName>
     </BuildHost>
     <MainSourceTransferCommand>
       <SkipWhenRunningCommandList>false</SkipWhenRunningCommandList>
       <RemoteHost>
-        <HostName>192.168.1.191</HostName>
+        <HostName>getac9</HostName>
         <Transport>SSH</Transport>
         <UserName>grahambriggs</UserName>
       </RemoteHost>
@@ -112,6 +112,7 @@
       <DisableDisassembly>false</DisableDisassembly>
       <ExamineMemoryWithXCommand>false</ExamineMemoryWithXCommand>
       <StepIntoNewInstanceEntry>main</StepIntoNewInstanceEntry>
+      <ExamineRegistersInRawFormat>true</ExamineRegistersInRawFormat>
     </AdditionalGDBSettings>
     <LaunchGDBSettings xsi:type="GDBLaunchParametersNewInstance">
       <GDBEnvironment>
@@ -143,5 +144,9 @@
     <PostDebugActions />
     <BreakMode>Default</BreakMode>
   </CustomDebug>
+  <CustomShortcuts>
+    <Shortcuts />
+    <ShowMessageAfterExecuting>true</ShowMessageAfterExecuting>
+  </CustomShortcuts>
   <UserDefinedVariables />
 </VisualGDBProjectSettings2>
