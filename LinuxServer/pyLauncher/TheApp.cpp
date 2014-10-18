@@ -37,7 +37,7 @@ TheApp::TheApp() :
 	mPyLaunchThread(*this), 
 	mDisplayThread(*this)
 {
-	mVersionString = "1.0.5";
+	mVersionString = "1.1.0";
 
 	mMaxEventsToLog = 9999;
 	mLogSysEvents = true;

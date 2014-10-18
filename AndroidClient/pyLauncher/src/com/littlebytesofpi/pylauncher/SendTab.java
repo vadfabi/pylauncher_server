@@ -1,29 +1,34 @@
 package com.littlebytesofpi.pylauncher;
 
+import java.lang.reflect.Field;
 import java.util.ArrayList;
 
-import android.app.Activity;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.ServiceConnection;
 import android.content.SharedPreferences;
 import android.content.SharedPreferences.Editor;
+import android.graphics.Color;
+import android.graphics.Paint;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.IBinder;
 import android.os.Message;
 import android.preference.PreferenceManager;
+import android.support.v7.app.ActionBarActivity;
 import android.util.Log;
 import android.view.Menu;
+import android.view.MenuInflater;
+import android.view.MenuItem;
 import android.view.View;
+import android.view.ViewConfiguration;
 import android.view.WindowManager;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.EditText;
-import android.widget.ImageButton;
 import android.widget.ListView;
 import android.widget.Spinner;
 import android.widget.TextView;
@@ -31,7 +36,7 @@ import android.widget.Toast;
 
 import com.littlebytesofpi.pylauncher.PyLauncherService.LocalBinder;
 
-public class SendTab extends Activity implements  AdapterView.OnItemSelectedListener {
+public class SendTab extends ActionBarActivity implements  AdapterView.OnItemSelectedListener {
 
 	
 	//  User interface elements
@@ -84,13 +89,7 @@ public class SendTab extends Activity implements  AdapterView.OnItemSelectedList
 				break;
 			}
 
-			case R.id.imageButtonSettings:
-			{
-				Intent intent = new Intent(SendTab.this, PyLauncher.class);
-				startActivity(intent);
-				
-				break;
-			}
+			
 
 			}
 		}
@@ -99,8 +98,7 @@ public class SendTab extends Activity implements  AdapterView.OnItemSelectedList
 	
 	
 	TextView mTextViewStatus;
-	ImageButton mImageButtonSettings;
-
+	
 	//  arguments edit text
 	EditText mEditTextArgs;
 	
@@ -110,6 +108,8 @@ public class SendTab extends Activity implements  AdapterView.OnItemSelectedList
 	private ArrayList<PyLaunchResult> mResultsList = new ArrayList<PyLaunchResult>();
 	private ResultAdapter mResultsAdapter = new ResultAdapter(mResultsList,  this);
 	
+	private boolean PaidVersion = true;
+	private TextView mTextViewSupportUs;
 	
 	//  onCreate
 	//
@@ -119,8 +119,6 @@ public class SendTab extends Activity implements  AdapterView.OnItemSelectedList
 		setContentView(R.layout.activity_send_tab);
 
 		mTextViewStatus = (TextView)findViewById(R.id.textViewStatus);
-		mImageButtonSettings  = (ImageButton)findViewById(R.id.imageButtonSettings);
-		mImageButtonSettings.setOnClickListener(ButtonOnClickListener);
 		
 		mSpinnerFileSelector = (Spinner)findViewById(R.id.spinnerFile);
 		mAdapter = new ArrayAdapter(this, android.R.layout.simple_spinner_item,  mFilesList);
@@ -150,10 +148,38 @@ public class SendTab extends Activity implements  AdapterView.OnItemSelectedList
 			}
 		});
 
+		mTextViewSupportUs = (TextView)findViewById(R.id.textView1);
+		mTextViewSupportUs.setTextColor(Color.parseColor("#FF0000"));
+		mTextViewSupportUs.setPaintFlags(mTextViewSupportUs.getPaintFlags() |   Paint.UNDERLINE_TEXT_FLAG);
+		mTextViewSupportUs.setOnClickListener( new View.OnClickListener() {
+			
+			@Override
+			public void onClick(View v) {
+				
+				Intent intent = new Intent(SendTab.this, Support.class);
+				startActivity(intent);
+			}
+		});
+		
+		if ( PaidVersion )
+			mTextViewSupportUs.setVisibility(View.GONE);
+		
 		//  setup default preferences
 		PreferenceManager.setDefaultValues(this,  R.xml.preferences,  false);
 		
 		getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_PAN);
+		
+		try {
+            ViewConfiguration config = ViewConfiguration.get(this);
+            Field menuKeyField = ViewConfiguration.class.getDeclaredField("sHasPermanentMenuKey");
+            if(menuKeyField != null) {
+                menuKeyField.setAccessible(true);
+                menuKeyField.setBoolean(config, false);
+            }
+    } catch (Exception ex) {
+            // Ignore
+} 
+		
 	}
 
 	//  onStart
@@ -269,7 +295,7 @@ public class SendTab extends Activity implements  AdapterView.OnItemSelectedList
 			//  launch the connection settings if we are not connected
 			if ( ! mService.IsConnectedToServer() )
 			{
-				Intent intent = new Intent(SendTab.this, PyLauncher.class);
+				Intent intent = new Intent(SendTab.this, ConnectTab.class);
 				startActivity(intent);
 			}
 			else
@@ -326,7 +352,7 @@ public class SendTab extends Activity implements  AdapterView.OnItemSelectedList
 		}
 	};  
 
-	//  select a sensor from the spinner
+	//  select a python file from the spinner
 	@Override
 	public void onItemSelected(AdapterView<?> parent, View view, 
 			int pos, long id) {
@@ -354,12 +380,46 @@ public class SendTab extends Activity implements  AdapterView.OnItemSelectedList
 		
 		if ( mService != null && mService.IsConnectedToServer() )
 		{
-			mTextViewStatus.setText(String.format("Connected to pyLauncher server at \n" + mService.getConnectedToServerIp() + " on port " + mService.getConnectedToServerOnPort()) );
+			mTextViewStatus.setText(String.format("Connected to " + mService.getConnectedToServerIp() + " on port " + mService.getConnectedToServerOnPort()) );
 		}
 		else
-			mTextViewStatus.setText("Not connected. \nPlease tap the settings button to connect to the server.");
+			mTextViewStatus.setText("Not connected. \nPlease tap connection settings.");
 	}
 	
+	
+	@Override
+	public boolean onCreateOptionsMenu(Menu menu)
+	{
+		// Inflate the menu items for use in the action bar
+	    MenuInflater inflater = getMenuInflater();
+	    inflater.inflate(R.menu.send_tab, menu);
+	    return super.onCreateOptionsMenu(menu);
+	}
+	
+	@Override
+	public boolean onOptionsItemSelected(MenuItem item) 
+	{
+		switch (item.getItemId()) 
+		{
+		case R.id.action_settings: 
+		{
+			Intent intent = new Intent(SendTab.this, ConnectTab.class);
+			startActivity(intent);
+		}
+		return true;
+		
+		case R.id.action_directories: 
+		{
+			Intent intent = new Intent(SendTab.this, DirectoryTab.class);
+			startActivity(intent);
+		}
+		return true;
+		
+		default:
+			return super.onOptionsItemSelected(item);
+		}
+
+	}
 	
 	
 

@@ -6,5 +6,8 @@
     <string name="title_activity_send_tab">pyLauncher</string>
     <string name="title_activity_connect_tab">Connect Settings</string>
     <string name="title_activity_directory_tab">Directory Settings</string>
+    <string name="title_activity_support">Support Our Projects</string>
+    <string name="projectpage_link"><a href="http://littlebytesofpi.com/index.php/projects/our-pro/">Little Bytes of Pi Projects Page</a></string>
+    
 
 </resources>
