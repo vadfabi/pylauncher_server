@@ -393,6 +393,12 @@ public class SendTab extends ActionBarActivity implements  AdapterView.OnItemSel
 			Intent intent = new Intent(SendTab.this, ConnectTab.class);
 			startActivity(intent);
 		}
+		case R.id.action_directories: 
+		{
+			Intent intent = new Intent(SendTab.this, DirectoryTab.class);
+			startActivity(intent);
+		}
+		
 			
 		return true;
 

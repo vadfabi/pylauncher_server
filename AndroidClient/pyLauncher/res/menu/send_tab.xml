@@ -1,10 +1,15 @@
-<menu xmlns:android="http://schemas.android.com/apk/res/android" >
 
-    <item
-        android:id="@+id/action_settings"
-        android:orderInCategory="100"
-        android:icon="@drawable/ic_settings"
-        android:showAsAction="always"
-        android:title="@string/action_settings"/>
 
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+      xmlns:yourapp="http://schemas.android.com/apk/res-auto" >
+    <item android:id="@+id/action_settings"
+          android:icon="@drawable/ic_settings"
+          android:title="Connect"
+          yourapp:showAsAction="always"  />
+    
+    <item android:id="@+id/action_directories"
+          android:icon="@drawable/ic_directory"
+          android:title="Directories"
+          yourapp:showAsAction="ifRoom"  />
+    
 </menu>
