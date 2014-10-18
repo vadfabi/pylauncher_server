@@ -2,7 +2,6 @@ package com.littlebytesofpi.pylauncher;
 
 import java.util.ArrayList;
 
-import android.app.Activity;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
@@ -17,7 +16,11 @@ import android.os.Handler;
 import android.os.IBinder;
 import android.os.Message;
 import android.preference.PreferenceManager;
+import android.support.v7.app.ActionBarActivity;
 import android.util.Log;
+import android.view.Menu;
+import android.view.MenuInflater;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.WindowManager;
 import android.widget.AdapterView;
@@ -32,7 +35,7 @@ import android.widget.Toast;
 
 import com.littlebytesofpi.pylauncher.PyLauncherService.LocalBinder;
 
-public class SendTab extends Activity implements  AdapterView.OnItemSelectedListener {
+public class SendTab extends ActionBarActivity implements  AdapterView.OnItemSelectedListener {
 
 	
 	//  User interface elements
@@ -85,13 +88,7 @@ public class SendTab extends Activity implements  AdapterView.OnItemSelectedList
 				break;
 			}
 
-			case R.id.imageButtonSettings:
-			{
-				Intent intent = new Intent(SendTab.this, PyLauncher.class);
-				startActivity(intent);
-				
-				break;
-			}
+			
 
 			}
 		}
@@ -100,8 +97,7 @@ public class SendTab extends Activity implements  AdapterView.OnItemSelectedList
 	
 	
 	TextView mTextViewStatus;
-	ImageButton mImageButtonSettings;
-
+	
 	//  arguments edit text
 	EditText mEditTextArgs;
 	
@@ -122,8 +118,6 @@ public class SendTab extends Activity implements  AdapterView.OnItemSelectedList
 		setContentView(R.layout.activity_send_tab);
 
 		mTextViewStatus = (TextView)findViewById(R.id.textViewStatus);
-		mImageButtonSettings  = (ImageButton)findViewById(R.id.imageButtonSettings);
-		mImageButtonSettings.setOnClickListener(ButtonOnClickListener);
 		
 		mSpinnerFileSelector = (Spinner)findViewById(R.id.spinnerFile);
 		mAdapter = new ArrayAdapter(this, android.R.layout.simple_spinner_item,  mFilesList);
@@ -288,7 +282,7 @@ public class SendTab extends Activity implements  AdapterView.OnItemSelectedList
 			//  launch the connection settings if we are not connected
 			if ( ! mService.IsConnectedToServer() )
 			{
-				Intent intent = new Intent(SendTab.this, PyLauncher.class);
+				Intent intent = new Intent(SendTab.this, ConnectTab.class);
 				startActivity(intent);
 			}
 			else
@@ -345,7 +339,7 @@ public class SendTab extends Activity implements  AdapterView.OnItemSelectedList
 		}
 	};  
 
-	//  select a sensor from the spinner
+	//  select a python file from the spinner
 	@Override
 	public void onItemSelected(AdapterView<?> parent, View view, 
 			int pos, long id) {
@@ -373,12 +367,40 @@ public class SendTab extends Activity implements  AdapterView.OnItemSelectedList
 		
 		if ( mService != null && mService.IsConnectedToServer() )
 		{
-			mTextViewStatus.setText(String.format("Connected to pyLauncher server at \n" + mService.getConnectedToServerIp() + " on port " + mService.getConnectedToServerOnPort()) );
+			mTextViewStatus.setText(String.format("Connected to " + mService.getConnectedToServerIp() + " on port " + mService.getConnectedToServerOnPort()) );
 		}
 		else
-			mTextViewStatus.setText("Not connected. \nPlease tap the settings button to connect to the server.");
+			mTextViewStatus.setText("Not connected. \nPlease tap connection settings.");
 	}
 	
+	
+	@Override
+	public boolean onCreateOptionsMenu(Menu menu)
+	{
+		// Inflate the menu items for use in the action bar
+	    MenuInflater inflater = getMenuInflater();
+	    inflater.inflate(R.menu.send_tab, menu);
+	    return super.onCreateOptionsMenu(menu);
+	}
+	
+	@Override
+	public boolean onOptionsItemSelected(MenuItem item) 
+	{
+		switch (item.getItemId()) 
+		{
+		case R.id.action_settings: 
+		{
+			Intent intent = new Intent(SendTab.this, ConnectTab.class);
+			startActivity(intent);
+		}
+			
+		return true;
+
+		default:
+			return super.onOptionsItemSelected(item);
+		}
+
+	}
 	
 	
 
