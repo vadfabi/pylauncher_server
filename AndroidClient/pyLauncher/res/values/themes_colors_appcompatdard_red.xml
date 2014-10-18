@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<!-- Generated with http://android-holo-colors.com -->
+<resources xmlns:android="http://schemas.android.com/apk/res/android">
+
+  <style name="colors_appcompatdard_red" parent="Theme.AppCompat">
+
+    <item name="android:editTextStyle">@style/EditTextcolors_appcompatdard_red</item>
+
+    <item name="android:textColorHighlight">#99cc0000</item>
+
+    <item name="android:autoCompleteTextViewStyle">@style/AutoCompleteTextViewcolors_appcompatdard_red</item>
+
+    <item name="android:checkboxStyle">@style/CheckBoxcolors_appcompatdard_red</item>
+
+    <item name="android:radioButtonStyle">@style/RadioButtoncolors_appcompatdard_red</item>
+
+    <item name="android:buttonStyle">@style/Buttoncolors_appcompatdard_red</item>
+
+    <item name="android:imageButtonStyle">@style/ImageButtoncolors_appcompatdard_red</item>
+
+    <item name="android:spinnerStyle">@style/Spinnercolors_appcompatdard_red</item>
+
+    <item name="android:spinnerDropDownItemStyle">@style/SpinnerDropDownItemcolors_appcompatdard_red</item>
+
+    <item name="android:progressBarStyleHorizontal">@style/ProgressBarcolors_appcompatdard_red</item>
+
+    <item name="android:seekBarStyle">@style/SeekBarcolors_appcompatdard_red</item>
+
+    <item name="android:ratingBarStyle">@style/RatingBarcolors_appcompatdard_red</item>
+
+    <item name="android:ratingBarStyleIndicator">@style/RatingBarBigcolors_appcompatdard_red</item>
+
+    <item name="android:ratingBarStyleSmall">@style/RatingBarSmallcolors_appcompatdard_red</item>
+
+    <item name="android:buttonStyleToggle">@style/Togglecolors_appcompatdard_red</item>
+
+    <item name="android:listViewStyle">@style/ListViewcolors_appcompatdard_red</item>
+
+    <item name="android:listViewWhiteStyle">@style/ListViewcolors_appcompatdard_red.White</item>
+
+    <item name="android:spinnerItemStyle">@style/SpinnerItemcolors_appcompatdard_red</item>
+
+  </style>
+
+</resources>

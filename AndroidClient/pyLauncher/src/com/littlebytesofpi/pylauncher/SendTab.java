@@ -1,5 +1,6 @@
 package com.littlebytesofpi.pylauncher;
 
+import java.lang.reflect.Field;
 import java.util.ArrayList;
 
 import android.content.ComponentName;
@@ -22,12 +23,12 @@ import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
+import android.view.ViewConfiguration;
 import android.view.WindowManager;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.EditText;
-import android.widget.ImageButton;
 import android.widget.ListView;
 import android.widget.Spinner;
 import android.widget.TextView;
@@ -167,6 +168,18 @@ public class SendTab extends ActionBarActivity implements  AdapterView.OnItemSel
 		PreferenceManager.setDefaultValues(this,  R.xml.preferences,  false);
 		
 		getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_PAN);
+		
+		try {
+            ViewConfiguration config = ViewConfiguration.get(this);
+            Field menuKeyField = ViewConfiguration.class.getDeclaredField("sHasPermanentMenuKey");
+            if(menuKeyField != null) {
+                menuKeyField.setAccessible(true);
+                menuKeyField.setBoolean(config, false);
+            }
+    } catch (Exception ex) {
+            // Ignore
+} 
+		
 	}
 
 	//  onStart
@@ -393,15 +406,15 @@ public class SendTab extends ActionBarActivity implements  AdapterView.OnItemSel
 			Intent intent = new Intent(SendTab.this, ConnectTab.class);
 			startActivity(intent);
 		}
+		return true;
+		
 		case R.id.action_directories: 
 		{
 			Intent intent = new Intent(SendTab.this, DirectoryTab.class);
 			startActivity(intent);
 		}
-		
-			
 		return true;
-
+		
 		default:
 			return super.onOptionsItemSelected(item);
 		}

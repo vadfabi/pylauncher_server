@@ -12,4 +12,19 @@
           android:title="Directories"
           yourapp:showAsAction="ifRoom"  />
     
+     <item android:id="@+id/item1"
+          android:icon="@drawable/ic_directory"
+          android:title="Directories"
+          yourapp:showAsAction="ifRoom"  />
+     
+      <item android:id="@+id/item2"
+          android:icon="@drawable/ic_directory"
+          android:title="Directories"
+          yourapp:showAsAction="ifRoom"  />
+      
+       <item android:id="@+id/item3"
+          android:icon="@drawable/ic_directory"
+          android:title="Directories"
+          yourapp:showAsAction="ifRoom"  />
+    
 </menu>

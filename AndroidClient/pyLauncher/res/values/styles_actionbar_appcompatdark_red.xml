@@ -19,7 +19,7 @@
 
 <resources>
 
-    <style name="Theme.Actionbar_appcompatdark_red" parent="@style/Theme.AppCompat">
+    <style name="Theme.Actionbar_appcompatdark_red" parent="@style/colors_appcompatdard_red">
         <item name="actionBarItemBackground">@drawable/selectable_background_actionbar_appcompatdark_red</item>
         <item name="popupMenuStyle">@style/PopupMenu.Actionbar_appcompatdark_red</item>
         <item name="dropDownListViewStyle">@style/DropDownListView.Actionbar_appcompatdark_red</item>
