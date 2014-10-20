@@ -36,7 +36,7 @@ import android.widget.Toast;
 
 import com.littlebytesofpi.pylauncher.PyLauncherService.LocalBinder;
 
-public class SendTab extends ActionBarActivity implements  AdapterView.OnItemSelectedListener {
+public class EditButtonActivity extends ActionBarActivity implements  AdapterView.OnItemSelectedListener {
 
 	
 	//  User interface elements
@@ -49,6 +49,19 @@ public class SendTab extends ActionBarActivity implements  AdapterView.OnItemSel
 
 	//  launch button
 	Button mButtonRunFile;
+	
+	//  arguments edit text
+	EditText mEditTextArgs;
+	
+	//  Results adapter
+	//
+	private ListView mListViewResults;
+	private ArrayList<PyLaunchResult> mResultsList = new ArrayList<PyLaunchResult>();
+	private ResultAdapter mResultsAdapter = new ResultAdapter(mResultsList,  this);
+	
+	//  save button
+	private Button mButtonSave;
+	
 	//
 	View.OnClickListener ButtonOnClickListener = new View.OnClickListener() {
 
@@ -62,7 +75,7 @@ public class SendTab extends ActionBarActivity implements  AdapterView.OnItemSel
 			{
 				if ( ! mService.IsConnectedToServer() )
 				{
-					Toast.makeText(SendTab.this,  "You must be connected to the server.",  Toast.LENGTH_SHORT).show();
+					Toast.makeText(EditButtonActivity.this,  "You must be connected to the server.",  Toast.LENGTH_SHORT).show();
 					return;
 				}
 				
@@ -72,14 +85,14 @@ public class SendTab extends ActionBarActivity implements  AdapterView.OnItemSel
 				
 				if ( selectedFile == null )
 				{
-					Toast.makeText(SendTab.this,  "No python file selected.", Toast.LENGTH_SHORT).show();
+					Toast.makeText(EditButtonActivity.this,  "No python file selected.", Toast.LENGTH_SHORT).show();
 					return;
 				}
 				
 				String args = mEditTextArgs.getText().toString();
 
 				//  save arguments for this file
-				Editor editPref = PreferenceManager.getDefaultSharedPreferences(SendTab.this).edit();
+				Editor editPref = PreferenceManager.getDefaultSharedPreferences(EditButtonActivity.this).edit();
 				editPref.putString(selectedFile.mFullPath, args);
 				// Commit the edits
 				editPref.commit();
@@ -88,43 +101,30 @@ public class SendTab extends ActionBarActivity implements  AdapterView.OnItemSel
 				
 				break;
 			}
-
+			case R.id.buttonSave:
+			{
+				//  save this button
+				break;
+			}
 			
-
 			}
 		}
 	};
-
 	
-	
-	TextView mTextViewStatus;
-	
-	//  arguments edit text
-	EditText mEditTextArgs;
-	
-	//  Results adapter
-	//
-	private ListView mListViewResults;
-	private ArrayList<PyLaunchResult> mResultsList = new ArrayList<PyLaunchResult>();
-	private ResultAdapter mResultsAdapter = new ResultAdapter(mResultsList,  this);
-	
-	private boolean PaidVersion = true;
-	private TextView mTextViewSupportUs;
 	
 	//  onCreate
 	//
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
-		setContentView(R.layout.activity_send_tab);
+		setContentView(R.layout.activity_editbutton);
 
-		mTextViewStatus = (TextView)findViewById(R.id.textViewStatus);
 		
 		mSpinnerFileSelector = (Spinner)findViewById(R.id.spinnerFile);
 		mAdapter = new ArrayAdapter(this, android.R.layout.simple_spinner_item,  mFilesList);
 		mAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
 		mSpinnerFileSelector.setAdapter(mAdapter);
-		mSpinnerFileSelector.setOnItemSelectedListener(SendTab.this);
+		mSpinnerFileSelector.setOnItemSelectedListener(EditButtonActivity.this);
 
 		mButtonRunFile = (Button)findViewById(R.id.buttonRunFile);
 		mButtonRunFile.setOnClickListener(ButtonOnClickListener);
@@ -148,41 +148,14 @@ public class SendTab extends ActionBarActivity implements  AdapterView.OnItemSel
 			}
 		});
 
-		mTextViewSupportUs = (TextView)findViewById(R.id.textViewSaveButton);
-		mTextViewSupportUs.setTextColor(Color.parseColor("#FF0000"));
-		mTextViewSupportUs.setPaintFlags(mTextViewSupportUs.getPaintFlags() |   Paint.UNDERLINE_TEXT_FLAG);
-		mTextViewSupportUs.setOnClickListener( new View.OnClickListener() {
-			
-			@Override
-			public void onClick(View v) {
-				
-				Intent intent = new Intent(SendTab.this, Support.class);
-				startActivity(intent);
-			}
-		});
+	
 		
-		if ( PaidVersion )
-			mTextViewSupportUs.setVisibility(View.GONE);
+		mButtonSave = (Button)findViewById(R.id.buttonSave);
 		
 		//  setup default preferences
 		PreferenceManager.setDefaultValues(this,  R.xml.preferences,  false);
 		
 		getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_PAN);
-		
-		//  force the overflow icon to show even if we have physical settings button
-		//  will only work on android 4+
-		try {
-			ViewConfiguration config = ViewConfiguration.get(this);
-			Field menuKeyField = ViewConfiguration.class
-					.getDeclaredField("sHasPermanentMenuKey");
-			if (menuKeyField != null) {
-				menuKeyField.setAccessible(true);
-				menuKeyField.setBoolean(config, false);
-			}
-		} catch (Exception ex) {
-			// Ignore
-		}
-		
 	}
 
 	//  onStart
@@ -209,9 +182,6 @@ public class SendTab extends ActionBarActivity implements  AdapterView.OnItemSel
 			mService.GetLaunchResults(mResultsList);
 			mResultsAdapter.notifyDataSetChanged();
 		}
-		
-		FormatConnectionStatus();
-
 	}
 
 	
@@ -259,7 +229,7 @@ public class SendTab extends ActionBarActivity implements  AdapterView.OnItemSel
 			mService.GetLaunchResults(mResultsList);
 			mResultsAdapter.notifyDataSetChanged();
 			
-			new WaitForConnectionTask().execute();
+			//  TODO - how to handle connections  new WaitForConnectionTask().execute();
 		}
 
 
@@ -277,7 +247,7 @@ public class SendTab extends ActionBarActivity implements  AdapterView.OnItemSel
 
 		protected Void doInBackground(Void... param ) {
 			
-			SharedPreferences sharedPrefs = PreferenceManager.getDefaultSharedPreferences(SendTab.this);
+			SharedPreferences sharedPrefs = PreferenceManager.getDefaultSharedPreferences(EditButtonActivity.this);
 			String ipAddress = sharedPrefs.getString("pref_serveripaddress", "");
 
 			if ( ipAddress.length() == 0 )
@@ -298,13 +268,12 @@ public class SendTab extends ActionBarActivity implements  AdapterView.OnItemSel
 			//  launch the connection settings if we are not connected
 			if ( ! mService.IsConnectedToServer() )
 			{
-				Intent intent = new Intent(SendTab.this, ConnectTab.class);
-				startActivity(intent);
+				//  TODO - exit
+				//  Intent intent = new Intent(EditButtonActivity.this, ConnectTab.class);
+				//startActivity(intent);
 			}
-			else
-			{
-				FormatConnectionStatus();
-			}
+			
+			//  we are connected
 		}
 	};
 
@@ -315,7 +284,7 @@ public class SendTab extends ActionBarActivity implements  AdapterView.OnItemSel
 		if ( D ) Log.d(TAG, "bindToService()");
 
 		// bind to the service 
-		Intent startIntent = new Intent(SendTab.this, PyLauncherService.class);
+		Intent startIntent = new Intent(EditButtonActivity.this, PyLauncherService.class);
 		getApplicationContext().bindService(startIntent, mConnection, Context.BIND_AUTO_CREATE);
 	}
 
@@ -365,7 +334,7 @@ public class SendTab extends ActionBarActivity implements  AdapterView.OnItemSel
 			PyFile selectedFile = mFilesList.get(pos);
 			
 			//  see if we have some arguments for this
-			SharedPreferences sharedPrefs = PreferenceManager.getDefaultSharedPreferences(SendTab.this);
+			SharedPreferences sharedPrefs = PreferenceManager.getDefaultSharedPreferences(EditButtonActivity.this);
 			
 			//  initialize edit fields
 			mEditTextArgs.setText(sharedPrefs.getString(selectedFile.mFullPath, ""));
@@ -379,23 +348,12 @@ public class SendTab extends ActionBarActivity implements  AdapterView.OnItemSel
 	
 	
 	
-	public void FormatConnectionStatus(){
-		
-		if ( mService != null && mService.IsConnectedToServer() )
-		{
-			mTextViewStatus.setText(String.format("Connected to " + mService.getConnectedToServerIp() + " on port " + mService.getConnectedToServerOnPort()) );
-		}
-		else
-			mTextViewStatus.setText("Not connected. \nPlease tap connection settings.");
-	}
-	
-	
 	@Override
 	public boolean onCreateOptionsMenu(Menu menu)
 	{
 		// Inflate the menu items for use in the action bar
-	    MenuInflater inflater = getMenuInflater();
-	    inflater.inflate(R.menu.send_tab, menu);
+	   // MenuInflater inflater = getMenuInflater();
+	   // inflater.inflate(R.menu.send_tab, menu);
 	    return super.onCreateOptionsMenu(menu);
 	}
 	
@@ -405,35 +363,15 @@ public class SendTab extends ActionBarActivity implements  AdapterView.OnItemSel
 		switch (item.getItemId()) 
 		{
 		
-		case R.id.action_buttons:
-		{
-			Intent intent = new Intent(SendTab.this, SendButtonsActivity.class);
-			startActivity(intent);
-		}
-		return true;
-		
-		case R.id.action_settings: 
-		{
-			Intent intent = new Intent(SendTab.this, ConnectTab.class);
-			startActivity(intent);
-		}
-		return true;
-		
-		case R.id.action_directories: 
-		{
-			Intent intent = new Intent(SendTab.this, DirectoryTab.class);
-			startActivity(intent);
-		}
-		return true;
-		
 		default:
 			return super.onOptionsItemSelected(item);
 		}
+
 	}
 	
 	
 
 	boolean D = false;
-	String TAG = "SendTab";
+	String TAG = "EditButton";
 
 }

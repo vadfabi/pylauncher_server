@@ -10,7 +10,7 @@
         android:id="@+id/listViewEvents"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:layout_above="@+id/textView1"
+        android:layout_above="@+id/textViewSaveButton"
         android:layout_alignParentRight="true"
         android:layout_below="@+id/editTextArgs"
         android:divider="#660000"
@@ -59,10 +59,10 @@
         android:layout_alignRight="@+id/buttonRunFile"
         android:layout_marginLeft="20dp"
         android:gravity="right"
-        android:text="Not connected to the server please hit the settings button:" />
+        android:text="Not connected. Please tap settings." />
 
     <TextView
-        android:id="@+id/textView1"
+        android:id="@+id/textViewSaveButton"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_alignParentBottom="true"

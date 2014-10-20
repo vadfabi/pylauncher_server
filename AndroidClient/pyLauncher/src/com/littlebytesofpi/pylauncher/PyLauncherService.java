@@ -45,6 +45,9 @@ public class PyLauncherService extends Service {
 	//
 	public PyLauncherService(){
 		
+		mButtonsList = new ArrayList<PyLauncherButton>();
+		
+		
 		//  This service will monitor network status, so setup a network state broadcast receiver
 		mNetworkStateChangedFilter = new IntentFilter();
 		mNetworkStateChangedFilter.addAction(ConnectivityManager.CONNECTIVITY_ACTION);
@@ -516,6 +519,8 @@ public class PyLauncherService extends Service {
 	public synchronized void GetDirectoryList(ArrayList<PyFile> dirList)
 	{
 		dirList.clear();
+		
+		//  TODO - add the visible directory filter here
 		dirList.addAll(mDirectoryList);		
 	}
 	
@@ -523,6 +528,8 @@ public class PyLauncherService extends Service {
 	public synchronized void GetFilesList(ArrayList<PyFile> filesList)
 	{
 		filesList.clear();
+		
+		//  TODO - add the visible files filter here
 		filesList.addAll(mFilesList);
 	}
 	
@@ -705,6 +712,8 @@ public class PyLauncherService extends Service {
 			nextFile = parser.GetNextString();
 		}
 		
+		LoadButtonsList();
+		
 		return true;
 	}
 
@@ -754,7 +763,34 @@ public class PyLauncherService extends Service {
 		}
 	}
 
-
+	/*
+	 * Buttons Handling
+	 */
+	protected ArrayList<PyLauncherButton> mButtonsList;
+	
+	protected void LoadButtonsList()
+	{
+		mButtonsList.clear();
+		
+		PyFile file = mFilesList.get(0);
+		PyLauncherButton newButton = new PyLauncherButton(file, "", "ButtonOne", 0);
+		mButtonsList.add(new PyLauncherButton(file, "", "ButtonOne", 0) );
+		mButtonsList.add(new PyLauncherButton(file, "", "ButtonOne", 0));
+		
+	}
+	
+	protected void SaveButtonsList(ArrayList<PyLauncherButton> buttonList)
+	{
+		
+	}
+	
+	public void getButtonList(ArrayList<PyLauncherButton> buttonList)
+	{
+		buttonList.clear();
+		
+		buttonList.addAll(mButtonsList);
+	}
+	
 
 
 	/*
