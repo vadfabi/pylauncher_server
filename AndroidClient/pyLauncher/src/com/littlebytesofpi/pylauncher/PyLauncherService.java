@@ -1,8 +1,10 @@
 package com.littlebytesofpi.pylauncher;
 
 import java.util.ArrayList;
-import java.util.List;
 
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
 
 import android.app.Notification;
 import android.app.NotificationManager;
@@ -13,6 +15,8 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.SharedPreferences;
+import android.content.SharedPreferences.Editor;
+import android.graphics.drawable.Drawable;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.net.wifi.WifiManager;
@@ -41,12 +45,10 @@ public class PyLauncherService extends Service {
 	public static final int MESSAGE_UPDATEDIRECTORIES = 4;
 
 	
+	
 	//  Constructor
 	//
 	public PyLauncherService(){
-		
-		mButtonsList = new ArrayList<PyLauncherButton>();
-		
 		
 		//  This service will monitor network status, so setup a network state broadcast receiver
 		mNetworkStateChangedFilter = new IntentFilter();
@@ -61,6 +63,7 @@ public class PyLauncherService extends Service {
 			}
 		};
 	}
+	
 	
 
 
@@ -126,13 +129,16 @@ public class PyLauncherService extends Service {
 		//  setup default preferences
 		PreferenceManager.setDefaultValues(this,  R.xml.preferences,  false);
 
+		//  setup buttons
+		//  user defined buttons
+		LoadButtonDrawableArray();
+		LoadButtonsFromPreferences();
+			
+			
 		//  attempt connection to the server
 		if ( ! IsConnectedToServer() )
 		{
-
 			openConnectionToServer();
-			
-			
 		}
 
 		return mBinder;
@@ -712,7 +718,7 @@ public class PyLauncherService extends Service {
 			nextFile = parser.GetNextString();
 		}
 		
-		LoadButtonsList();
+		LoadButtonsFromPreferences();
 		
 		return true;
 	}
@@ -766,22 +772,86 @@ public class PyLauncherService extends Service {
 	/*
 	 * Buttons Handling
 	 */
-	protected ArrayList<PyLauncherButton> mButtonsList;
+	protected static final String BNAME = "Name";
+	protected static final String BPATH = "Path";
+	protected static final String BARGS = "Args";
+	protected static final String BICON = "Icon";
 	
-	protected void LoadButtonsList()
+	protected ArrayList<PyLauncherButton> mButtonsList = null;
+	
+	protected void LoadButtonsFromPreferences()
 	{
-		mButtonsList.clear();
+		if ( mButtonsList != null )
+			return;
 		
-		PyFile file = mFilesList.get(0);
-		PyLauncherButton newButton = new PyLauncherButton(file, "", "ButtonOne", 0);
-		mButtonsList.add(new PyLauncherButton(file, "", "ButtonOne", 0) );
-		mButtonsList.add(new PyLauncherButton(file, "", "ButtonOne", 0));
+		mButtonsList = new ArrayList<PyLauncherButton>();
+		
+		//  Load the buttons from the settings
+		SharedPreferences prefs = getSharedPreferences("pref_hidden",MODE_PRIVATE);
+		
+		//  the array of button objects is encoded in a JSON object
+		try 
+		{
+			JSONArray jsonArray = new JSONArray(prefs.getString("buttonsList","[]"));
+			for (int i = 0; i < jsonArray.length(); i++) 
+			{
+				//  parse the button object
+				try
+				{
+					JSONObject nextButton = jsonArray.getJSONObject(i);
+					String name = nextButton.getString(BNAME);
+					String path = nextButton.getString(BPATH);
+					String args = nextButton.getString(BARGS);
+					Integer icon = nextButton.getInt(BICON);
+					
+					//  make the button
+					mButtonsList.add(new PyLauncherButton(new PyFile(path), args, name, icon));
+				}
+				catch (Exception e)
+				{
+					
+				}
+			}
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+
 		
 	}
 	
 	protected void SaveButtonsList(ArrayList<PyLauncherButton> buttonList)
 	{
+		//  get the prefs
+		//  Load the buttons from the settings
+		SharedPreferences prefs = getSharedPreferences("pref_hidden",MODE_PRIVATE);
 		
+		JSONArray buttonObjectsList = new JSONArray();
+
+		for (PyLauncherButton nextButton : buttonList) 
+		{
+			try 
+			{
+				// save this to json object
+				JSONObject buttonObject = new JSONObject();
+				buttonObject.put(BNAME, nextButton.getTitle());
+				buttonObject.put(BPATH, nextButton.getPyFile().getPath());
+				buttonObject.put(BARGS, nextButton.getCommandLineArgs());
+				buttonObject.put(BICON, nextButton.getIcon());
+
+				buttonObjectsList.put(buttonObject);
+			} 
+			catch (JSONException e) 
+			{
+				continue;
+			}
+		}
+		
+		Editor editor = prefs.edit();
+		editor.putString("buttonsList", buttonObjectsList.toString());
+		editor.commit();
+
+		//  update the button list		
+		mButtonsList = buttonList;
 	}
 	
 	public void getButtonList(ArrayList<PyLauncherButton> buttonList)
@@ -789,6 +859,15 @@ public class PyLauncherService extends Service {
 		buttonList.clear();
 		
 		buttonList.addAll(mButtonsList);
+	}
+	
+	public void AddButton(String path, String args, String name, int icon)
+	{
+		PyLauncherButton newButton = new PyLauncherButton(new PyFile(path), args, name, icon);
+		
+		mButtonsList.add(newButton);
+		
+		SaveButtonsList(mButtonsList);
 	}
 	
 
@@ -844,6 +923,45 @@ public class PyLauncherService extends Service {
 		SendMessage(MESSAGE_NETSTATECHANGE);
 	}
 
+	
+	//  Button Array
+	protected static ArrayList<Drawable> ButtonDrawableArrayList = null;
+	//
+	protected void LoadButtonDrawableArray()
+	{
+		if ( ButtonDrawableArrayList != null )
+			return;
+		
+		ButtonDrawableArrayList = new ArrayList<Drawable>();
+		
+		Integer nextButtonIndex = 1;
+		Integer drawableId = 1;
+		while ( drawableId > 0 )
+		{
+			String nextIcon = "ic_"+ nextButtonIndex.toString();
+			drawableId = this.getResources().getIdentifier(nextIcon,"drawable", this.getPackageName());
+			
+			if ( drawableId > 0 )
+			{
+				ButtonDrawableArrayList.add(getResources().getDrawable(drawableId) );
+				nextButtonIndex ++;
+			}
+		}
+	}
+	
+	public int GetButtonDrawableCount()
+	{
+		//  return size 
+		return ButtonDrawableArrayList.size() ;
+	}
+	
+	public Drawable GetButtonDrawable(int index)
+	{
+		if ( index >= 0 && ButtonDrawableArrayList.size() > index )
+			return ButtonDrawableArrayList.get(index);
+		else
+			return this.getResources().getDrawable(R.drawable.ic_unknown);
+	}
 
 
 

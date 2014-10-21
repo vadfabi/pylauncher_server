@@ -76,19 +76,24 @@ public class SendButtonsActivity extends ActionBarActivity {
 		});
 		
 		
-	//  force the overflow icon to show even if we have physical settings button
-			//  will only work on android 4+
-			try {
-				ViewConfiguration config = ViewConfiguration.get(this);
-				Field menuKeyField = ViewConfiguration.class
-						.getDeclaredField("sHasPermanentMenuKey");
-				if (menuKeyField != null) {
-					menuKeyField.setAccessible(true);
-					menuKeyField.setBoolean(config, false);
-				}
-			} catch (Exception ex) {
-				// Ignore
+		// force the overflow icon to show even if we have physical settings
+		// button
+		// will only work on android 4+
+		try 
+		{
+			ViewConfiguration config = ViewConfiguration.get(this);
+			Field menuKeyField = ViewConfiguration.class
+					.getDeclaredField("sHasPermanentMenuKey");
+			if (menuKeyField != null) 
+			{
+				menuKeyField.setAccessible(true);
+				menuKeyField.setBoolean(config, false);
 			}
+		} 
+		catch (Exception ex) 
+		{
+			// Ignore
+		}
 			
 	}
 
@@ -231,6 +236,37 @@ public class SendButtonsActivity extends ActionBarActivity {
 		// Inflate the menu; this adds items to the action bar if it is present.
 		getMenuInflater().inflate(R.menu.send_buttons, menu);
 		return true;
+	}
+	
+	//  Open the edit button activity
+	public void AddButton()
+	{
+		Intent intent = new Intent(SendButtonsActivity.this, EditButtonActivity.class);
+		
+		startActivityForResult(intent, 99);
+	}
+	
+	
+	//  Activity Result
+	//
+	@Override
+	protected void onActivityResult(int requestCode, int resultCode, Intent data)
+	{
+		switch ( requestCode )
+		{
+		case 99:
+			{
+				if ( resultCode == RESULT_OK )
+				{
+					mService.getButtonList(mButtonList);
+					mGridViewAdapter.notifyDataSetChanged();
+				}
+			}
+			break;
+
+		default:
+			break;
+		}
 	}
 
 	@Override

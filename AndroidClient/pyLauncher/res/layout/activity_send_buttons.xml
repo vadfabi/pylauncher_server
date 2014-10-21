@@ -12,6 +12,10 @@
         android:id="@+id/textViewStatus"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:layout_alignParentLeft="true"
+        android:layout_alignParentRight="true"
+        android:layout_alignParentTop="true"
+        android:layout_marginTop="1dp"
         android:text="TextView" />
 
     <GridView
@@ -19,7 +23,7 @@
         android:layout_width="match_parent"
         android:layout_height="202dp"
         android:layout_above="@+id/listViewEvents"
-        android:layout_below="@+id/textView1"
+        android:layout_below="@+id/textViewStatus"
         android:numColumns="3" >
 
     </GridView>

@@ -1,6 +1,5 @@
 package com.littlebytesofpi.pylauncher;
 
-import java.lang.reflect.Field;
 import java.util.ArrayList;
 
 import android.content.ComponentName;
@@ -9,8 +8,6 @@ import android.content.Intent;
 import android.content.ServiceConnection;
 import android.content.SharedPreferences;
 import android.content.SharedPreferences.Editor;
-import android.graphics.Color;
-import android.graphics.Paint;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Handler;
@@ -20,18 +17,17 @@ import android.preference.PreferenceManager;
 import android.support.v7.app.ActionBarActivity;
 import android.util.Log;
 import android.view.Menu;
-import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
-import android.view.ViewConfiguration;
 import android.view.WindowManager;
+import android.webkit.MimeTypeMap;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.ImageButton;
 import android.widget.ListView;
 import android.widget.Spinner;
-import android.widget.TextView;
 import android.widget.Toast;
 
 import com.littlebytesofpi.pylauncher.PyLauncherService.LocalBinder;
@@ -40,6 +36,13 @@ public class EditButtonActivity extends ActionBarActivity implements  AdapterVie
 
 	
 	//  User interface elements
+	
+	//  icon for the button
+	ImageButton mIconButton;
+	int mIconIndex  = -1;
+	
+	//  text view for name
+	EditText mEditTextName;
 	
 	//  List of files is mapped to a spinner
 	//
@@ -98,18 +101,56 @@ public class EditButtonActivity extends ActionBarActivity implements  AdapterVie
 				editPref.commit();
 
 				mService.RunPyFile(selectedFile, args);
-				
-				break;
 			}
+			break;
+			
 			case R.id.buttonSave:
 			{
 				//  save this button
-				break;
+				PyFile selectedFile = (PyFile)mSpinnerFileSelector.getSelectedItem();
+				
+				mService.AddButton(selectedFile.getPath(), mEditTextArgs.getText().toString(), mEditTextName.getText().toString(), mIconIndex);
+				setResult(RESULT_OK);
+				finish();
 			}
+			break;
+			
+			case R.id.imageButtonIcon:
+			{
+				// open pick image button activity for result
+				Intent intent = new Intent(EditButtonActivity.this, SelectButton.class);
+				startActivityForResult(intent, 99);
+			}
+			break;
 			
 			}
 		}
 	};
+	
+	//  Activity Result
+	//
+	@Override
+	protected void onActivityResult(int requestCode, int resultCode, Intent data)
+	{
+		super.onActivityResult(requestCode, resultCode, data);
+		
+		switch ( requestCode )
+		{
+		case 99:
+			{
+				if ( resultCode == RESULT_OK )
+				{
+					mIconIndex = data.getIntExtra("select",  -1);
+					
+					mIconButton.setImageDrawable(mService.GetButtonDrawable(mIconIndex));
+				}
+			}
+			break;
+
+		default:
+			break;
+		}
+	}
 	
 	
 	//  onCreate
@@ -119,6 +160,11 @@ public class EditButtonActivity extends ActionBarActivity implements  AdapterVie
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_editbutton);
 
+		mIconButton = (ImageButton)findViewById(R.id.imageButtonIcon);
+		mIconButton.setOnClickListener(ButtonOnClickListener);
+		
+		mEditTextName = (EditText)findViewById(R.id.editTextName);
+		
 		
 		mSpinnerFileSelector = (Spinner)findViewById(R.id.spinnerFile);
 		mAdapter = new ArrayAdapter(this, android.R.layout.simple_spinner_item,  mFilesList);
@@ -151,6 +197,7 @@ public class EditButtonActivity extends ActionBarActivity implements  AdapterVie
 	
 		
 		mButtonSave = (Button)findViewById(R.id.buttonSave);
+		mButtonSave.setOnClickListener(ButtonOnClickListener);
 		
 		//  setup default preferences
 		PreferenceManager.setDefaultValues(this,  R.xml.preferences,  false);

@@ -30,13 +30,14 @@
                 android:layout_weight="13.20"
                 android:text="Select an icon for the button:" />
 
-            <ImageView
-                android:id="@+id/imageView1"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
+            <ImageButton
+                android:id="@+id/imageButtonIcon"
+                android:layout_width="65dp"
+                android:layout_height="65dp"
                 android:layout_alignParentRight="true"
                 android:layout_alignParentTop="true"
-                android:src="@drawable/ic_connect" />
+                android:background="@android:color/transparent"
+                android:src="@drawable/ic_unknown" />
 
         </RelativeLayout>
 
@@ -47,7 +48,7 @@
             android:text="Enter a name for the button:" />
 
         <EditText
-            android:id="@+id/editText1"
+            android:id="@+id/editTextName"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:ems="10" />

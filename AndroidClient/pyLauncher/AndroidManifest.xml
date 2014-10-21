@@ -43,24 +43,24 @@
             android:label="@string/title_activity_directory_tab"
             android:launchMode="singleTask" >
         </activity>
-        
-         <activity
+        <activity
             android:name=".SendButtonsActivity"
             android:label="@string/title_activity_send_buttons"
             android:launchMode="singleTask" >
         </activity>
-        
-          <activity
+        <activity
             android:name=".EditButtonActivity"
             android:label="@string/title_activity_edit_buttons"
-            android:launchMode="singleTask" >
+             >
         </activity>
-        
         <activity
             android:name=".Support"
             android:label="@string/title_activity_support" >
         </activity>
-       
+        <activity
+            android:name=".SelectButton"
+            android:label="@string/title_activity_select_button" >
+        </activity>
     </application>
 
 </manifest>

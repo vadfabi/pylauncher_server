@@ -10,6 +10,7 @@
     <string name="title_activity_edit_buttons">Edit Buttons</string>
     <string name="title_activity_support">Support Our Projects</string>
     <string name="projectpage_link"><a href="http://littlebytesofpi.com/index.php/projects/our-pro/">Little Bytes of Pi Projects Page</a></string>
-
+    <string name="title_activity_select_button">SelectButton</string>
+    <string name="hello_world">Hello world!</string>
 
 </resources>

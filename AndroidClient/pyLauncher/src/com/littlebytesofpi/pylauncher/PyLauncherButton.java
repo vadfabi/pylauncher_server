@@ -18,6 +18,14 @@ public class PyLauncherButton {
 		mIcon = icon;
 	}
 	
+	public PyLauncherButton(String path, String commandLineArgs, String title, int icon )
+	{
+		mPyFile = new PyFile(path);
+		mCommandLineArgs = commandLineArgs;
+		mTitle = title;
+		mIcon = icon;
+	}
+	
 	protected PyFile mPyFile;
 	public PyFile getPyFile() {
 		return mPyFile;
@@ -34,5 +42,8 @@ public class PyLauncherButton {
 	}
 
 	protected int mIcon;
+	public int getIcon() {
+		return mIcon;
+	}
 	
 }
