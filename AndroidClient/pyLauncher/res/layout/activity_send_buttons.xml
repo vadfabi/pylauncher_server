@@ -18,15 +18,14 @@
         android:layout_marginTop="1dp"
         android:text="TextView" />
 
-    <GridView
+    <org.askerov.dynamicgrid.DynamicGridView
         android:id="@+id/gridViewButtons"
         android:layout_width="match_parent"
         android:layout_height="202dp"
         android:layout_above="@+id/listViewEvents"
         android:layout_below="@+id/textViewStatus"
-        android:numColumns="3" >
-
-    </GridView>
+        android:numColumns="3" 
+		/>
 
     <ListView
         android:id="@+id/listViewEvents"

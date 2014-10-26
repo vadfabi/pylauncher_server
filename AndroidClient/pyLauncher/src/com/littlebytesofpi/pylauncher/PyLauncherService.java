@@ -854,22 +854,40 @@ public class PyLauncherService extends Service {
 		mButtonsList = buttonList;
 	}
 	
-	public void getButtonList(ArrayList<PyLauncherButton> buttonList)
+	
+	//  Get Visible Button List
+	//  adds the buttons that are visible to your list
+	public void getVisibleButtonList(ArrayList<PyLauncherButton> buttonList)
 	{
 		buttonList.clear();
 		
+		//  TODO - add filter for visible buttons
 		buttonList.addAll(mButtonsList);
 	}
 	
-	public void AddButton(String path, String args, String name, int icon)
+	
+	
+	public void UpdateButtonList(PyLauncherButton button)
 	{
-		PyLauncherButton newButton = new PyLauncherButton(new PyFile(path), args, name, icon);
-		
-		mButtonsList.add(newButton);
+		//  see if this button exists already
+		if ( ! mButtonsList.contains(button) )
+		{
+			mButtonsList.add(button);
+		}
 		
 		SaveButtonsList(mButtonsList);
 	}
 	
+	
+	public void RemoveButton(PyLauncherButton button)
+	{
+		if ( mButtonsList.contains(button) )
+		{
+			mButtonsList.remove(button);
+		}
+		
+		SaveButtonsList(mButtonsList);
+	}
 
 
 	/*

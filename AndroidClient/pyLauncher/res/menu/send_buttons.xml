@@ -18,10 +18,19 @@
           android:title="Directories"
           yourapp:showAsAction="ifRoom"  />
     
-    <item android:id="@+id/action_editButtons"
+    <item android:id="@+id/action_newButton"
+          android:icon="@drawable/ic_directory"
+          android:title="New Button"
+          yourapp:showAsAction="never"  />
+    
+     <item android:id="@+id/action_editButtons"
           android:icon="@drawable/ic_directory"
           android:title="Edit Buttons"
-          yourapp:showAsAction="ifRoom"  />
+          yourapp:showAsAction="never"  />
     
+    <item android:id="@+id/action_delButtons"
+          android:icon="@drawable/ic_directory"
+          android:title="Delete Buttons"
+          yourapp:showAsAction="never"  />
     
 </menu>

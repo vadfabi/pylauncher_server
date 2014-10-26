@@ -3,6 +3,8 @@ package com.littlebytesofpi.pylauncher;
 import java.lang.reflect.Field;
 import java.util.ArrayList;
 
+import org.askerov.dynamicgrid.DynamicGridView;
+
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
@@ -12,13 +14,13 @@ import android.os.Handler;
 import android.os.IBinder;
 import android.os.Message;
 import android.support.v7.app.ActionBarActivity;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewConfiguration;
 import android.widget.AdapterView;
 import android.widget.AdapterView.OnItemClickListener;
-import android.widget.GridView;
 import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -30,9 +32,9 @@ public class SendButtonsActivity extends ActionBarActivity {
 	TextView mTextViewStatus;
 	
 	//  Buttons grid view
-	GridView mGridViewButtons;
-	ArrayList<PyLauncherButton> mButtonList = new ArrayList<PyLauncherButton>();
-	private GridViewButtonsAdapter mGridViewAdapter = new GridViewButtonsAdapter(this, mButtonList);
+	DynamicGridView mGridViewButtons;
+	ArrayList<PyLauncherButton> mVisibleButtonsList = new ArrayList<PyLauncherButton>();
+	private GridViewButtonsAdapter mGridViewAdapter = new GridViewButtonsAdapter(this, mVisibleButtonsList);
 	
 	//  Results adapter
 	//
@@ -44,19 +46,37 @@ public class SendButtonsActivity extends ActionBarActivity {
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_send_buttons);
-	
+
 		mTextViewStatus = (TextView)findViewById(R.id.textViewStatus);
-		
+
 		//  Buttons View
-		mGridViewButtons = (GridView)findViewById(R.id.gridViewButtons);
+		mGridViewButtons = (DynamicGridView)findViewById(R.id.gridViewButtons);
 		mGridViewButtons.setAdapter( mGridViewAdapter );
-		
-		mGridViewButtons.setOnItemClickListener(new OnItemClickListener() {
-	        public void onItemClick(AdapterView<?> parent, View v, int position, long id) {
-	            Toast.makeText(SendButtonsActivity.this, "" + position, Toast.LENGTH_SHORT).show();
-	        }
-	    });
-		
+
+		mGridViewButtons.setOnDragListener(new DynamicGridView.OnDragListener() {
+			@Override
+			public void onDragStarted(int position) {
+				Log.d("GridView", "drag started at position " + position);
+			}
+
+			@Override
+			public void onDragPositionsChanged(int oldPosition, int newPosition) {
+				Log.d("GridView", String.format("drag item position changed from %d to %d", oldPosition, newPosition));
+			}        
+		});
+
+		//     TODO - does this get called
+		mGridViewButtons.setOnDropListener(new DynamicGridView.OnDropListener()
+		{
+			@Override
+			public void onActionDrop()
+			{
+				mGridViewButtons.stopEditMode();
+				//  TODO - commit the order of the new list to the preferences
+			}
+		});
+
+
 		//  Results List View
 		mListViewResults = (ListView)findViewById(R.id.listViewEvents);
 		mListViewResults.setAdapter(mResultsAdapter);
@@ -173,7 +193,8 @@ public class SendButtonsActivity extends ActionBarActivity {
 			mService = binder.getService();
 			mService.AddHandler(mHandler);
 			
-			mService.getButtonList(mButtonList);
+			mService.getVisibleButtonList(mVisibleButtonsList);
+			mGridViewAdapter.set(mVisibleButtonsList);
 			mGridViewAdapter.notifyDataSetChanged();
 
 			mService.GetLaunchResults(mResultsList);
@@ -238,14 +259,63 @@ public class SendButtonsActivity extends ActionBarActivity {
 		return true;
 	}
 	
-	//  Open the edit button activity
-	public void AddButton()
+	
+	//  Options menu function handlers
+	//
+	
+	
+	
+	//  Functions for the grid view to call back
+	//
+	
+	//  Grid View Item Click
+	//
+	public void GridViewItemClick(int position)
 	{
-		Intent intent = new Intent(SendButtonsActivity.this, EditButtonActivity.class);
-		
-		startActivityForResult(intent, 99);
+		if ( mEditButtonsMode )
+		{
+			Intent intent = new Intent(SendButtonsActivity.this, EditButtonActivity.class);
+			intent.putExtra("EditIndex", position);
+			startActivityForResult(intent, ACTIVITYREQUEST_EDITBUTTON);
+		}
+		else if ( mDeleteButtonsMode )
+		{
+			//  
+			PyLauncherButton thisButton = (PyLauncherButton)mGridViewButtons.getItemAtPosition(position);
+			
+			mService.RemoveButton(thisButton);
+			
+			//  update the grid view
+			mService.getVisibleButtonList(mVisibleButtonsList);
+			mGridViewAdapter.set(mVisibleButtonsList);
+			mGridViewAdapter.notifyDataSetChanged();
+		}
+		else
+		{
+			//  run this function
+			PyLauncherButton thisButton = (PyLauncherButton)mGridViewButtons.getItemAtPosition(position);
+			
+			mService.RunPyFile(thisButton.getPyFile(),  thisButton.getCommandLineArgs() );
+		}
 	}
 	
+	
+	//  Grid View Item Long Click
+	public void GridViewItemLongClick(int position)
+	{
+		//  what mode are we in
+		if ( mEditButtonsMode || mDeleteButtonsMode )
+		{
+			return;
+		}
+		else
+			mGridViewButtons.startEditMode(position);
+		
+	}
+	
+	
+	static final int ACTIVITYREQUEST_NEWBUTTON = 99;
+	static final int ACTIVITYREQUEST_EDITBUTTON = 100;
 	
 	//  Activity Result
 	//
@@ -254,21 +324,60 @@ public class SendButtonsActivity extends ActionBarActivity {
 	{
 		switch ( requestCode )
 		{
-		case 99:
+		case ACTIVITYREQUEST_NEWBUTTON:
 			{
 				if ( resultCode == RESULT_OK )
 				{
-					mService.getButtonList(mButtonList);
+					mService.getVisibleButtonList(mVisibleButtonsList);
+					mGridViewAdapter.set(mVisibleButtonsList);
 					mGridViewAdapter.notifyDataSetChanged();
 				}
 			}
 			break;
 
+		case ACTIVITYREQUEST_EDITBUTTON:
+		{
+			if ( resultCode == RESULT_OK )
+			{
+				mGridViewAdapter.notifyDataSetChanged();
+			}
+		}
 		default:
 			break;
 		}
 	}
 
+	boolean mEditButtonsMode = false;
+	boolean mDeleteButtonsMode = false;
+	
+	@Override
+	public void onBackPressed()
+	{
+		//  use back to cancel edit mode, otherwise on back
+		if ( mEditButtonsMode == true )
+		{
+			StopEditMode();
+			//  TODO - commit the list
+		}
+		else if ( mDeleteButtonsMode == true )
+		{
+			StopEditMode();
+			//  TODO - commit the list
+		}
+		else
+			super.onBackPressed();
+		
+		return;
+	}
+	
+	protected void StopEditMode()
+	{
+		mEditButtonsMode = false;
+		mDeleteButtonsMode = false;
+		mGridViewButtons.stopWobble(true);
+		mGridViewButtons.stopEditMode();
+	}
+	
 	@Override
 	public boolean onOptionsItemSelected(MenuItem item) {
 		// Handle action bar item clicks here. The action bar will
@@ -298,11 +407,44 @@ public class SendButtonsActivity extends ActionBarActivity {
 		}
 		return true;
 		
+		case R.id.action_newButton:
+		{
+			//  stop edit mode
+			StopEditMode();
+			
+			Intent intent = new Intent(SendButtonsActivity.this, EditButtonActivity.class);
+			startActivityForResult(intent, ACTIVITYREQUEST_NEWBUTTON);
+		}
+		return true;
+		
 		case R.id.action_editButtons:
 		{
-			Intent intent = new Intent(SendButtonsActivity.this, EditButtonActivity.class);
-			startActivity(intent);
-			
+			if ( mEditButtonsMode )
+			{
+				StopEditMode();
+			}
+			else
+			{
+				mDeleteButtonsMode = false;
+				mEditButtonsMode = true;
+				mGridViewButtons.startWobbleAnimation();
+			}
+		
+		}
+		return true;
+		
+		case R.id.action_delButtons:
+		{
+			if ( mDeleteButtonsMode )
+			{
+				StopEditMode();
+			}
+			else
+			{
+				mDeleteButtonsMode = true;
+				mEditButtonsMode = false;
+				mGridViewButtons.startWobbleAnimation();
+			}
 		}
 		return true;
 		

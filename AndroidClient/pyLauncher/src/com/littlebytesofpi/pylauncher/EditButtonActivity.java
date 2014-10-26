@@ -34,6 +34,8 @@ import com.littlebytesofpi.pylauncher.PyLauncherService.LocalBinder;
 
 public class EditButtonActivity extends ActionBarActivity implements  AdapterView.OnItemSelectedListener {
 
+	//  Index of button we are editing
+	PyLauncherButton mEditingButton;
 	
 	//  User interface elements
 	
@@ -109,7 +111,11 @@ public class EditButtonActivity extends ActionBarActivity implements  AdapterVie
 				//  save this button
 				PyFile selectedFile = (PyFile)mSpinnerFileSelector.getSelectedItem();
 				
-				mService.AddButton(selectedFile.getPath(), mEditTextArgs.getText().toString(), mEditTextName.getText().toString(), mIconIndex);
+				mEditingButton.mPyFile = selectedFile;
+				mEditingButton.mIcon = mIconIndex;
+				mEditingButton.mTitle = mEditTextName.getText().toString();
+				mEditingButton.mCommandLineArgs = mEditTextArgs.getText().toString();
+				mService.UpdateButtonList(mEditingButton);
 				setResult(RESULT_OK);
 				finish();
 			}
@@ -141,7 +147,6 @@ public class EditButtonActivity extends ActionBarActivity implements  AdapterVie
 				if ( resultCode == RESULT_OK )
 				{
 					mIconIndex = data.getIntExtra("select",  -1);
-					
 					mIconButton.setImageDrawable(mService.GetButtonDrawable(mIconIndex));
 				}
 			}
@@ -159,12 +164,11 @@ public class EditButtonActivity extends ActionBarActivity implements  AdapterVie
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_editbutton);
-
+		
 		mIconButton = (ImageButton)findViewById(R.id.imageButtonIcon);
 		mIconButton.setOnClickListener(ButtonOnClickListener);
 		
 		mEditTextName = (EditText)findViewById(R.id.editTextName);
-		
 		
 		mSpinnerFileSelector = (Spinner)findViewById(R.id.spinnerFile);
 		mAdapter = new ArrayAdapter(this, android.R.layout.simple_spinner_item,  mFilesList);
@@ -176,7 +180,7 @@ public class EditButtonActivity extends ActionBarActivity implements  AdapterVie
 		mButtonRunFile.setOnClickListener(ButtonOnClickListener);
 		
 		mEditTextArgs = (EditText)findViewById(R.id.editTextArgs);
-
+		
 		mListViewResults = (ListView)findViewById(R.id.listViewEvents);
 		mListViewResults.setAdapter(mResultsAdapter);
 		mListViewResults.setClickable(true);
@@ -188,14 +192,10 @@ public class EditButtonActivity extends ActionBarActivity implements  AdapterVie
 
 				PyLaunchResult thisResult = mResultsList.get(position);
 				thisResult.mExpanded = ! thisResult.mExpanded;
-
-
 				mResultsAdapter.notifyDataSetChanged();
 			}
 		});
 
-	
-		
 		mButtonSave = (Button)findViewById(R.id.buttonSave);
 		mButtonSave.setOnClickListener(ButtonOnClickListener);
 		
@@ -276,7 +276,25 @@ public class EditButtonActivity extends ActionBarActivity implements  AdapterVie
 			mService.GetLaunchResults(mResultsList);
 			mResultsAdapter.notifyDataSetChanged();
 			
-			//  TODO - how to handle connections  new WaitForConnectionTask().execute();
+			//  set the index of the button we are editing
+			int editButtonIndex = getIntent().getIntExtra("EditIndex",  -1);
+			
+			ArrayList<PyLauncherButton> visibleButtonList = new ArrayList<PyLauncherButton>();
+			mService.getVisibleButtonList(visibleButtonList);
+			if ( editButtonIndex >= 0 && visibleButtonList.size() > editButtonIndex )
+			{
+				//  get button from list
+				mEditingButton = visibleButtonList.get(editButtonIndex);
+			}
+			else
+			{
+				mEditingButton = new PyLauncherButton();
+			}
+			
+
+			mIconButton.setImageDrawable(mService.GetButtonDrawable(mIconIndex));
+			mEditTextName.setText(mEditingButton.getTitle());
+			mEditTextArgs.setText(mEditingButton.getCommandLineArgs());
 		}
 
 
@@ -379,12 +397,6 @@ public class EditButtonActivity extends ActionBarActivity implements  AdapterVie
 		if ( parent.getId() == R.id.spinnerFile )
 		{
 			PyFile selectedFile = mFilesList.get(pos);
-			
-			//  see if we have some arguments for this
-			SharedPreferences sharedPrefs = PreferenceManager.getDefaultSharedPreferences(EditButtonActivity.this);
-			
-			//  initialize edit fields
-			mEditTextArgs.setText(sharedPrefs.getString(selectedFile.mFullPath, ""));
 		}
 	}
 	
