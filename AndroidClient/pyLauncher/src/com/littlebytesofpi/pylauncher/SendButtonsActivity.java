@@ -2,6 +2,7 @@ package com.littlebytesofpi.pylauncher;
 
 import java.lang.reflect.Field;
 import java.util.ArrayList;
+import java.util.List;
 
 import org.askerov.dynamicgrid.DynamicGridView;
 
@@ -9,6 +10,7 @@ import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.ServiceConnection;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.IBinder;
@@ -20,15 +22,15 @@ import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewConfiguration;
 import android.widget.AdapterView;
-import android.widget.AdapterView.OnItemClickListener;
 import android.widget.ListView;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import com.littlebytesofpi.pylauncher.PyLauncherService.LocalBinder;
 
 public class SendButtonsActivity extends ActionBarActivity {
 
+	//  User Interface Elements
+	//
 	TextView mTextViewStatus;
 	
 	//  Buttons grid view
@@ -42,60 +44,29 @@ public class SendButtonsActivity extends ActionBarActivity {
 	private ArrayList<PyLaunchResult> mResultsList = new ArrayList<PyLaunchResult>();
 	private ResultAdapter mResultsAdapter = new ResultAdapter(mResultsList,  this);
 	
+	
+	//  On Create
+	//
 	@Override
-	protected void onCreate(Bundle savedInstanceState) {
+	protected void onCreate(Bundle savedInstanceState) 
+	{
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_send_buttons);
 
 		mTextViewStatus = (TextView)findViewById(R.id.textViewStatus);
 
-		//  Buttons View
+		//  Buttons Grid View View
 		mGridViewButtons = (DynamicGridView)findViewById(R.id.gridViewButtons);
 		mGridViewButtons.setAdapter( mGridViewAdapter );
-
-		mGridViewButtons.setOnDragListener(new DynamicGridView.OnDragListener() {
-			@Override
-			public void onDragStarted(int position) {
-				Log.d("GridView", "drag started at position " + position);
-			}
-
-			@Override
-			public void onDragPositionsChanged(int oldPosition, int newPosition) {
-				Log.d("GridView", String.format("drag item position changed from %d to %d", oldPosition, newPosition));
-			}        
-		});
-
-		//     TODO - does this get called
-		mGridViewButtons.setOnDropListener(new DynamicGridView.OnDropListener()
-		{
-			@Override
-			public void onActionDrop()
-			{
-				mGridViewButtons.stopEditMode();
-				//  TODO - commit the order of the new list to the preferences
-			}
-		});
-
-
+		mGridViewButtons.setOnDragListener(GridViewOnDragListener);
+		mGridViewButtons.setOnDropListener(GridViewOnDropListener);
+	
 		//  Results List View
 		mListViewResults = (ListView)findViewById(R.id.listViewEvents);
 		mListViewResults.setAdapter(mResultsAdapter);
 		mListViewResults.setClickable(true);
 		mListViewResults.setFastScrollEnabled(true);
 
-		mListViewResults.setOnItemClickListener(new AdapterView.OnItemClickListener() {
-			@Override
-			public void onItemClick(AdapterView<?> arg0, View arg1, int position, long arg3) {
-
-				PyLaunchResult thisResult = mResultsList.get(position);
-				thisResult.mExpanded = ! thisResult.mExpanded;
-
-
-				mResultsAdapter.notifyDataSetChanged();
-			}
-		});
-		
-		
 		// force the overflow icon to show even if we have physical settings
 		// button
 		// will only work on android 4+
@@ -113,11 +84,11 @@ public class SendButtonsActivity extends ActionBarActivity {
 		catch (Exception ex) 
 		{
 			// Ignore
-		}
-			
+		}			
 	}
+	
 
-//  onStart
+	//  onStart
 	//
 	@Override
 	public void onStart() {
@@ -139,7 +110,7 @@ public class SendButtonsActivity extends ActionBarActivity {
 			mResultsAdapter.notifyDataSetChanged();
 		}
 		
-		FormatConnectionStatus();
+		FormatStatus();
 
 	}
 
@@ -165,21 +136,8 @@ public class SendButtonsActivity extends ActionBarActivity {
 	}
 	
 
-	public void FormatConnectionStatus(){
-		
-		if ( mService != null && mService.IsConnectedToServer() )
-		{
-			mTextViewStatus.setText(String.format("Connected to " + mService.getConnectedToServerIp() + " : " + mService.getConnectedToServerOnPort()) );
-		}
-		else
-			mTextViewStatus.setText("Please tap settings to connect.");
-	}
-
-
-	/*
-	 * Service Handling
-	 * 
-	 */
+	//  Service Handling
+	//
 	PyLauncherService mService = null;
 
 	//  ServiceConnection
@@ -193,9 +151,7 @@ public class SendButtonsActivity extends ActionBarActivity {
 			mService = binder.getService();
 			mService.AddHandler(mHandler);
 			
-			mService.getVisibleButtonList(mVisibleButtonsList);
-			mGridViewAdapter.set(mVisibleButtonsList);
-			mGridViewAdapter.notifyDataSetChanged();
+			ResetGridView();
 
 			mService.GetLaunchResults(mResultsList);
 			mResultsAdapter.notifyDataSetChanged();
@@ -259,125 +215,6 @@ public class SendButtonsActivity extends ActionBarActivity {
 		return true;
 	}
 	
-	
-	//  Options menu function handlers
-	//
-	
-	
-	
-	//  Functions for the grid view to call back
-	//
-	
-	//  Grid View Item Click
-	//
-	public void GridViewItemClick(int position)
-	{
-		if ( mEditButtonsMode )
-		{
-			Intent intent = new Intent(SendButtonsActivity.this, EditButtonActivity.class);
-			intent.putExtra("EditIndex", position);
-			startActivityForResult(intent, ACTIVITYREQUEST_EDITBUTTON);
-		}
-		else if ( mDeleteButtonsMode )
-		{
-			//  
-			PyLauncherButton thisButton = (PyLauncherButton)mGridViewButtons.getItemAtPosition(position);
-			
-			mService.RemoveButton(thisButton);
-			
-			//  update the grid view
-			mService.getVisibleButtonList(mVisibleButtonsList);
-			mGridViewAdapter.set(mVisibleButtonsList);
-			mGridViewAdapter.notifyDataSetChanged();
-		}
-		else
-		{
-			//  run this function
-			PyLauncherButton thisButton = (PyLauncherButton)mGridViewButtons.getItemAtPosition(position);
-			
-			mService.RunPyFile(thisButton.getPyFile(),  thisButton.getCommandLineArgs() );
-		}
-	}
-	
-	
-	//  Grid View Item Long Click
-	public void GridViewItemLongClick(int position)
-	{
-		//  what mode are we in
-		if ( mEditButtonsMode || mDeleteButtonsMode )
-		{
-			return;
-		}
-		else
-			mGridViewButtons.startEditMode(position);
-		
-	}
-	
-	
-	static final int ACTIVITYREQUEST_NEWBUTTON = 99;
-	static final int ACTIVITYREQUEST_EDITBUTTON = 100;
-	
-	//  Activity Result
-	//
-	@Override
-	protected void onActivityResult(int requestCode, int resultCode, Intent data)
-	{
-		switch ( requestCode )
-		{
-		case ACTIVITYREQUEST_NEWBUTTON:
-			{
-				if ( resultCode == RESULT_OK )
-				{
-					mService.getVisibleButtonList(mVisibleButtonsList);
-					mGridViewAdapter.set(mVisibleButtonsList);
-					mGridViewAdapter.notifyDataSetChanged();
-				}
-			}
-			break;
-
-		case ACTIVITYREQUEST_EDITBUTTON:
-		{
-			if ( resultCode == RESULT_OK )
-			{
-				mGridViewAdapter.notifyDataSetChanged();
-			}
-		}
-		default:
-			break;
-		}
-	}
-
-	boolean mEditButtonsMode = false;
-	boolean mDeleteButtonsMode = false;
-	
-	@Override
-	public void onBackPressed()
-	{
-		//  use back to cancel edit mode, otherwise on back
-		if ( mEditButtonsMode == true )
-		{
-			StopEditMode();
-			//  TODO - commit the list
-		}
-		else if ( mDeleteButtonsMode == true )
-		{
-			StopEditMode();
-			//  TODO - commit the list
-		}
-		else
-			super.onBackPressed();
-		
-		return;
-	}
-	
-	protected void StopEditMode()
-	{
-		mEditButtonsMode = false;
-		mDeleteButtonsMode = false;
-		mGridViewButtons.stopWobble(true);
-		mGridViewButtons.stopEditMode();
-	}
-	
 	@Override
 	public boolean onOptionsItemSelected(MenuItem item) {
 		// Handle action bar item clicks here. The action bar will
@@ -410,7 +247,7 @@ public class SendButtonsActivity extends ActionBarActivity {
 		case R.id.action_newButton:
 		{
 			//  stop edit mode
-			StopEditMode();
+			StopEditingMode(true);
 			
 			Intent intent = new Intent(SendButtonsActivity.this, EditButtonActivity.class);
 			startActivityForResult(intent, ACTIVITYREQUEST_NEWBUTTON);
@@ -419,38 +256,359 @@ public class SendButtonsActivity extends ActionBarActivity {
 		
 		case R.id.action_editButtons:
 		{
-			if ( mEditButtonsMode )
-			{
-				StopEditMode();
-			}
-			else
-			{
-				mDeleteButtonsMode = false;
-				mEditButtonsMode = true;
-				mGridViewButtons.startWobbleAnimation();
-			}
+			StartEditMode();
 		
 		}
 		return true;
 		
 		case R.id.action_delButtons:
 		{
-			if ( mDeleteButtonsMode )
-			{
-				StopEditMode();
-			}
-			else
-			{
-				mDeleteButtonsMode = true;
-				mEditButtonsMode = false;
-				mGridViewButtons.startWobbleAnimation();
-			}
+			StartDeleteMode();
 		}
 		return true;
 		
 		default:
 			return super.onOptionsItemSelected(item);
 		}
-		
 	}
+	
+	static final int ACTIVITYREQUEST_NEWBUTTON = 99;
+	static final int ACTIVITYREQUEST_EDITBUTTON = 100;
+	
+	//  Activity Result
+	//
+	@Override
+	protected void onActivityResult(int requestCode, int resultCode, Intent data)
+	{
+		switch ( requestCode )
+		{
+		case ACTIVITYREQUEST_NEWBUTTON:
+			{
+				if ( resultCode == RESULT_OK )
+				{
+					ResetGridView();
+				}
+			}
+			break;
+
+		case ACTIVITYREQUEST_EDITBUTTON:
+		{
+			if ( resultCode == RESULT_OK )
+			{
+				ResetGridView();
+			}
+		}
+		default:
+			break;
+		}
+	}
+	
+	
+	//  Override onBack to handle exit edit mode
+	//
+	@Override
+	public void onBackPressed()
+	{
+		//  use back to cancel edit mode, otherwise on back
+		if ( mGridEditMode == true )
+		{
+			StopEditingMode(true);
+		}
+		else if ( mGridDeleteMode == true )
+		{
+			StopEditingMode(true);
+		}
+		else if ( mGridDragMode )
+		{
+			StopEditingMode(true);
+		}
+		else
+		{
+			super.onBackPressed();
+		}
+		
+		return;
+	}
+	
+
+	//  Format Status String
+	//
+	public void FormatStatus()
+	{
+		if ( mGridDeleteMode )
+		{
+			mTextViewStatus.setText("Tap a button to delete");
+		}
+		else if ( mGridEditMode )
+		{
+			mTextViewStatus.setText("Tap a button to edit.");
+		}
+		else if ( mGridDragMode )
+		{
+			if ( isPostHoneycomb() )
+				mTextViewStatus.setText("Drag and drop the button to a new location.");
+			else
+				mTextViewStatus.setText("Select new location for the button.");
+		}
+		else
+		{
+			//  no special mode in play, format connection status string
+			if ( mService != null && mService.IsConnectedToServer() )
+			{
+				mTextViewStatus.setText(String.format("Connected to " + mService.getConnectedToServerIp() + " : " + mService.getConnectedToServerOnPort()) );
+			}
+			else
+			{
+				mTextViewStatus.setText("Please tap settings to connect.");
+			}
+		}
+	}
+
+
+	//  Grid View Handling
+	//
+	boolean mGridEditMode = false;
+	boolean mGridDeleteMode = false;
+	boolean mGridDragMode = false;
+	int 	mDragIndex = -1;
+	
+	//  On Drag Listener
+	//
+	private DynamicGridView.OnDragListener GridViewOnDragListener = new DynamicGridView.OnDragListener() {
+
+		@Override
+		public void onDragStarted(int position) {
+			Log.d("GridView", "drag started at position " + position);
+		}
+
+		@Override
+		public void onDragPositionsChanged(int oldPosition, int newPosition) {
+			Log.d("GridView", String.format("drag item position changed from %d to %d", oldPosition, newPosition));
+		}        
+	};
+
+	
+	//  On Drop Listener
+	//
+	private DynamicGridView.OnDropListener GridViewOnDropListener = new DynamicGridView.OnDropListener() 
+	{
+		@Override
+		public void onActionDrop() {
+			
+			//  update the button list
+			mService.UpdateButtonsList(mGridViewAdapter.getItems());
+
+			//  end editing mode
+			StopEditingMode(false);
+			
+			//  reset the grid view
+			ResetGridView();
+		}
+	};
+	
+	
+	//  Grid View Item Click
+	//
+	public void GridViewItemClick(int position)
+	{
+		//  check our current UI mode
+		if ( mGridEditMode )
+		{	
+			//  edit this button - launch the edit activity
+			Intent intent = new Intent(SendButtonsActivity.this, EditButtonActivity.class);
+			intent.putExtra("EditIndex", position);
+			startActivityForResult(intent, ACTIVITYREQUEST_EDITBUTTON);
+		}
+		else if ( mGridDeleteMode )
+		{
+			//  delete this button
+			PyLauncherButton thisButton = (PyLauncherButton)mGridViewButtons.getItemAtPosition(position);
+			mService.RemoveButton(thisButton);
+			
+			//  update the grid view
+			ResetGridView();
+			
+			//  if we have deleted our last button, exit edit mode
+			if ( mService.mButtonsList.size() == 0 )
+				StopEditingMode(false);
+		}
+		else if ( mGridDragMode )
+		{
+			//  click during drag mode is only handled by android 2.x
+			if ( ! isPostHoneycomb() )
+			{
+				//  get this button, and the dragging button
+				PyLauncherButton dragButton = mVisibleButtonsList.get(mDragIndex);
+
+				// drop onto same spot?
+				if ( position == mDragIndex )
+				{
+					StopEditingMode(true);
+					return;
+				}
+				
+				//  add this button at the drop position
+				mVisibleButtonsList.add(position, dragButton);
+				
+				//  remove the button from where it used to be
+				if ( position > mDragIndex )
+				{
+					//  drop is past the drag, remove at the drag position
+					mVisibleButtonsList.remove(mDragIndex);
+					//  roll over the last button
+					PyLauncherButton lastButton = mVisibleButtonsList.remove(mVisibleButtonsList.size()-1);
+					mVisibleButtonsList.add(0,lastButton);
+				}
+				else if ( position < mDragIndex )
+				{
+					//  drop is before the drag, remove at drag position plus one
+					mVisibleButtonsList.remove(mDragIndex+1);
+				}
+				
+				//  update buttons
+				mService.UpdateButtonsList(mVisibleButtonsList);
+				
+				//  end editing mode
+				StopEditingMode(false);
+				
+				//  reset the view
+				ResetGridView();
+			}
+		}
+		else
+		{
+			//  run this function
+			PyLauncherButton thisButton = (PyLauncherButton)mGridViewButtons.getItemAtPosition(position);
+			
+			mService.RunPyFile(thisButton.getPyFile(),  thisButton.getCommandLineArgs() );
+		}
+	}
+	
+	
+	//  Grid View Item Long Click
+	//
+	public void GridViewItemLongClick(int position)
+	{
+		//  what mode are we in
+		if ( mGridEditMode || mGridDeleteMode || mGridDragMode )
+		{
+			//  ignore long clicks when we are in edit mode
+			return;
+		}
+		else
+		{
+			//  start drag mode
+			StartDragMode(position);
+		}
+	}
+	
+	//  Start Edit Mode
+	//
+	protected void StartEditMode()
+    {
+    	StopEditingMode(true);
+    	
+    	mGridEditMode = true;
+    	mGridViewButtons.startWobbleAnimation();
+    	
+    	if ( ! isPostHoneycomb() )
+    	{
+    		mGridViewAdapter.notifyDataSetChanged();
+    	}
+    	else
+    	{
+    		mGridViewButtons.startEditMode();
+    	}
+    	
+    	FormatStatus();
+    }
+    
+	
+	//  Start Delete Mode
+	//
+    protected void StartDeleteMode()
+    {
+    	StopEditingMode(true);
+    	
+    	mGridDeleteMode = true;
+    	mGridViewButtons.startWobbleAnimation();
+    	
+    	if ( ! isPostHoneycomb() )
+    	{
+    		mGridViewAdapter.notifyDataSetChanged();
+    	}
+    	else
+    	{
+    		mGridViewButtons.startEditMode();
+    	}
+    	
+    	FormatStatus();
+    }
+    
+    
+    //  Start Drag Mode
+    //
+    protected void StartDragMode(int position)
+    {
+    	StopEditingMode(true);
+    	
+    	mGridDragMode = true;
+    	
+    	if ( ! isPostHoneycomb() )
+    	{
+    		mDragIndex = position;
+    		mGridViewAdapter.notifyDataSetChanged();
+    	}
+    	else
+    	{
+    		mGridViewButtons.startEditMode(position);
+    	}
+    	
+    	FormatStatus();
+    }
+    
+	
+    //  Stop Editing Mode
+    //
+	protected void StopEditingMode(boolean notifyAdapter)
+	{
+		mGridDragMode = false;
+		mGridEditMode = false;
+		mGridDeleteMode = false;
+		
+		// handle grid view state
+		mGridViewButtons.stopWobble(true);
+		mGridViewButtons.stopEditMode();
+		
+		//  notify adapter
+		if ( notifyAdapter )
+			mGridViewAdapter.notifyDataSetChanged();
+		
+		FormatStatus();
+	}
+
+	
+	//  Reset Grid View
+	//
+	private void ResetGridView()
+	{
+		mService.getVisibleButtonList(mVisibleButtonsList);
+		mGridViewAdapter.set(mVisibleButtonsList);
+		mGridViewAdapter.notifyDataSetChanged();
+	}
+	
+	
+	
+	
+
+	
+	
+	//  API Version required for grid view behavior
+    private boolean isPostHoneycomb() {
+        return Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB;
+    }
+    
+    
+	
+	
 }

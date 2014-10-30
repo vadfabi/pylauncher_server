@@ -18,6 +18,7 @@ import android.os.IBinder;
 import android.os.Message;
 import android.preference.PreferenceManager;
 import android.support.v7.app.ActionBarActivity;
+import android.text.InputType;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuInflater;
@@ -130,6 +131,7 @@ public class SendTab extends ActionBarActivity implements  AdapterView.OnItemSel
 		mButtonRunFile.setOnClickListener(ButtonOnClickListener);
 		
 		mEditTextArgs = (EditText)findViewById(R.id.editTextArgs);
+		mEditTextArgs.setInputType(InputType.TYPE_TEXT_FLAG_NO_SUGGESTIONS);
 
 		mListViewResults = (ListView)findViewById(R.id.listViewEvents);
 		mListViewResults.setAdapter(mResultsAdapter);

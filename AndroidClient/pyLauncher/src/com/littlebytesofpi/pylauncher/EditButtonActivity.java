@@ -15,6 +15,7 @@ import android.os.IBinder;
 import android.os.Message;
 import android.preference.PreferenceManager;
 import android.support.v7.app.ActionBarActivity;
+import android.text.InputType;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -111,11 +112,17 @@ public class EditButtonActivity extends ActionBarActivity implements  AdapterVie
 				//  save this button
 				PyFile selectedFile = (PyFile)mSpinnerFileSelector.getSelectedItem();
 				
+				if ( selectedFile == null )
+					selectedFile = new PyFile("");
+				
 				mEditingButton.mPyFile = selectedFile;
 				mEditingButton.mIcon = mIconIndex;
 				mEditingButton.mTitle = mEditTextName.getText().toString();
 				mEditingButton.mCommandLineArgs = mEditTextArgs.getText().toString();
-				mService.UpdateButtonList(mEditingButton);
+				
+				mService.UpdateButton(mEditingButton);
+				
+				//  done
 				setResult(RESULT_OK);
 				finish();
 			}
@@ -169,6 +176,7 @@ public class EditButtonActivity extends ActionBarActivity implements  AdapterVie
 		mIconButton.setOnClickListener(ButtonOnClickListener);
 		
 		mEditTextName = (EditText)findViewById(R.id.editTextName);
+		mEditTextName.setInputType(InputType.TYPE_TEXT_FLAG_NO_SUGGESTIONS);
 		
 		mSpinnerFileSelector = (Spinner)findViewById(R.id.spinnerFile);
 		mAdapter = new ArrayAdapter(this, android.R.layout.simple_spinner_item,  mFilesList);
@@ -180,6 +188,7 @@ public class EditButtonActivity extends ActionBarActivity implements  AdapterVie
 		mButtonRunFile.setOnClickListener(ButtonOnClickListener);
 		
 		mEditTextArgs = (EditText)findViewById(R.id.editTextArgs);
+		mEditTextArgs.setInputType(InputType.TYPE_TEXT_FLAG_NO_SUGGESTIONS);
 		
 		mListViewResults = (ListView)findViewById(R.id.listViewEvents);
 		mListViewResults.setAdapter(mResultsAdapter);

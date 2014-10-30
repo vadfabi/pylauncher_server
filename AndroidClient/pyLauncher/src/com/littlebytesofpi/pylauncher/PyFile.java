@@ -21,10 +21,25 @@ public class PyFile {
 	@Override
 	public String toString(){
 		
-		return new File(mFullPath).getName();
+		if ( mFullPath.contains(".py") )
+			return new File(mFullPath).getName();
+		else
+			return mFullPath;
 	}
 	
 	public String getPath(){
 		return mFullPath;
+	}
+	
+	public String getDirectoryPath()
+	{
+		File file = new File(mFullPath);
+		
+		String test = file.getParentFile().getPath();
+		String path = file.getPath();
+		if ( path.contains(".py") )
+			return file.getParentFile().getPath();
+		else
+			return path;
 	}
 }

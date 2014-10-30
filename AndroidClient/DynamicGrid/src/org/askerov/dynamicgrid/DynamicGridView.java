@@ -238,6 +238,10 @@ public class DynamicGridView extends GridView {
 
     @TargetApi(Build.VERSION_CODES.HONEYCOMB)
     public void startWobbleAnimation() {
+    	
+    	if (! isPostHoneycomb())
+    		return;
+    		
         for (int i = 0; i < getChildCount(); i++) {
             View v = getChildAt(i);
             if (v != null && Boolean.TRUE != v.getTag(R.id.dgv_wobble_tag)) {
@@ -251,7 +255,11 @@ public class DynamicGridView extends GridView {
     }
 
     @TargetApi(Build.VERSION_CODES.HONEYCOMB)
-    public void stopWobble(boolean resetRotation) {
+    public void stopWobble(boolean resetRotation) 
+    {
+    	if (! isPostHoneycomb())
+    		return;
+    	
         for (Animator wobbleAnimator : mWobbleAnimators) {
             wobbleAnimator.cancel();
         }

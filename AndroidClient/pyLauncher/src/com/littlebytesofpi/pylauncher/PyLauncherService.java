@@ -1,6 +1,10 @@
 package com.littlebytesofpi.pylauncher;
 
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -526,7 +530,6 @@ public class PyLauncherService extends Service {
 	{
 		dirList.clear();
 		
-		//  TODO - add the visible directory filter here
 		dirList.addAll(mDirectoryList);		
 	}
 	
@@ -534,9 +537,20 @@ public class PyLauncherService extends Service {
 	public synchronized void GetFilesList(ArrayList<PyFile> filesList)
 	{
 		filesList.clear();
-		
-		//  TODO - add the visible files filter here
-		filesList.addAll(mFilesList);
+
+		for ( PyFile nextFile : mFilesList )
+		{
+			//  see if this file is in visible directory
+			for ( PyFile nextDir : mDirectoryList )
+			{
+				if ( nextDir.getDirectoryPath().compareTo(nextFile.getDirectoryPath()) == 0 )
+				{
+					if ( nextDir.mSet )
+						filesList.add(nextFile);
+					break;
+				}
+			}
+		}
 	}
 	
 	
@@ -585,25 +599,17 @@ public class PyLauncherService extends Service {
 	
 	//  RemoveDirectory
 	//
-	public void RemoveDirectory()
+	public void RemoveDirectory(String dirToRemove)
 	{
-		new RemoveDirectoryTask().execute();
+		new RemoveDirectoryTask().execute(dirToRemove);
 	}
 	//
-	private class RemoveDirectoryTask extends AsyncTask<Void, Void, Integer> {
+	private class RemoveDirectoryTask extends AsyncTask<String, Void, Integer> {
 
 		String readResponse = "";
-		protected Integer doInBackground(Void... param ) {
+		protected Integer doInBackground(String... param ) {
 
-			String removeCommand = ClientsServer.TCP_REMOVEDIR + ",";
-			synchronized (PyLauncherService.this) {
-			//  build a list of directories to remove
-				for ( PyFile nextFile : mDirectoryList )
-				{
-					if ( nextFile.mSet )
-						removeCommand += "," + nextFile.getPath();
-				}
-			}
+			String removeCommand = ClientsServer.TCP_REMOVEDIR + "," + param[0];
 			
 			readResponse = IpFunctions.SendStringToPort(mConnectedToServerIp, mConnectedToServerOnPort, removeCommand);
 
@@ -635,18 +641,28 @@ public class PyLauncherService extends Service {
 	//
 	private class AddDirectoryTask extends AsyncTask<String, Void, Integer> {
 
+		String dirName = "";
 		String readResponse = "";
 		protected Integer doInBackground(String... param ) {
 
 			String addCommand = ClientsServer.TCP_ADDDIR + "," + param[0];
+			dirName = param[0];
 			
+			//  update the dir list before command
+			PyFile newDir = new PyFile(dirName);
+			newDir.mSet = true;
+			mDirectoryList.add(newDir);
+			SaveDirectoryList();
 			
 			readResponse = IpFunctions.SendStringToPort(mConnectedToServerIp, mConnectedToServerOnPort, addCommand);
 
 			if ( readResponse.contains(ClientsServer.TCP_ADDDIR) && readResponse.contains(ClientsServer.TCP_ACK) )
 				return 1;
 			else
+			{
+				mDirectoryList.remove(newDir);
 				return 0;
+			}
 		}
 
 		//  Post Execute
@@ -656,7 +672,12 @@ public class PyLauncherService extends Service {
 			{
 				Toast.makeText(PyLauncherService.this, "Failed to add directory!", Toast.LENGTH_SHORT).show();		
 			}
+			else
+			{
+				//  TODO - what for success
+			}
 
+			//  TODO - is this necessary?
 			showNotification();
 		}
 	}
@@ -687,6 +708,9 @@ public class PyLauncherService extends Service {
 			mDirectoryList.add(new PyFile(nextDir));
 			nextDir = parser.GetNextString();
 		}
+		
+		//  match the directory list with settings to retain visibility flag
+		LoadDirsFromPreferences();
 		
 		return true;
 	}
@@ -769,16 +793,20 @@ public class PyLauncherService extends Service {
 		}
 	}
 
-	/*
-	 * Buttons Handling
-	 */
-	protected static final String BNAME = "Name";
-	protected static final String BPATH = "Path";
-	protected static final String BARGS = "Args";
-	protected static final String BICON = "Icon";
 	
+	//  Buttons
+	//
+	private static final String BNAME = "Name";
+	private static final String BPATH = "Path";
+	private static final String BARGS = "Args";
+	private static final String BICON = "Icon";
+	private static final String PREF_BUTTONS = "buttonsList";
+	
+	//  Buttons List
 	protected ArrayList<PyLauncherButton> mButtonsList = null;
 	
+	//  Load Buttons from Preferences
+	//
 	protected void LoadButtonsFromPreferences()
 	{
 		if ( mButtonsList != null )
@@ -814,20 +842,18 @@ public class PyLauncherService extends Service {
 			}
 		} catch (Exception e) {
 			e.printStackTrace();
-		}
-
-		
+		}	
 	}
 	
-	protected void SaveButtonsList(ArrayList<PyLauncherButton> buttonList)
+	
+	//  Save Buttons to Preferences
+	//
+	protected void SaveButtonsList()
 	{
-		//  get the prefs
-		//  Load the buttons from the settings
-		SharedPreferences prefs = getSharedPreferences("pref_hidden",MODE_PRIVATE);
-		
+		//  put the list of buttons in json array	
 		JSONArray buttonObjectsList = new JSONArray();
 
-		for (PyLauncherButton nextButton : buttonList) 
+		for (PyLauncherButton nextButton : mButtonsList) 
 		{
 			try 
 			{
@@ -846,14 +872,103 @@ public class PyLauncherService extends Service {
 			}
 		}
 		
+		//  save it
+		SharedPreferences prefs = getSharedPreferences("pref_hidden",MODE_PRIVATE);
 		Editor editor = prefs.edit();
 		editor.putString("buttonsList", buttonObjectsList.toString());
 		editor.commit();
-
-		//  update the button list		
-		mButtonsList = buttonList;
 	}
 	
+	
+	//  Directory List
+	//
+	static final String DNAME = "Name";
+	static final String DCHK = "Checked";
+	static final String PREF_DIR = "dirList";
+
+	
+	//  Save Directories to Preferences
+	//
+	protected void SaveDirectoryList()
+	{
+		//  put the directory list into a JSON array
+		JSONArray dirObjectList = new JSONArray();
+
+		for ( PyFile nextFile : mDirectoryList )
+		{
+			try
+			{
+				JSONObject dirObject = new JSONObject();
+				dirObject.put(DNAME, nextFile.getPath() );
+				dirObject.put(DCHK, nextFile.mSet );
+
+				dirObjectList.put(dirObject);
+			}
+			catch (JSONException e)
+			{
+				continue;
+			}
+		}
+
+		//  save the dir list to the settings
+		SharedPreferences prefs = getSharedPreferences("pref_hidden",MODE_PRIVATE);			
+		Editor editor = prefs.edit();
+		editor.putString("dirList", dirObjectList.toString());
+		editor.commit();
+	}
+	
+	//  Load Directories from Preferences
+	//
+	protected void LoadDirsFromPreferences()
+	{
+		ArrayList<PyFile> dirList = new ArrayList<PyFile>();
+		
+		//  Load the directories from the settings
+		SharedPreferences prefs = getSharedPreferences("pref_hidden",MODE_PRIVATE);
+		
+		try 
+		{
+			JSONArray jsonArray = new JSONArray(prefs.getString("dirList","[]"));
+			for (int i = 0; i < jsonArray.length(); i++) 
+			{
+				//  parse the button object
+				try
+				{
+					JSONObject nextDir = jsonArray.getJSONObject(i);
+					String name = nextDir.getString(DNAME);
+					boolean checked = nextDir.getBoolean(DCHK);
+					
+					//  make the dir
+					PyFile newDir = new PyFile(name);
+					newDir.mSet = checked;
+					
+					dirList.add(newDir);
+				}
+				catch (Exception e)
+				{
+					
+				}
+			}
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		
+		//  now set the state of each dir in the list from the server
+		for ( PyFile nextDir : mDirectoryList )
+		{
+			nextDir.mSet = true;
+			
+			//  see if this directory is in the settings list
+			for ( PyFile settingsDir : dirList )
+			{
+				if ( settingsDir.getPath().compareTo(nextDir.getPath()) == 0 )
+				{
+					nextDir.mSet = settingsDir.mSet;
+					break;
+				}
+			}
+		}
+	}
 	
 	//  Get Visible Button List
 	//  adds the buttons that are visible to your list
@@ -861,13 +976,25 @@ public class PyLauncherService extends Service {
 	{
 		buttonList.clear();
 		
-		//  TODO - add filter for visible buttons
-		buttonList.addAll(mButtonsList);
+		//  filter buttons by directory visibility
+		for ( PyLauncherButton nextButton : mButtonsList )
+		{
+			//  see if this button is in visible directory
+			for ( PyFile nextDir : mDirectoryList )
+			{
+				if ( nextDir.getDirectoryPath().compareTo(nextButton.getPyFile().getDirectoryPath()) == 0 )
+				{
+					if ( nextDir.mSet )
+						buttonList.add(nextButton);
+					break;
+				}
+			}
+		}
 	}
 	
 	
 	
-	public void UpdateButtonList(PyLauncherButton button)
+	public void UpdateButton(PyLauncherButton button)
 	{
 		//  see if this button exists already
 		if ( ! mButtonsList.contains(button) )
@@ -875,7 +1002,7 @@ public class PyLauncherService extends Service {
 			mButtonsList.add(button);
 		}
 		
-		SaveButtonsList(mButtonsList);
+		SaveButtonsList();
 	}
 	
 	
@@ -886,9 +1013,63 @@ public class PyLauncherService extends Service {
 			mButtonsList.remove(button);
 		}
 		
-		SaveButtonsList(mButtonsList);
+		SaveButtonsList();
 	}
 
+	
+	public void UpdateButtonsList(List<?> newButtonList)
+	{
+		//  create an array of the original indices of these buttons
+		ArrayList<Integer> indexList = new ArrayList<Integer>();
+		
+		//  determine the original indices of the buttons in the list
+		for ( PyLauncherButton nextButton : mButtonsList )
+		{
+			if ( newButtonList.contains(nextButton) )
+			{
+				indexList.add(mButtonsList.indexOf(nextButton));
+			}
+		}
+		
+		//  rearrange the list
+		for ( int i = 0; i < newButtonList.size(); i++ )
+		{
+			PyLauncherButton nextButton = (PyLauncherButton)newButtonList.get(i);
+			
+			//  get the current index of this button
+			int currentIndex = mButtonsList.indexOf(nextButton);
+			
+			//  get the insert index
+			int insertionIndex = indexList.get(i);
+			
+			//  see if this button has new location
+			if ( currentIndex != insertionIndex )
+			{
+				//  insert the new button
+				mButtonsList.add(insertionIndex, nextButton);
+				
+				//  remove the old button
+				if ( currentIndex < insertionIndex )
+				{
+					//  inserted below, remove the object above
+					mButtonsList.remove(currentIndex);
+				}
+				else
+				{
+					//  inserted above, remove the object below which is now at index + 1
+					mButtonsList.remove(currentIndex+1);
+				}
+			}
+		}
+		
+		//  Save
+		SaveButtonsList();
+		
+		
+		
+	}
+	
+	
 
 	/*
 	 * Network State Monitor
@@ -943,6 +1124,7 @@ public class PyLauncherService extends Service {
 
 	
 	//  Button Array
+	//
 	protected static ArrayList<Drawable> ButtonDrawableArrayList = null;
 	//
 	protected void LoadButtonDrawableArray()
