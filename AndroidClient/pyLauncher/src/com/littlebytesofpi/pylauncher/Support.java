@@ -15,10 +15,10 @@ import android.widget.TextView;
 
 public class Support extends Activity {
 
-	TextView mTextViewAbout1;
-	TextView mTextViewProjLink;
-	TextView mTextViewAbout2;
-	TextView mTextViewAppLink;
+	TextView TextViewAbout1;
+	TextView TextViewProjLink;
+	TextView TextViewAbout2;
+	TextView TextViewAppLink;
 
 	final String appName = "com.littlebytesofpi.pylauncher";
 	
@@ -28,30 +28,30 @@ public class Support extends Activity {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_support);
 		
-		mTextViewAbout1 = (TextView)findViewById(R.id.textViewAbout1);
-		mTextViewProjLink = (TextView)findViewById(R.id.textViewProjPageLink);
-		mTextViewAbout2 = (TextView)findViewById(R.id.textViewAbout2);
-		mTextViewAppLink = (TextView)findViewById(R.id.textViewAppPageLink);
+		TextViewAbout1 = (TextView)findViewById(R.id.textViewAbout1);
+		TextViewProjLink = (TextView)findViewById(R.id.textViewProjPageLink);
+		TextViewAbout2 = (TextView)findViewById(R.id.textViewAbout2);
+		TextViewAppLink = (TextView)findViewById(R.id.textViewAppPageLink);
 		
 		//  preamble
-		mTextViewAbout1.setText("Little Bytes of Pi is a Corvallis, Oregon company inspired by the Raspberry Pi. Our mission is to create useful products and resources for educators and innovators alike.\n\n" +
+		TextViewAbout1.setText("Little Bytes of Pi is a Corvallis, Oregon company inspired by the Raspberry Pi. Our mission is to create useful products and resources for educators and innovators alike.\n\n" +
 				"Please check out our projects page, to see details about our current activities:");
 		
 		
 		//  link to our web page
-		mTextViewProjLink.setMovementMethod(LinkMovementMethod.getInstance());
+		TextViewProjLink.setMovementMethod(LinkMovementMethod.getInstance());
 		
 		
 		//  
-		mTextViewAbout2.setText("If you would like to support our efforts, please consider purchasing the paid version of this application:");
+		TextViewAbout2.setText("If you would like to support our efforts, please consider purchasing the paid version of this application:");
 		
 		
 		//  link to google play
-		mTextViewAppLink.setText("pyLauncher on Google Play");
-		mTextViewAppLink.setTextColor(Color.parseColor("#00CCFF"));
-		mTextViewAppLink.setPaintFlags(mTextViewAppLink.getPaintFlags() |   Paint.UNDERLINE_TEXT_FLAG);
+		TextViewAppLink.setText("pyLauncher on Google Play");
+		TextViewAppLink.setTextColor(Color.parseColor("#00CCFF"));
+		TextViewAppLink.setPaintFlags(TextViewAppLink.getPaintFlags() |   Paint.UNDERLINE_TEXT_FLAG);
 
-		mTextViewAppLink.setOnClickListener( new View.OnClickListener() {
+		TextViewAppLink.setOnClickListener( new View.OnClickListener() {
 
 			@Override
 			public void onClick(View v) {

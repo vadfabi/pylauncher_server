@@ -27,89 +27,13 @@ import com.littlebytesofpi.pylauncher.PyLauncherService.LocalBinder;
 public class DirectoryTab extends ActionBarActivity {
 
 	//  User Interface Elements
-	private ListView mListViewDirectories;
-	private ArrayList<PyFile> mDirectoryList = new ArrayList<PyFile>();
-	private DirectoriesAdapter mDirectoryAdapter = new DirectoriesAdapter(mDirectoryList,  this);
+	private ListView ListViewDirectories;
+	private ArrayList<PyFile> DirectoryList = new ArrayList<PyFile>();
+	private DirectoriesAdapter DirectoryAdapter = new DirectoriesAdapter(DirectoryList,  this);
 	
 	
-	Button mButtonAdd;
-	Button mButtonRemove;
-	
-	View.OnClickListener ButtonOnClickListener = new View.OnClickListener() {
-		
-		@Override
-		public void onClick(View v) {
-			
-			
-			
-			switch ( v.getId() )
-			{
-			case R.id.buttonAdd:
-			{
-				mDirectoryList.clear();
-				mDirectoryAdapter.notifyDataSetChanged();
-				
-				final AlertDialog.Builder alert = new AlertDialog.Builder(DirectoryTab.this);
-				alert.setTitle("Enter Directory Name");
-				final EditText input = new EditText(DirectoryTab.this);
-				
-				//  set default file name based on date / time
-			
-				input.setText("");
-				input.setInputType(InputType.TYPE_TEXT_FLAG_NO_SUGGESTIONS);
-				alert.setView(input);
-				
-				//  alert dialog button handlers
-				alert.setPositiveButton("Add", new DialogInterface.OnClickListener() {
-					public void onClick(DialogInterface dialog, int whichButton) {
-						String value = input.getText().toString().trim();
-						
-						mService.AddDirectory(value);
-					}
-				});
-
-				alert.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
-					public void onClick(DialogInterface dialog, int whichButton) {
-						dialog.cancel();
-					}
-				});
-				alert.show();   
-			}
-				break;
-				
-			case R.id.buttonRemove:
-			{
-				AlertDialog.Builder builder = new AlertDialog.Builder(DirectoryTab.this);  
-		           builder.setTitle("Remove Directory");  
-		           final ArrayAdapter<PyFile> arrayAdapter = new ArrayAdapter<PyFile>(DirectoryTab.this,  
-		                     android.R.layout.select_dialog_singlechoice);  
-
-		            
-		           for (PyFile nextFile : mDirectoryList )
-		           {
-		                arrayAdapter.add(nextFile);  
-		           }  
-		           builder.setAdapter(arrayAdapter, new DialogInterface.OnClickListener() {  
-		                @Override  
-		                public void onClick(DialogInterface dialog, int which) {  
-		                    DirectoryTab.this.mService.RemoveDirectory(arrayAdapter.getItem(which).getPath());
-		                }  
-		           });  
-		           builder.setPositiveButton("Cancel",  
-		                     new DialogInterface.OnClickListener() {  
-		                          @Override  
-		                          public void onClick(DialogInterface dialog, int which) {  
-		                               dialog.dismiss();  
-		                          }  
-		                     });  
-		           AlertDialog alert = builder.create();  
-		           alert.show();  
-			}
-				break;
-			
-			}
-		}
-	};
+	Button ButtonAdd;
+	Button ButtonRemove;
 	
 	//  onCreate
 	//
@@ -118,13 +42,13 @@ public class DirectoryTab extends ActionBarActivity {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_directory_tab);
 		
-		mListViewDirectories = (ListView)findViewById(R.id.listViewDirectories);
-		mListViewDirectories.setAdapter(mDirectoryAdapter);
+		ListViewDirectories = (ListView)findViewById(R.id.listViewDirectories);
+		ListViewDirectories.setAdapter(DirectoryAdapter);
 		
-		mButtonAdd = (Button)findViewById(R.id.buttonAdd);
-		mButtonAdd.setOnClickListener(ButtonOnClickListener);
-		mButtonRemove = (Button)findViewById(R.id.buttonRemove);
-		mButtonRemove.setOnClickListener(ButtonOnClickListener);
+		ButtonAdd = (Button)findViewById(R.id.buttonAdd);
+		ButtonAdd.setOnClickListener(ButtonOnClickListener);
+		ButtonRemove = (Button)findViewById(R.id.buttonRemove);
+		ButtonRemove.setOnClickListener(ButtonOnClickListener);
 	}
 	
 	
@@ -147,8 +71,8 @@ public class DirectoryTab extends ActionBarActivity {
 
 		if ( mService != null )
 		{
-			mService.GetDirectoryList(mDirectoryList);
-			mDirectoryAdapter.notifyDataSetChanged();
+			mService.GetDirectoryList(DirectoryList);
+			DirectoryAdapter.notifyDataSetChanged();
 		}
 
 	}
@@ -182,8 +106,8 @@ public class DirectoryTab extends ActionBarActivity {
 			mService = binder.getService();
 			mService.AddHandler(mHandler);
 
-			mService.GetDirectoryList(mDirectoryList);
-			mDirectoryAdapter.notifyDataSetChanged();
+			mService.GetDirectoryList(DirectoryList);
+			DirectoryAdapter.notifyDataSetChanged();
 		}
 
 
@@ -226,14 +150,86 @@ public class DirectoryTab extends ActionBarActivity {
 
 			case PyLauncherService.MESSAGE_UPDATEDIRECTORIES:
 				
-				mService.GetDirectoryList(mDirectoryList);
-				mDirectoryAdapter.notifyDataSetChanged();
+				mService.GetDirectoryList(DirectoryList);
+				DirectoryAdapter.notifyDataSetChanged();
 				
 				break;
 			}
 		}
 	};  
 
+View.OnClickListener ButtonOnClickListener = new View.OnClickListener() {
+		
+		@Override
+		public void onClick(View v) {
+			
+			switch ( v.getId() )
+			{
+			case R.id.buttonAdd:
+			{
+				DirectoryList.clear();
+				DirectoryAdapter.notifyDataSetChanged();
+				
+				final AlertDialog.Builder alert = new AlertDialog.Builder(DirectoryTab.this);
+				alert.setTitle("Enter Directory Name");
+				final EditText input = new EditText(DirectoryTab.this);
+				
+				//  set default file name based on date / time
+				input.setText("");
+				input.setInputType(InputType.TYPE_TEXT_FLAG_NO_SUGGESTIONS);
+				alert.setView(input);
+				
+				//  alert dialog button handlers
+				alert.setPositiveButton("Add", new DialogInterface.OnClickListener() {
+					public void onClick(DialogInterface dialog, int whichButton) {
+						String value = input.getText().toString().trim();
+						
+						mService.AddDirectory(value);
+					}
+				});
+
+				alert.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
+					public void onClick(DialogInterface dialog, int whichButton) {
+						dialog.cancel();
+					}
+				});
+				alert.show();   
+			}
+				break;
+				
+			case R.id.buttonRemove:
+			{
+				AlertDialog.Builder builder = new AlertDialog.Builder(DirectoryTab.this);  
+		           builder.setTitle("Remove Directory");  
+		           final ArrayAdapter<PyFile> arrayAdapter = new ArrayAdapter<PyFile>(DirectoryTab.this,  
+		                     android.R.layout.select_dialog_singlechoice);  
+
+		            
+		           for (PyFile nextFile : DirectoryList )
+		           {
+		                arrayAdapter.add(nextFile);  
+		           }  
+		           builder.setAdapter(arrayAdapter, new DialogInterface.OnClickListener() {  
+		                @Override  
+		                public void onClick(DialogInterface dialog, int which) {  
+		                    DirectoryTab.this.mService.RemoveDirectory(arrayAdapter.getItem(which).GetPath());
+		                }  
+		           });  
+		           builder.setPositiveButton("Cancel",  
+		                     new DialogInterface.OnClickListener() {  
+		                          @Override  
+		                          public void onClick(DialogInterface dialog, int which) {  
+		                               dialog.dismiss();  
+		                          }  
+		                     });  
+		           AlertDialog alert = builder.create();  
+		           alert.show();  
+			}
+				break;
+			
+			}
+		}
+	};
 	
 	//  Override onBack to save directory state on the way out
 	//

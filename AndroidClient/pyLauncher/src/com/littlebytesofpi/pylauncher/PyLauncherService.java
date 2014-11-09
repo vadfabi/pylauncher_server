@@ -55,10 +55,10 @@ public class PyLauncherService extends Service {
 	public PyLauncherService(){
 		
 		//  This service will monitor network status, so setup a network state broadcast receiver
-		mNetworkStateChangedFilter = new IntentFilter();
-		mNetworkStateChangedFilter.addAction(ConnectivityManager.CONNECTIVITY_ACTION);
+		NetworkStateChangedFilter = new IntentFilter();
+		NetworkStateChangedFilter.addAction(ConnectivityManager.CONNECTIVITY_ACTION);
 		//
-		mNetworkStateIntentReceiver = new BroadcastReceiver() {
+		NetworkStateIntentReceiver = new BroadcastReceiver() {
 			@Override
 			public void onReceive(Context context, Intent intent) {
 				if (intent.getAction().equals(ConnectivityManager.CONNECTIVITY_ACTION)) {
@@ -69,15 +69,13 @@ public class PyLauncherService extends Service {
 	}
 	
 	
-
-
 	//  onDestroy
 	//
 	@Override
 	public void onDestroy() {
 
-		if ( mClientsServerThread != null && mClientsServerThread.IsConnected() )
-			mClientsServerThread.cancel();
+		if ( ClientsServerThread != null && ClientsServerThread.IsConnected() )
+			ClientsServerThread.Cancel();
 
 		super.onDestroy();
 	}
@@ -88,7 +86,7 @@ public class PyLauncherService extends Service {
 	public int onStartCommand(Intent intent, int flags, int startId) {
 
 		//  register for network state change messages
-		registerReceiver(mNetworkStateIntentReceiver, mNetworkStateChangedFilter);
+		registerReceiver(NetworkStateIntentReceiver, NetworkStateChangedFilter);
 
 		showNotification();
 
@@ -101,7 +99,7 @@ public class PyLauncherService extends Service {
 	//  LocalBinder
 	//  this is a simple intraprocess application, so we use the LocalBinder method
 	//
-	private LocalBinder mBinder = null;
+	private LocalBinder Binder = null;
 	//
 	public class LocalBinder extends Binder {
 		PyLauncherService getService() {
@@ -115,14 +113,14 @@ public class PyLauncherService extends Service {
 	@Override
 	public IBinder onBind(Intent arg0) {
 
-		if ( mBinder == null )
+		if ( Binder == null )
 		{
 			//  create the binder object
-			mBinder = new LocalBinder();
+			Binder = new LocalBinder();
 		}
 
 		//  hook up the network state listener
-		registerReceiver(mNetworkStateIntentReceiver, mNetworkStateChangedFilter);
+		registerReceiver(NetworkStateIntentReceiver, NetworkStateChangedFilter);
 
 		//  query current network state
 		SetNetworkStatus();
@@ -145,7 +143,7 @@ public class PyLauncherService extends Service {
 			openConnectionToServer();
 		}
 
-		return mBinder;
+		return Binder;
 	}
 
 
@@ -185,9 +183,9 @@ public class PyLauncherService extends Service {
 
 	public void ShutDown(){
 		
-		if ( mClientsServerThread != null )
-			mClientsServerThread.cancel();
-		mClientsServerThread = null;
+		if ( ClientsServerThread != null )
+			ClientsServerThread.Cancel();
+		ClientsServerThread = null;
 		
 		stopSelf();
 	}
@@ -197,24 +195,24 @@ public class PyLauncherService extends Service {
 	//
 	
 	//  List of Handlers we will send messages to
-	private  ArrayList<Handler> mHandlerList = new ArrayList<Handler>(); 
+	private  ArrayList<Handler> HandlerList = new ArrayList<Handler>(); 
 	//
 	public synchronized void AddHandler(Handler handler){
-		if ( mHandlerList.contains(handler) )
+		if ( HandlerList.contains(handler) )
 			return;
-		mHandlerList.add(handler);
+		HandlerList.add(handler);
 
 	}
 	//
 	public synchronized void RemoveHandler(Handler handler){
-		mHandlerList.remove(handler);
+		HandlerList.remove(handler);
 	}
 
 	// SendMessage
 	//
 	public synchronized void SendMessage(int message)
 	{
-		for ( Handler handler : mHandlerList )
+		for ( Handler handler : HandlerList )
 		{
 			Message messageToSend = Message.obtain(null, message);
 
@@ -227,7 +225,7 @@ public class PyLauncherService extends Service {
 	//
 	public synchronized void SendMessage(int message, int arg1)
 	{
-		for ( Handler handler : mHandlerList )
+		for ( Handler handler : HandlerList )
 		{
 			Message messageToSend = Message.obtain(null, message, arg1, 0);
 
@@ -246,14 +244,14 @@ public class PyLauncherService extends Service {
 	 */
 
 	//  List of events in the log
-	private ArrayList<PyLaunchResult> mResultsList = new ArrayList<PyLaunchResult>();
+	private ArrayList<PyLaunchResult> ResultsList = new ArrayList<PyLaunchResult>();
 	//
 	public synchronized void AddLaunchResult(PyLaunchResult result){
 
-		mResultsList.add(result);
+		ResultsList.add(result);
 		
-		if ( mResultsList.size() > 1 )
-			mResultsList.get(mResultsList.size()-2).mExpanded = false;
+		if ( ResultsList.size() > 1 )
+			ResultsList.get(ResultsList.size()-2).mExpanded = false;
 		
 		//  message the UI
 		SendMessage(MESSAGE_NEWEVENT);
@@ -261,13 +259,13 @@ public class PyLauncherService extends Service {
 	//
 	public synchronized void GetLaunchResults(ArrayList<PyLaunchResult> list){
 
-		for ( int i = list.size(); i < mResultsList.size(); i++ )
-			list.add(0, mResultsList.get(i));
+		for ( int i = list.size(); i < ResultsList.size(); i++ )
+			list.add(0, ResultsList.get(i));
 	}
 	//
 	public synchronized void ClearLogs()
 	{
-		mResultsList.clear();
+		ResultsList.clear();
 		SendMessage(MESSAGE_NEWEVENT);
 	}
 
@@ -281,33 +279,33 @@ public class PyLauncherService extends Service {
 
 	//  Port that we connect to the server on (this must be set in the settings)
 	//  TODO:  replace user settings with zero-conf networking discovery of server service
-	private int mServerPort = 48888;
+	private int ServerPort = 48888;
 	public int getServerPort()
 	{
-		return mServerPort;
+		return ServerPort;
 	}
 
 
 	//  ip address of the server we are connected to
-	private String mConnectedToServerIp = "";
+	private String ConnectedToServerIp = "";
 	public String getConnectedToServerIp(){
-		return mConnectedToServerIp;
+		return ConnectedToServerIp;
 	}
 
 
 	//  when connected, the server opens a socket connection on this port to receive our control commands
-	private int mConnectedToServerOnPort = 0; 
+	private int ConnectedToServerOnPort = 0; 
 	public int getConnectedToServerOnPort(){
-		return mConnectedToServerOnPort;
+		return ConnectedToServerOnPort;
 	}
 
 
 	//  when connected we open a socket connection on this port for the server to send to us
 	//  and we run a socket accept thread
-	ClientsServer mClientsServerThread = null;
+	ClientsServer ClientsServerThread = null;
 	public int getClientListeningOnPort(){  
-		if ( mClientsServerThread != null )
-			return mClientsServerThread.GetClientListeningOnPort();
+		if ( ClientsServerThread != null )
+			return ClientsServerThread.GetClientListeningOnPort();
 		else
 			return -1;
 	}
@@ -319,31 +317,31 @@ public class PyLauncherService extends Service {
 	public synchronized boolean IsConnectedToServer()
 	{
 		//  we are connected when control thread is running and control socket is open
-		return mClientsServerThread != null && mClientsServerThread.IsConnected();
+		return ClientsServerThread != null && ClientsServerThread.IsConnected();
 	}
 
 
 	//  SendStringToConnectedOnCommandPort
 	//  
 	private String SendStringToConnectedOnCommandPort(String message){
-		return IpFunctions.SendStringToPort(mConnectedToServerIp, mConnectedToServerOnPort, message);
+		return IpFunctions.SendStringToPort(ConnectedToServerIp, ConnectedToServerOnPort, message);
 	}
 
 	
-	boolean mConnectingToServer = false;
+	boolean ConnectingToServer = false;
 
 	//  OpenConnectionToServer
 	//
 	public void openConnectionToServer()
 	{
 		//  are we trying to connect already
-		if ( mConnectingToServer )
+		if ( ConnectingToServer )
 		{
 			Toast.makeText(this,  "Connection to server is in progress, please be patient.",  Toast.LENGTH_SHORT).show();
 			return;
 		}
 		//  we are connecting now, lock out other attempts
-		mConnectingToServer = true;
+		ConnectingToServer = true;
 		
 		
 		//  get the IP address to connect to
@@ -362,20 +360,20 @@ public class PyLauncherService extends Service {
 		}
 
 		//  close previous connection to the server if it is open
-		if ( mClientsServerThread != null )
+		if ( ClientsServerThread != null )
 		{
-			mClientsServerThread.cancel();
-			mClientsServerThread = null;
+			ClientsServerThread.Cancel();
+			ClientsServerThread = null;
 		}
 
-		mServerPort = serverPort;
-		mConnectedToServerIp = ipAddress;
+		ServerPort = serverPort;
+		ConnectedToServerIp = ipAddress;
 
-		mClientsServerThread = new ClientsServer(this);
+		ClientsServerThread = new ClientsServer(this);
 
-		if ( mConnectedToServerIp.length() != 0 )
+		if ( ConnectedToServerIp.length() != 0 )
 			//  starting connection, tell user
-			Toast.makeText(PyLauncherService.this, "Connecting to to server at: " + mConnectedToServerIp + " on port: " + mServerPort, Toast.LENGTH_SHORT).show();
+			Toast.makeText(PyLauncherService.this, "Connecting to to server at: " + ConnectedToServerIp + " on port: " + ServerPort, Toast.LENGTH_SHORT).show();
 		
 		//  launch the connection task
 		new OpenConnectionTask().execute();
@@ -388,15 +386,15 @@ public class PyLauncherService extends Service {
 		protected Integer doInBackground(Void... param ) {
 
 			//  if we have never connected, bail out so we can show the settings page as first action
-			if ( mConnectedToServerIp.length() == 0 || mServerPort == 0 )
+			if ( ConnectedToServerIp.length() == 0 || ServerPort == 0 )
 				return 2;
 			
-			if ( mClientsServerThread.OpenSocketConnection() )
+			if ( ClientsServerThread.OpenSocketConnection() )
 			{
 				//  connect to server command:
 				// $TCP_CONNECT,clientsControlPort
 			
-				readResponse = IpFunctions.SendStringToPort(mConnectedToServerIp, mServerPort, ClientsServer.TCP_CONNECT +"," + getClientListeningOnPort());
+				readResponse = IpFunctions.SendStringToPort(ConnectedToServerIp, ServerPort, ClientsServer.TCP_CONNECT +"," + getClientListeningOnPort());
 
 				if ( readResponse.contains(ClientsServer.TCP_CONNECT) && readResponse.contains(ClientsServer.TCP_ACK) )
 				{
@@ -409,14 +407,14 @@ public class PyLauncherService extends Service {
 					String serversControlPort = parser.GetNextString();		//  the server's listening port
 
 					try{
-						mConnectedToServerOnPort =  Integer.parseInt(serversControlPort);
+						ConnectedToServerOnPort =  Integer.parseInt(serversControlPort);
 					} catch (NumberFormatException e){
 						
 						return 0;
 					}
 
 					//  start the client's listening server thread
-					mClientsServerThread.start();
+					ClientsServerThread.start();
 
 					//  wait until our connected condition is true
 					long timeStartWait = System.currentTimeMillis();
@@ -452,21 +450,21 @@ public class PyLauncherService extends Service {
 			{
 
 				//  There is nothing to make a connection with
-				mConnectingToServer = false;
+				ConnectingToServer = false;
 				return;
 			}
 			else
 			{
-				mClientsServerThread = null;
+				ClientsServerThread = null;
 
 				Toast.makeText(PyLauncherService.this, "Failed to open server connection!", Toast.LENGTH_SHORT).show();
-				mConnectedToServerIp = "";
+				ConnectedToServerIp = "";
 			}
 
 			//  update android notification
 			showNotification();
 			
-			mConnectingToServer = false;
+			ConnectingToServer = false;
 		}
 	}
 	
@@ -476,7 +474,7 @@ public class PyLauncherService extends Service {
 	//
 	public void closeConnectionToServer(){
 
-		if ( mClientsServerThread == null )
+		if ( ClientsServerThread == null )
 			return; //  closed already
 
 		//  launch the close connection task
@@ -489,7 +487,7 @@ public class PyLauncherService extends Service {
 		String readResponse = "";
 		protected Integer doInBackground(String... param ) {
 
-			readResponse = IpFunctions.SendStringToPort(mConnectedToServerIp, mServerPort, "$TCP_DISCONNECT");
+			readResponse = IpFunctions.SendStringToPort(ConnectedToServerIp, ServerPort, "$TCP_DISCONNECT");
 
 			return 1;
 		}
@@ -497,7 +495,7 @@ public class PyLauncherService extends Service {
 		protected void onPostExecute(Integer result ) {
 
 			//  shut down the server thread
-			mClientsServerThread.cancel();
+			ClientsServerThread.Cancel();
 
 			if ( readResponse.contains(ClientsServer.TCP_DISCONNECT) && readResponse.contains(ClientsServer.TCP_ACK) )
 				Toast.makeText(PyLauncherService.this, "Server closed connection.", Toast.LENGTH_SHORT).show();
@@ -510,7 +508,7 @@ public class PyLauncherService extends Service {
 			showNotification();
 			
 			mFilesList.clear();
-			mDirectoryList.clear();
+			DirectoryList.clear();
 
 			//  update UI
 			PyLauncherService.this.SendMessage(MESSAGE_CONNECTEDSTATECHANGE);	
@@ -525,12 +523,12 @@ public class PyLauncherService extends Service {
 	 * 
 	 */
 	
-	protected ArrayList<PyFile> mDirectoryList = new ArrayList<PyFile>();
+	protected ArrayList<PyFile> DirectoryList = new ArrayList<PyFile>();
 	public synchronized void GetDirectoryList(ArrayList<PyFile> dirList)
 	{
 		dirList.clear();
 		
-		dirList.addAll(mDirectoryList);		
+		dirList.addAll(DirectoryList);		
 	}
 	
 	protected ArrayList<PyFile> mFilesList = new ArrayList<PyFile>();
@@ -541,9 +539,9 @@ public class PyLauncherService extends Service {
 		for ( PyFile nextFile : mFilesList )
 		{
 			//  see if this file is in visible directory
-			for ( PyFile nextDir : mDirectoryList )
+			for ( PyFile nextDir : DirectoryList )
 			{
-				if ( nextDir.getDirectoryPath().compareTo(nextFile.getDirectoryPath()) == 0 )
+				if ( nextDir.GetDirectoryPath().compareTo(nextFile.GetDirectoryPath()) == 0 )
 				{
 					if ( nextDir.mSet )
 						filesList.add(nextFile);
@@ -563,13 +561,13 @@ public class PyLauncherService extends Service {
 
 			if ( IsConnectedToServer() )
 			{
-				readResponse = IpFunctions.SendStringToPort(mConnectedToServerIp, mConnectedToServerOnPort, "$TCP_LISTDIR");
+				readResponse = IpFunctions.SendStringToPort(ConnectedToServerIp, ConnectedToServerOnPort, "$TCP_LISTDIR");
 
 				if ( ! ParseListDir(readResponse) )
 					return 0;
 
 				//  get the list of files
-				readResponse = IpFunctions.SendStringToPort(mConnectedToServerIp, mConnectedToServerOnPort, "$TCP_LISTFILES");
+				readResponse = IpFunctions.SendStringToPort(ConnectedToServerIp, ConnectedToServerOnPort, "$TCP_LISTFILES");
 
 				if ( ! ParseListFiles(readResponse) )
 					return 0;
@@ -611,7 +609,7 @@ public class PyLauncherService extends Service {
 
 			String removeCommand = ClientsServer.TCP_REMOVEDIR + "," + param[0];
 			
-			readResponse = IpFunctions.SendStringToPort(mConnectedToServerIp, mConnectedToServerOnPort, removeCommand);
+			readResponse = IpFunctions.SendStringToPort(ConnectedToServerIp, ConnectedToServerOnPort, removeCommand);
 
 			if ( readResponse.contains(ClientsServer.TCP_REMOVEDIR) && readResponse.contains(ClientsServer.TCP_ACK) )
 				return 1;
@@ -651,16 +649,16 @@ public class PyLauncherService extends Service {
 			//  update the dir list before command
 			PyFile newDir = new PyFile(dirName);
 			newDir.mSet = true;
-			mDirectoryList.add(newDir);
+			DirectoryList.add(newDir);
 			SaveDirectoryList();
 			
-			readResponse = IpFunctions.SendStringToPort(mConnectedToServerIp, mConnectedToServerOnPort, addCommand);
+			readResponse = IpFunctions.SendStringToPort(ConnectedToServerIp, ConnectedToServerOnPort, addCommand);
 
 			if ( readResponse.contains(ClientsServer.TCP_ADDDIR) && readResponse.contains(ClientsServer.TCP_ACK) )
 				return 1;
 			else
 			{
-				mDirectoryList.remove(newDir);
+				DirectoryList.remove(newDir);
 				return 0;
 			}
 		}
@@ -700,12 +698,12 @@ public class PyLauncherService extends Service {
 			return false;
 
 		// update directory list
-		mDirectoryList.clear();
+		DirectoryList.clear();
 		//
 		String nextDir = parser.GetNextString();
 		while ( nextDir.length() != 0 )
 		{
-			mDirectoryList.add(new PyFile(nextDir));
+			DirectoryList.add(new PyFile(nextDir));
 			nextDir = parser.GetNextString();
 		}
 		
@@ -757,7 +755,7 @@ public class PyLauncherService extends Service {
 	//
 	public void RunPyFile(PyFile fileToRun, String args)
 	{
-		new RunPyFileTask().execute(fileToRun.mFullPath, args);
+		new RunPyFileTask().execute(fileToRun.FullPath, args);
 	}
 	
 	//
@@ -769,7 +767,7 @@ public class PyLauncherService extends Service {
 
 			if ( IsConnectedToServer() )
 			{
-				readResponse = IpFunctions.SendStringToPort(mConnectedToServerIp, mConnectedToServerOnPort, "$TCP_PYLAUNCH," + param[0] + "," + param[1]);
+				readResponse = IpFunctions.SendStringToPort(ConnectedToServerIp, ConnectedToServerOnPort, "$TCP_PYLAUNCH," + param[0] + "," + param[1]);
 
 				if ( ! readResponse.contains("$TCP_PYLAUNCH,ACK") )
 					return 0;
@@ -803,16 +801,16 @@ public class PyLauncherService extends Service {
 	private static final String PREF_BUTTONS = "buttonsList";
 	
 	//  Buttons List
-	protected ArrayList<PyLauncherButton> mButtonsList = null;
+	protected ArrayList<PyLauncherButton> ButtonsList = null;
 	
 	//  Load Buttons from Preferences
 	//
 	protected void LoadButtonsFromPreferences()
 	{
-		if ( mButtonsList != null )
+		if ( ButtonsList != null )
 			return;
 		
-		mButtonsList = new ArrayList<PyLauncherButton>();
+		ButtonsList = new ArrayList<PyLauncherButton>();
 		
 		//  Load the buttons from the settings
 		SharedPreferences prefs = getSharedPreferences("pref_hidden",MODE_PRIVATE);
@@ -833,7 +831,7 @@ public class PyLauncherService extends Service {
 					Integer icon = nextButton.getInt(BICON);
 					
 					//  make the button
-					mButtonsList.add(new PyLauncherButton(new PyFile(path), args, name, icon));
+					ButtonsList.add(new PyLauncherButton(new PyFile(path), args, name, icon));
 				}
 				catch (Exception e)
 				{
@@ -853,14 +851,14 @@ public class PyLauncherService extends Service {
 		//  put the list of buttons in json array	
 		JSONArray buttonObjectsList = new JSONArray();
 
-		for (PyLauncherButton nextButton : mButtonsList) 
+		for (PyLauncherButton nextButton : ButtonsList) 
 		{
 			try 
 			{
 				// save this to json object
 				JSONObject buttonObject = new JSONObject();
 				buttonObject.put(BNAME, nextButton.getTitle());
-				buttonObject.put(BPATH, nextButton.getPyFile().getPath());
+				buttonObject.put(BPATH, nextButton.getPyFile().GetPath());
 				buttonObject.put(BARGS, nextButton.getCommandLineArgs());
 				buttonObject.put(BICON, nextButton.getIcon());
 
@@ -894,12 +892,12 @@ public class PyLauncherService extends Service {
 		//  put the directory list into a JSON array
 		JSONArray dirObjectList = new JSONArray();
 
-		for ( PyFile nextFile : mDirectoryList )
+		for ( PyFile nextFile : DirectoryList )
 		{
 			try
 			{
 				JSONObject dirObject = new JSONObject();
-				dirObject.put(DNAME, nextFile.getPath() );
+				dirObject.put(DNAME, nextFile.GetPath() );
 				dirObject.put(DCHK, nextFile.mSet );
 
 				dirObjectList.put(dirObject);
@@ -954,14 +952,14 @@ public class PyLauncherService extends Service {
 		}
 		
 		//  now set the state of each dir in the list from the server
-		for ( PyFile nextDir : mDirectoryList )
+		for ( PyFile nextDir : DirectoryList )
 		{
 			nextDir.mSet = true;
 			
 			//  see if this directory is in the settings list
 			for ( PyFile settingsDir : dirList )
 			{
-				if ( settingsDir.getPath().compareTo(nextDir.getPath()) == 0 )
+				if ( settingsDir.GetPath().compareTo(nextDir.GetPath()) == 0 )
 				{
 					nextDir.mSet = settingsDir.mSet;
 					break;
@@ -977,12 +975,12 @@ public class PyLauncherService extends Service {
 		buttonList.clear();
 		
 		//  filter buttons by directory visibility
-		for ( PyLauncherButton nextButton : mButtonsList )
+		for ( PyLauncherButton nextButton : ButtonsList )
 		{
 			//  see if this button is in visible directory
-			for ( PyFile nextDir : mDirectoryList )
+			for ( PyFile nextDir : DirectoryList )
 			{
-				if ( nextDir.getDirectoryPath().compareTo(nextButton.getPyFile().getDirectoryPath()) == 0 )
+				if ( nextDir.GetDirectoryPath().compareTo(nextButton.getPyFile().GetDirectoryPath()) == 0 )
 				{
 					if ( nextDir.mSet )
 						buttonList.add(nextButton);
@@ -997,9 +995,9 @@ public class PyLauncherService extends Service {
 	public void UpdateButton(PyLauncherButton button)
 	{
 		//  see if this button exists already
-		if ( ! mButtonsList.contains(button) )
+		if ( ! ButtonsList.contains(button) )
 		{
-			mButtonsList.add(button);
+			ButtonsList.add(button);
 		}
 		
 		SaveButtonsList();
@@ -1008,9 +1006,9 @@ public class PyLauncherService extends Service {
 	
 	public void RemoveButton(PyLauncherButton button)
 	{
-		if ( mButtonsList.contains(button) )
+		if ( ButtonsList.contains(button) )
 		{
-			mButtonsList.remove(button);
+			ButtonsList.remove(button);
 		}
 		
 		SaveButtonsList();
@@ -1023,11 +1021,11 @@ public class PyLauncherService extends Service {
 		ArrayList<Integer> indexList = new ArrayList<Integer>();
 		
 		//  determine the original indices of the buttons in the list
-		for ( PyLauncherButton nextButton : mButtonsList )
+		for ( PyLauncherButton nextButton : ButtonsList )
 		{
 			if ( newButtonList.contains(nextButton) )
 			{
-				indexList.add(mButtonsList.indexOf(nextButton));
+				indexList.add(ButtonsList.indexOf(nextButton));
 			}
 		}
 		
@@ -1037,7 +1035,7 @@ public class PyLauncherService extends Service {
 			PyLauncherButton nextButton = (PyLauncherButton)newButtonList.get(i);
 			
 			//  get the current index of this button
-			int currentIndex = mButtonsList.indexOf(nextButton);
+			int currentIndex = ButtonsList.indexOf(nextButton);
 			
 			//  get the insert index
 			int insertionIndex = indexList.get(i);
@@ -1046,18 +1044,18 @@ public class PyLauncherService extends Service {
 			if ( currentIndex != insertionIndex )
 			{
 				//  insert the new button
-				mButtonsList.add(insertionIndex, nextButton);
+				ButtonsList.add(insertionIndex, nextButton);
 				
 				//  remove the old button
 				if ( currentIndex < insertionIndex )
 				{
 					//  inserted below, remove the object above
-					mButtonsList.remove(currentIndex);
+					ButtonsList.remove(currentIndex);
 				}
 				else
 				{
 					//  inserted above, remove the object below which is now at index + 1
-					mButtonsList.remove(currentIndex+1);
+					ButtonsList.remove(currentIndex+1);
 				}
 			}
 		}
@@ -1075,12 +1073,12 @@ public class PyLauncherService extends Service {
 	 * Network State Monitor
 	 */
 
-	private BroadcastReceiver mNetworkStateIntentReceiver;
-	private IntentFilter mNetworkStateChangedFilter;
+	private BroadcastReceiver NetworkStateIntentReceiver;
+	private IntentFilter NetworkStateChangedFilter;
 	//
-	NetworkInfo mIpWiFiInfo;
-	NetworkInfo mIpMobileInfo;
-	public String mIpWiFiAddress = "";
+	NetworkInfo IpWiFiInfo;
+	NetworkInfo IpMobileInfo;
+	public String IpWiFiAddress = "";
 
 
 	//  HandleNetworkStatusChange
@@ -1096,11 +1094,11 @@ public class PyLauncherService extends Service {
 	{
 		//  get the LAN IP address of this device
 		WifiManager wifiManager = (WifiManager) getSystemService(WIFI_SERVICE);
-		mIpWiFiAddress = IpFunctions.GetLocalIpAddress(wifiManager);
+		IpWiFiAddress = IpFunctions.GetLocalIpAddress(wifiManager);
 
 		//  get the info about wifi and mobile connection
-		mIpWiFiInfo = null;
-		mIpMobileInfo = null;
+		IpWiFiInfo = null;
+		IpMobileInfo = null;
 
 		ConnectivityManager connectivity = (ConnectivityManager)this.getSystemService(Context.CONNECTIVITY_SERVICE);
 		NetworkInfo[] netInfo = connectivity.getAllNetworkInfo();
@@ -1109,11 +1107,11 @@ public class PyLauncherService extends Service {
 			switch ( ni.getType() )
 			{
 			case ConnectivityManager.TYPE_WIFI:
-				mIpWiFiInfo = ni;
+				IpWiFiInfo = ni;
 				break;
 
 			case ConnectivityManager.TYPE_MOBILE:
-				mIpMobileInfo = ni;
+				IpMobileInfo = ni;
 				break;
 			}
 		}
@@ -1134,7 +1132,7 @@ public class PyLauncherService extends Service {
 		
 		ButtonDrawableArrayList = new ArrayList<Drawable>();
 		
-		Integer nextButtonIndex = 1;
+		Integer nextButtonIndex = 0;
 		Integer drawableId = 1;
 		while ( drawableId > 0 )
 		{
@@ -1149,12 +1147,17 @@ public class PyLauncherService extends Service {
 		}
 	}
 	
+	//  Get Count of Button Icons
+	//
 	public int GetButtonDrawableCount()
 	{
 		//  return size 
 		return ButtonDrawableArrayList.size() ;
 	}
 	
+	
+	//  Get the button icon for index
+	//
 	public Drawable GetButtonDrawable(int index)
 	{
 		if ( index >= 0 && ButtonDrawableArrayList.size() > index )

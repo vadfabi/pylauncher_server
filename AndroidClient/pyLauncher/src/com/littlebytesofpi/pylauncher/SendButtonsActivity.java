@@ -24,6 +24,7 @@ import android.view.ViewConfiguration;
 import android.widget.AdapterView;
 import android.widget.ListView;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.littlebytesofpi.pylauncher.PyLauncherService.LocalBinder;
 
@@ -94,7 +95,7 @@ public class SendButtonsActivity extends ActionBarActivity {
 	public void onStart() {
 		super.onStart();
 
-		if (mService == null) 
+		if (Service == null) 
 			BindToService();	
 	}
 
@@ -104,9 +105,11 @@ public class SendButtonsActivity extends ActionBarActivity {
 	public void onResume(){
 		super.onResume();
 
-		if ( mService != null )
+		if ( Service != null )
 		{
-			mService.GetLaunchResults(mResultsList);
+			ResetGridView();
+
+			Service.GetLaunchResults(mResultsList);
 			mResultsAdapter.notifyDataSetChanged();
 		}
 		
@@ -116,18 +119,19 @@ public class SendButtonsActivity extends ActionBarActivity {
 
 	
 	//  onDestroy
+	//
 	@Override
 	public void onDestroy(){
 		
 		//  if we are connected to server, start the service so it stays connected
-		if ( mService.IsConnectedToServer() )
+		if ( Service.IsConnectedToServer() )
 		{
 			Intent startIntent = new Intent(this, PyLauncherService.class);
 			this.startService(startIntent);
 		}
 		else
 		{
-			mService.ShutDown();
+			Service.ShutDown();
 		}
 		
 		UnbindFromService();
@@ -138,7 +142,7 @@ public class SendButtonsActivity extends ActionBarActivity {
 
 	//  Service Handling
 	//
-	PyLauncherService mService = null;
+	PyLauncherService Service = null;
 
 	//  ServiceConnection
 	//
@@ -148,12 +152,12 @@ public class SendButtonsActivity extends ActionBarActivity {
 
 			//  this is simple intra process, we can just get the service object
 			LocalBinder binder = (LocalBinder) service;
-			mService = binder.getService();
-			mService.AddHandler(mHandler);
+			Service = binder.getService();
+			Service.AddHandler(Handler);
 			
 			ResetGridView();
 
-			mService.GetLaunchResults(mResultsList);
+			Service.GetLaunchResults(mResultsList);
 			mResultsAdapter.notifyDataSetChanged();
 		}
 
@@ -177,9 +181,9 @@ public class SendButtonsActivity extends ActionBarActivity {
 
 	//  UnbindFromService
 	void UnbindFromService() {
-		if (mService != null) {
+		if (Service != null) {
 
-			mService.RemoveHandler(mHandler);
+			Service.RemoveHandler(Handler);
 
 			// Detach our existing connection
 			getApplicationContext().unbindService(mConnection);
@@ -189,25 +193,28 @@ public class SendButtonsActivity extends ActionBarActivity {
 	
 
 	//  Message Handler
-	private final Handler mHandler = new Handler() {
+	private final Handler Handler = new Handler() {
 		@Override
 		public void handleMessage(Message msg) {
 			switch (msg.what) {
 
 			case PyLauncherService.MESSAGE_UPDATEDIRECTORIES:
 				
-				//  TODO
+				ResetGridView();
 				
 				break;
 				
 			case PyLauncherService.MESSAGE_NEWEVENT:
-				mService.GetLaunchResults(mResultsList);
+				Service.GetLaunchResults(mResultsList);
 				mResultsAdapter.notifyDataSetChanged();
+				
 				break;
 			}
 		}
 	};  
 	
+	
+	//  Create Options Menu
 	@Override
 	public boolean onCreateOptionsMenu(Menu menu) {
 		// Inflate the menu; this adds items to the action bar if it is present.
@@ -215,6 +222,9 @@ public class SendButtonsActivity extends ActionBarActivity {
 		return true;
 	}
 	
+	
+	// Options Menu Selected
+	//
 	@Override
 	public boolean onOptionsItemSelected(MenuItem item) {
 		// Handle action bar item clicks here. The action bar will
@@ -248,6 +258,12 @@ public class SendButtonsActivity extends ActionBarActivity {
 		{
 			//  stop edit mode
 			StopEditingMode(true);
+			
+			if ( ! Service.IsConnectedToServer() )
+			{
+				Toast.makeText(this,  "You must be connected to the server to create buttons.", Toast.LENGTH_LONG).show();
+				return true;
+			}
 			
 			Intent intent = new Intent(SendButtonsActivity.this, EditButtonActivity.class);
 			startActivityForResult(intent, ACTIVITYREQUEST_NEWBUTTON);
@@ -310,15 +326,15 @@ public class SendButtonsActivity extends ActionBarActivity {
 	public void onBackPressed()
 	{
 		//  use back to cancel edit mode, otherwise on back
-		if ( mGridEditMode == true )
+		if ( GridEditMode == true )
 		{
 			StopEditingMode(true);
 		}
-		else if ( mGridDeleteMode == true )
+		else if ( GridDeleteMode == true )
 		{
 			StopEditingMode(true);
 		}
-		else if ( mGridDragMode )
+		else if ( GridDragMode )
 		{
 			StopEditingMode(true);
 		}
@@ -331,45 +347,11 @@ public class SendButtonsActivity extends ActionBarActivity {
 	}
 	
 
-	//  Format Status String
-	//
-	public void FormatStatus()
-	{
-		if ( mGridDeleteMode )
-		{
-			mTextViewStatus.setText("Tap a button to delete");
-		}
-		else if ( mGridEditMode )
-		{
-			mTextViewStatus.setText("Tap a button to edit.");
-		}
-		else if ( mGridDragMode )
-		{
-			if ( isPostHoneycomb() )
-				mTextViewStatus.setText("Drag and drop the button to a new location.");
-			else
-				mTextViewStatus.setText("Select new location for the button.");
-		}
-		else
-		{
-			//  no special mode in play, format connection status string
-			if ( mService != null && mService.IsConnectedToServer() )
-			{
-				mTextViewStatus.setText(String.format("Connected to " + mService.getConnectedToServerIp() + " : " + mService.getConnectedToServerOnPort()) );
-			}
-			else
-			{
-				mTextViewStatus.setText("Please tap settings to connect.");
-			}
-		}
-	}
-
-
 	//  Grid View Handling
 	//
-	boolean mGridEditMode = false;
-	boolean mGridDeleteMode = false;
-	boolean mGridDragMode = false;
+	boolean GridEditMode = false;
+	boolean GridDeleteMode = false;
+	boolean GridDragMode = false;
 	int 	mDragIndex = -1;
 	
 	//  On Drag Listener
@@ -396,7 +378,7 @@ public class SendButtonsActivity extends ActionBarActivity {
 		public void onActionDrop() {
 			
 			//  update the button list
-			mService.UpdateButtonsList(mGridViewAdapter.getItems());
+			Service.UpdateButtonsList(mGridViewAdapter.getItems());
 
 			//  end editing mode
 			StopEditingMode(false);
@@ -412,27 +394,33 @@ public class SendButtonsActivity extends ActionBarActivity {
 	public void GridViewItemClick(int position)
 	{
 		//  check our current UI mode
-		if ( mGridEditMode )
+		if ( GridEditMode )
 		{	
+			if ( ! Service.IsConnectedToServer() )
+			{
+				Toast.makeText(this,  "You must be connected to the server to create buttons.", Toast.LENGTH_LONG).show();
+				StopEditingMode(true);
+				return;
+			}
 			//  edit this button - launch the edit activity
 			Intent intent = new Intent(SendButtonsActivity.this, EditButtonActivity.class);
 			intent.putExtra("EditIndex", position);
 			startActivityForResult(intent, ACTIVITYREQUEST_EDITBUTTON);
 		}
-		else if ( mGridDeleteMode )
+		else if ( GridDeleteMode )
 		{
 			//  delete this button
 			PyLauncherButton thisButton = (PyLauncherButton)mGridViewButtons.getItemAtPosition(position);
-			mService.RemoveButton(thisButton);
+			Service.RemoveButton(thisButton);
 			
 			//  update the grid view
 			ResetGridView();
 			
 			//  if we have deleted our last button, exit edit mode
-			if ( mService.mButtonsList.size() == 0 )
+			if ( Service.ButtonsList.size() == 0 )
 				StopEditingMode(false);
 		}
-		else if ( mGridDragMode )
+		else if ( GridDragMode )
 		{
 			//  click during drag mode is only handled by android 2.x
 			if ( ! isPostHoneycomb() )
@@ -466,7 +454,7 @@ public class SendButtonsActivity extends ActionBarActivity {
 				}
 				
 				//  update buttons
-				mService.UpdateButtonsList(mVisibleButtonsList);
+				Service.UpdateButtonsList(mVisibleButtonsList);
 				
 				//  end editing mode
 				StopEditingMode(false);
@@ -477,10 +465,16 @@ public class SendButtonsActivity extends ActionBarActivity {
 		}
 		else
 		{
+			if ( ! Service.IsConnectedToServer() )
+			{
+				Toast.makeText(this,  "You must be connected to the server to create buttons.", Toast.LENGTH_LONG).show();
+				return;
+			}
+			
 			//  run this function
 			PyLauncherButton thisButton = (PyLauncherButton)mGridViewButtons.getItemAtPosition(position);
 			
-			mService.RunPyFile(thisButton.getPyFile(),  thisButton.getCommandLineArgs() );
+			Service.RunPyFile(thisButton.getPyFile(),  thisButton.getCommandLineArgs() );
 		}
 	}
 	
@@ -490,7 +484,7 @@ public class SendButtonsActivity extends ActionBarActivity {
 	public void GridViewItemLongClick(int position)
 	{
 		//  what mode are we in
-		if ( mGridEditMode || mGridDeleteMode || mGridDragMode )
+		if ( GridEditMode || GridDeleteMode || GridDragMode )
 		{
 			//  ignore long clicks when we are in edit mode
 			return;
@@ -508,7 +502,7 @@ public class SendButtonsActivity extends ActionBarActivity {
     {
     	StopEditingMode(true);
     	
-    	mGridEditMode = true;
+    	GridEditMode = true;
     	mGridViewButtons.startWobbleAnimation();
     	
     	if ( ! isPostHoneycomb() )
@@ -530,7 +524,7 @@ public class SendButtonsActivity extends ActionBarActivity {
     {
     	StopEditingMode(true);
     	
-    	mGridDeleteMode = true;
+    	GridDeleteMode = true;
     	mGridViewButtons.startWobbleAnimation();
     	
     	if ( ! isPostHoneycomb() )
@@ -552,7 +546,7 @@ public class SendButtonsActivity extends ActionBarActivity {
     {
     	StopEditingMode(true);
     	
-    	mGridDragMode = true;
+    	GridDragMode = true;
     	
     	if ( ! isPostHoneycomb() )
     	{
@@ -572,9 +566,9 @@ public class SendButtonsActivity extends ActionBarActivity {
     //
 	protected void StopEditingMode(boolean notifyAdapter)
 	{
-		mGridDragMode = false;
-		mGridEditMode = false;
-		mGridDeleteMode = false;
+		GridDragMode = false;
+		GridEditMode = false;
+		GridDeleteMode = false;
 		
 		// handle grid view state
 		mGridViewButtons.stopWobble(true);
@@ -592,16 +586,43 @@ public class SendButtonsActivity extends ActionBarActivity {
 	//
 	private void ResetGridView()
 	{
-		mService.getVisibleButtonList(mVisibleButtonsList);
+		Service.getVisibleButtonList(mVisibleButtonsList);
 		mGridViewAdapter.set(mVisibleButtonsList);
 		mGridViewAdapter.notifyDataSetChanged();
 	}
 	
-	
-	
-	
-
-	
+//  Format Status String
+	//
+	public void FormatStatus()
+	{
+		if ( GridDeleteMode )
+		{
+			mTextViewStatus.setText("Tap a button to delete");
+		}
+		else if ( GridEditMode )
+		{
+			mTextViewStatus.setText("Tap a button to edit.");
+		}
+		else if ( GridDragMode )
+		{
+			if ( isPostHoneycomb() )
+				mTextViewStatus.setText("Drag and drop the button to a new location.");
+			else
+				mTextViewStatus.setText("Select new location for the button.");
+		}
+		else
+		{
+			//  no special mode in play, format connection status string
+			if ( Service != null && Service.IsConnectedToServer() )
+			{
+				mTextViewStatus.setText(String.format("Connected to " + Service.getConnectedToServerIp() + " : " + Service.getConnectedToServerOnPort()) );
+			}
+			else
+			{
+				mTextViewStatus.setText("Please tap settings to connect.");
+			}
+		}
+	}
 	
 	//  API Version required for grid view behavior
     private boolean isPostHoneycomb() {

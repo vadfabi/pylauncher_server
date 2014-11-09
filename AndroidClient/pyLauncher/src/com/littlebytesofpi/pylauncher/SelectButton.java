@@ -33,7 +33,7 @@ public class SelectButton extends ActionBarActivity {
 	public void onStart() {
 		super.onStart();
 
-		if (mService == null) 
+		if (Service == null) 
 			BindToService();	
 	}
 
@@ -49,8 +49,6 @@ public class SelectButton extends ActionBarActivity {
 	@Override
 	public void onDestroy(){
 		
-		
-		
 		UnbindFromService();
 		
 		super.onDestroy();
@@ -64,21 +62,21 @@ public class SelectButton extends ActionBarActivity {
 	 * Service Handling
 	 * 
 	 */
-	PyLauncherService mService = null;
+	PyLauncherService Service = null;
 
 	//  ServiceConnection
 	//
-	private ServiceConnection mConnection = new ServiceConnection() {
+	private ServiceConnection Connection = new ServiceConnection() {
 		public void onServiceConnected(ComponentName className,
 				IBinder service) {
 
 			//  this is simple intra process, we can just get the service object
 			LocalBinder binder = (LocalBinder) service;
-			mService = binder.getService();
-			mService.AddHandler(mHandler);
+			Service = binder.getService();
+			Service.AddHandler(Handler);
 			
 			GridView gridView = (GridView)findViewById(R.id.gridView);
-			gridView.setAdapter(new ButtonsAdapter(mService));
+			gridView.setAdapter(new ButtonsAdapter(Service));
 			
 			gridView.setOnItemClickListener(new OnItemClickListener() {
 				public void onItemClick(AdapterView<?> parent, View v, int position, long id) {
@@ -108,25 +106,25 @@ public class SelectButton extends ActionBarActivity {
 		
 		// bind to the service 
 		Intent startIntent = new Intent(SelectButton.this, PyLauncherService.class);
-		getApplicationContext().bindService(startIntent, mConnection, Context.BIND_AUTO_CREATE);
+		getApplicationContext().bindService(startIntent, Connection, Context.BIND_AUTO_CREATE);
 	}
 
 
 	//  UnbindFromService
 	void UnbindFromService() {
-		if (mService != null) {
+		if (Service != null) {
 
-			mService.RemoveHandler(mHandler);
+			Service.RemoveHandler(Handler);
 
 			// Detach our existing connection
-			getApplicationContext().unbindService(mConnection);
+			getApplicationContext().unbindService(Connection);
 		}
 	}
 	
 	
 
 	//  Message Handler
-	private final Handler mHandler = new Handler() {
+	private final Handler Handler = new Handler() {
 		@Override
 		public void handleMessage(Message msg) {
 			switch (msg.what) 

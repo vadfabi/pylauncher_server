@@ -8,23 +8,22 @@ import android.widget.ImageView;
 
 public class ButtonsAdapter extends BaseAdapter {
 
-	PyLauncherService mService;
+	PyLauncherService Service;
 	
 	public ButtonsAdapter(PyLauncherService service)
 	{
-		mService = service;
+		Service = service;
 	}
 	
 	@Override
 	public int getCount() {
 		// TODO Auto-generated method stub
-		return mService.GetButtonDrawableCount();
+		return Service.GetButtonDrawableCount();
 	}
 
 	@Override
 	public Object getItem(int arg0) {
-		// TODO Auto-generated method stub
-		return null;
+		return Service.GetButtonDrawable(arg0);
 	}
 
 	@Override
@@ -37,7 +36,7 @@ public class ButtonsAdapter extends BaseAdapter {
 	public View getView(int position, View convertView, ViewGroup parent) {
         ImageView imageView;
         if (convertView == null) {  // if it's not recycled, initialize some attributes
-            imageView = new ImageView(mService);
+            imageView = new ImageView(Service);
             imageView.setLayoutParams(new GridView.LayoutParams(85, 85));
             imageView.setScaleType(ImageView.ScaleType.CENTER_CROP);
             imageView.setPadding(8, 8, 8, 8);
@@ -45,7 +44,7 @@ public class ButtonsAdapter extends BaseAdapter {
             imageView = (ImageView) convertView;
         }
 
-        imageView.setImageDrawable(mService.GetButtonDrawable(position));
+        imageView.setImageDrawable(Service.GetButtonDrawable(position));
         
         return imageView;
     }

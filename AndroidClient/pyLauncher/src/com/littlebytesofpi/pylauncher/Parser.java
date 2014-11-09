@@ -2,35 +2,35 @@ package com.littlebytesofpi.pylauncher;
 
 public class Parser {
 
-	private String mString = "";
-	private String mStringBuffer = "";
+	private String OriginalString = "";
+	private String StringBuffer = "";
 	private String mDelimiter = "";
 	
 	public Parser(String string, String delimiter){
 	
-		mString = string;
-		mStringBuffer = string;
+		OriginalString = string;
+		StringBuffer = string;
 		mDelimiter = delimiter;
 	}
 	
 	String GetNextString(){
 		
 		String returnString = "";
-		int index = mStringBuffer.indexOf(mDelimiter);
+		int index = StringBuffer.indexOf(mDelimiter);
 		
 		if ( index < 1 )
 		{
-			returnString = mStringBuffer;
-			mStringBuffer = "";
+			returnString = StringBuffer;
+			StringBuffer = "";
 			return returnString;
 		}
 			
-		returnString = mStringBuffer.substring(0, index);
-		mStringBuffer = mStringBuffer.substring(index+1);
+		returnString = StringBuffer.substring(0, index);
+		StringBuffer = StringBuffer.substring(index+1);
 		return returnString;
 	}
 	
 	String GetRemainingBuffer(){
-		return mStringBuffer;
+		return StringBuffer;
 	}
 }

@@ -12,26 +12,26 @@ import android.widget.BaseAdapter;
 public abstract class ListViewAdapter extends BaseAdapter {
 
 	//  save the context and the list of objects
-	public Context mContext;
-	public List<?> mDataList;
+	public Context Context;
+	public List<?> DataList;
 	
 	//  constructor
 	public ListViewAdapter(List<?> dataList, Context c){
 
-		mDataList = dataList;
-		mContext = c;
+		DataList = dataList;
+		Context = c;
 	}
 	
 	
 	//  Adapter functions
 	public int getCount() {
 		
-		return mDataList.size();
+		return DataList.size();
 	}
 
 	public Object getItem(int position) {
 		
-		return mDataList.get(position);
+		return DataList.get(position);
 	}
 
 	public long getItemId(int position) {

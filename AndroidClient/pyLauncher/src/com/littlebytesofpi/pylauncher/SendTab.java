@@ -41,76 +41,31 @@ public class SendTab extends ActionBarActivity implements  AdapterView.OnItemSel
 
 	
 	//  User interface elements
+
+	//  status string
+	TextView TextViewStatus;
 	
-	//  List of files is mapped to a spinner
-	//
-	ArrayList<PyFile> mFilesList = new ArrayList<PyFile>();
-	Spinner mSpinnerFileSelector;
-	ArrayAdapter<PyFile> mAdapter;
+	//  available python files in the spinner
+	ArrayList<PyFile> FilesList = new ArrayList<PyFile>();
+	Spinner SpinnerFileSelector;
+	ArrayAdapter<PyFile> AdapterFileSelector;
 
 	//  launch button
-	Button mButtonRunFile;
-	//
-	View.OnClickListener ButtonOnClickListener = new View.OnClickListener() {
-
-		@Override
-		public void onClick(View v) {
-
-			switch ( v.getId() )
-			{
-
-			case R.id.buttonRunFile:
-			{
-				if ( ! mService.IsConnectedToServer() )
-				{
-					Toast.makeText(SendTab.this,  "You must be connected to the server.",  Toast.LENGTH_SHORT).show();
-					return;
-				}
-				
-				//  get the file and send it
-				//  get the selected sensor
-				PyFile selectedFile = (PyFile)mSpinnerFileSelector.getSelectedItem();
-				
-				if ( selectedFile == null )
-				{
-					Toast.makeText(SendTab.this,  "No python file selected.", Toast.LENGTH_SHORT).show();
-					return;
-				}
-				
-				String args = mEditTextArgs.getText().toString();
-
-				//  save arguments for this file
-				Editor editPref = PreferenceManager.getDefaultSharedPreferences(SendTab.this).edit();
-				editPref.putString(selectedFile.mFullPath, args);
-				// Commit the edits
-				editPref.commit();
-
-				mService.RunPyFile(selectedFile, args);
-				
-				break;
-			}
-
-			
-
-			}
-		}
-	};
-
-	
-	
-	TextView mTextViewStatus;
+	Button ButtonRunFile;
 	
 	//  arguments edit text
-	EditText mEditTextArgs;
+	EditText EditTextArgs;
 	
 	//  Results adapter
 	//
-	private ListView mListViewResults;
-	private ArrayList<PyLaunchResult> mResultsList = new ArrayList<PyLaunchResult>();
-	private ResultAdapter mResultsAdapter = new ResultAdapter(mResultsList,  this);
+	private ListView ListViewResults;
+	private ArrayList<PyLaunchResult> ResultsList = new ArrayList<PyLaunchResult>();
+	private ResultAdapter AdapterResultsList = new ResultAdapter(ResultsList,  this);
 	
+	private TextView TextViewSupportUs;
+	
+	//  Properties
 	private boolean PaidVersion = true;
-	private TextView mTextViewSupportUs;
 	
 	//  onCreate
 	//
@@ -119,42 +74,39 @@ public class SendTab extends ActionBarActivity implements  AdapterView.OnItemSel
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_send_tab);
 
-		mTextViewStatus = (TextView)findViewById(R.id.textViewStatus);
+		TextViewStatus = (TextView)findViewById(R.id.textViewStatus);
 		
-		mSpinnerFileSelector = (Spinner)findViewById(R.id.spinnerFile);
-		mAdapter = new ArrayAdapter(this, android.R.layout.simple_spinner_item,  mFilesList);
-		mAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
-		mSpinnerFileSelector.setAdapter(mAdapter);
-		mSpinnerFileSelector.setOnItemSelectedListener(SendTab.this);
+		SpinnerFileSelector = (Spinner)findViewById(R.id.spinnerFile);
+		AdapterFileSelector = new ArrayAdapter(this, android.R.layout.simple_spinner_item,  FilesList);
+		AdapterFileSelector.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+		SpinnerFileSelector.setAdapter(AdapterFileSelector);
+		SpinnerFileSelector.setOnItemSelectedListener(SendTab.this);
 
-		mButtonRunFile = (Button)findViewById(R.id.buttonRunFile);
-		mButtonRunFile.setOnClickListener(ButtonOnClickListener);
+		ButtonRunFile = (Button)findViewById(R.id.buttonRunFile);
+		ButtonRunFile.setOnClickListener(ButtonOnClickListener);
 		
-		mEditTextArgs = (EditText)findViewById(R.id.editTextArgs);
-		mEditTextArgs.setInputType(InputType.TYPE_TEXT_FLAG_NO_SUGGESTIONS);
+		EditTextArgs = (EditText)findViewById(R.id.editTextArgs);
+		EditTextArgs.setInputType(InputType.TYPE_TEXT_FLAG_NO_SUGGESTIONS);
 
-		mListViewResults = (ListView)findViewById(R.id.listViewEvents);
-		mListViewResults.setAdapter(mResultsAdapter);
-		mListViewResults.setClickable(true);
-		mListViewResults.setFastScrollEnabled(true);
+		ListViewResults = (ListView)findViewById(R.id.listViewEvents);
+		ListViewResults.setAdapter(AdapterResultsList);
+		ListViewResults.setClickable(true);
+		ListViewResults.setFastScrollEnabled(true);
 
-		mListViewResults.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+		ListViewResults.setOnItemClickListener(new AdapterView.OnItemClickListener() {
 			@Override
 			public void onItemClick(AdapterView<?> arg0, View arg1, int position, long arg3) {
 
-				PyLaunchResult thisResult = mResultsList.get(position);
+				PyLaunchResult thisResult = ResultsList.get(position);
 				thisResult.mExpanded = ! thisResult.mExpanded;
-
-
-				mResultsAdapter.notifyDataSetChanged();
+				AdapterResultsList.notifyDataSetChanged();
 			}
 		});
 
-		mTextViewSupportUs = (TextView)findViewById(R.id.textViewSaveButton);
-		mTextViewSupportUs.setTextColor(Color.parseColor("#FF0000"));
-		mTextViewSupportUs.setPaintFlags(mTextViewSupportUs.getPaintFlags() |   Paint.UNDERLINE_TEXT_FLAG);
-		mTextViewSupportUs.setOnClickListener( new View.OnClickListener() {
-			
+		TextViewSupportUs = (TextView)findViewById(R.id.textViewSaveButton);
+		TextViewSupportUs.setTextColor(Color.parseColor("#FF0000"));
+		TextViewSupportUs.setPaintFlags(TextViewSupportUs.getPaintFlags() |   Paint.UNDERLINE_TEXT_FLAG);
+		TextViewSupportUs.setOnClickListener( new View.OnClickListener() {
 			@Override
 			public void onClick(View v) {
 				
@@ -164,7 +116,7 @@ public class SendTab extends ActionBarActivity implements  AdapterView.OnItemSel
 		});
 		
 		if ( PaidVersion )
-			mTextViewSupportUs.setVisibility(View.GONE);
+			TextViewSupportUs.setVisibility(View.GONE);
 		
 		//  setup default preferences
 		PreferenceManager.setDefaultValues(this,  R.xml.preferences,  false);
@@ -193,7 +145,7 @@ public class SendTab extends ActionBarActivity implements  AdapterView.OnItemSel
 	public void onStart() {
 		super.onStart();
 
-		if (mService == null) 
+		if (Service == null) 
 			BindToService();	
 	}
 
@@ -203,13 +155,13 @@ public class SendTab extends ActionBarActivity implements  AdapterView.OnItemSel
 	public void onResume(){
 		super.onResume();
 
-		if ( mService != null )
+		if ( Service != null )
 		{
-			mService.GetFilesList(mFilesList);
-			mAdapter.notifyDataSetChanged();
+			Service.GetFilesList(FilesList);
+			AdapterFileSelector.notifyDataSetChanged();
 
-			mService.GetLaunchResults(mResultsList);
-			mResultsAdapter.notifyDataSetChanged();
+			Service.GetLaunchResults(ResultsList);
+			AdapterResultsList.notifyDataSetChanged();
 		}
 		
 		FormatConnectionStatus();
@@ -222,14 +174,14 @@ public class SendTab extends ActionBarActivity implements  AdapterView.OnItemSel
 	public void onDestroy(){
 		
 		//  if we are connected to server, start the service so it stays connected
-		if ( mService.IsConnectedToServer() )
+		if ( Service.IsConnectedToServer() )
 		{
 			Intent startIntent = new Intent(this, PyLauncherService.class);
 			this.startService(startIntent);
 		}
 		else
 		{
-			mService.ShutDown();
+			Service.ShutDown();
 		}
 		
 		UnbindFromService();
@@ -238,32 +190,29 @@ public class SendTab extends ActionBarActivity implements  AdapterView.OnItemSel
 	}
 
 
-	/*
-	 * Service Handling
-	 * 
-	 */
-	PyLauncherService mService = null;
+	//  Service
+	//
+	PyLauncherService Service = null;
 
 	//  ServiceConnection
 	//
-	private ServiceConnection mConnection = new ServiceConnection() {
+	private ServiceConnection Connection = new ServiceConnection() {
 		public void onServiceConnected(ComponentName className,
 				IBinder service) {
 
 			//  this is simple intra process, we can just get the service object
 			LocalBinder binder = (LocalBinder) service;
-			mService = binder.getService();
-			mService.AddHandler(mHandler);
+			Service = binder.getService();
+			Service.AddHandler(Handler);
 
-			mService.GetFilesList(mFilesList);
-			mAdapter.notifyDataSetChanged();
+			Service.GetFilesList(FilesList);
+			AdapterFileSelector.notifyDataSetChanged();
 			
-			mService.GetLaunchResults(mResultsList);
-			mResultsAdapter.notifyDataSetChanged();
+			Service.GetLaunchResults(ResultsList);
+			AdapterResultsList.notifyDataSetChanged();
 			
 			new WaitForConnectionTask().execute();
 		}
-
 
 		public void onServiceDisconnected(ComponentName className) {
 			// This is called when the connection with the service has been
@@ -286,7 +235,7 @@ public class SendTab extends ActionBarActivity implements  AdapterView.OnItemSel
 				return null;
 			
 			long timeStartWait = System.currentTimeMillis();
-			while ( ! mService.IsConnectedToServer() && (System.currentTimeMillis() - timeStartWait < 3000) )
+			while ( ! Service.IsConnectedToServer() && (System.currentTimeMillis() - timeStartWait < 3000) )
 			{
 				try {
 					Thread.sleep(10);
@@ -298,7 +247,7 @@ public class SendTab extends ActionBarActivity implements  AdapterView.OnItemSel
 		protected void onPostExecute(Void result ) {
 
 			//  launch the connection settings if we are not connected
-			if ( ! mService.IsConnectedToServer() )
+			if ( ! Service.IsConnectedToServer() )
 			{
 				Intent intent = new Intent(SendTab.this, ConnectTab.class);
 				startActivity(intent);
@@ -318,80 +267,117 @@ public class SendTab extends ActionBarActivity implements  AdapterView.OnItemSel
 
 		// bind to the service 
 		Intent startIntent = new Intent(SendTab.this, PyLauncherService.class);
-		getApplicationContext().bindService(startIntent, mConnection, Context.BIND_AUTO_CREATE);
+		getApplicationContext().bindService(startIntent, Connection, Context.BIND_AUTO_CREATE);
 	}
 
 
 	//  UnbindFromService
+	//
 	void UnbindFromService() {
-		if (mService != null) {
+		if (Service != null) {
 
-			mService.RemoveHandler(mHandler);
+			Service.RemoveHandler(Handler);
 
 			// Detach our existing connection
-			getApplicationContext().unbindService(mConnection);
+			getApplicationContext().unbindService(Connection);
 		}
 	}
 
-
-
 	
 	//  Message Handler
-	private final Handler mHandler = new Handler() {
+	//
+	private final Handler Handler = new Handler() {
 		@Override
 		public void handleMessage(Message msg) {
 			switch (msg.what) {
 
 			case PyLauncherService.MESSAGE_UPDATEDIRECTORIES:
 				
-				mService.GetFilesList(mFilesList);
-				mAdapter.notifyDataSetChanged();
+				Service.GetFilesList(FilesList);
+				AdapterFileSelector.notifyDataSetChanged();
 				
 				break;
 				
 			case PyLauncherService.MESSAGE_NEWEVENT:
-				mService.GetLaunchResults(mResultsList);
-				mResultsAdapter.notifyDataSetChanged();
+				Service.GetLaunchResults(ResultsList);
+				AdapterResultsList.notifyDataSetChanged();
 				break;
 			}
 		}
 	};  
 
-	//  select a python file from the spinner
+//  Button Handlers
+	//
+	//
+	View.OnClickListener ButtonOnClickListener = new View.OnClickListener() 
+	{
+		@Override
+		public void onClick(View v) 
+		{
+			switch ( v.getId() )
+			{
+
+			case R.id.buttonRunFile:
+			{
+				if ( ! Service.IsConnectedToServer() )
+				{
+					Toast.makeText(SendTab.this,  "You must be connected to the server.",  Toast.LENGTH_SHORT).show();
+					return;
+				}
+
+				//  get the file and send it
+				//  get the selected sensor
+				PyFile selectedFile = (PyFile)SpinnerFileSelector.getSelectedItem();
+
+				if ( selectedFile == null )
+				{
+					Toast.makeText(SendTab.this,  "No python file selected.", Toast.LENGTH_SHORT).show();
+					return;
+				}
+
+				String args = EditTextArgs.getText().toString();
+
+				//  save arguments for this file
+				Editor editPref = PreferenceManager.getDefaultSharedPreferences(SendTab.this).edit();
+				editPref.putString(selectedFile.FullPath, args);
+				// Commit the edits
+				editPref.commit();
+
+				Service.RunPyFile(selectedFile, args);
+
+				break;
+			}
+			}
+		}
+	};
+
+	//  Spinner On Item Selected
+	//
 	@Override
 	public void onItemSelected(AdapterView<?> parent, View view, 
 			int pos, long id) {
 
 		if ( parent.getId() == R.id.spinnerFile )
 		{
-			PyFile selectedFile = mFilesList.get(pos);
+			PyFile selectedFile = FilesList.get(pos);
 			
 			//  see if we have some arguments for this
 			SharedPreferences sharedPrefs = PreferenceManager.getDefaultSharedPreferences(SendTab.this);
 			
 			//  initialize edit fields
-			mEditTextArgs.setText(sharedPrefs.getString(selectedFile.mFullPath, ""));
+			EditTextArgs.setText(sharedPrefs.getString(selectedFile.FullPath, ""));
 		}
 	}
 	
+	//  Spinner On Nothing Selected
+	//
 	@Override
 	public void onNothingSelected(AdapterView<?> parent) {
 		// Another interface callback
 	}
 	
-	
-	
-	public void FormatConnectionStatus(){
-		
-		if ( mService != null && mService.IsConnectedToServer() )
-		{
-			mTextViewStatus.setText(String.format("Connected to " + mService.getConnectedToServerIp() + " on port " + mService.getConnectedToServerOnPort()) );
-		}
-		else
-			mTextViewStatus.setText("Not connected. \nPlease tap connection settings.");
-	}
-	
-	
+	//  Options Menu
+	//
 	@Override
 	public boolean onCreateOptionsMenu(Menu menu)
 	{
@@ -400,7 +386,10 @@ public class SendTab extends ActionBarActivity implements  AdapterView.OnItemSel
 	    inflater.inflate(R.menu.send_tab, menu);
 	    return super.onCreateOptionsMenu(menu);
 	}
+
 	
+	//  Options Menu Selected
+	//
 	@Override
 	public boolean onOptionsItemSelected(MenuItem item) 
 	{
@@ -431,6 +420,19 @@ public class SendTab extends ActionBarActivity implements  AdapterView.OnItemSel
 		default:
 			return super.onOptionsItemSelected(item);
 		}
+	}
+	
+	
+	//  Format Connection Status String
+	//
+	public void FormatConnectionStatus(){
+		
+		if ( Service != null && Service.IsConnectedToServer() )
+		{
+			TextViewStatus.setText(String.format("Connected to " + Service.getConnectedToServerIp() + " on port " + Service.getConnectedToServerOnPort()) );
+		}
+		else
+			TextViewStatus.setText("Not connected. \nPlease tap connection settings.");
 	}
 	
 	

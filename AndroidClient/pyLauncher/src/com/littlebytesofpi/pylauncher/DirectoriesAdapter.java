@@ -24,7 +24,7 @@ public class DirectoriesAdapter extends ListViewAdapter {
 		CheckBox checkBoxSelect;
 	}
 	
-	ViewHolder mViewHolder;
+	ViewHolder ViewHolder;
 	
 	
 	@Override
@@ -34,38 +34,38 @@ public class DirectoriesAdapter extends ListViewAdapter {
 		if (convertView  == null)
 		{
 			//  first time through, map it into a new view holder
-			LayoutInflater vi = (LayoutInflater)mContext.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
+			LayoutInflater vi = (LayoutInflater)Context.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
 			convertView = vi.inflate(R.layout.listadapter_directory, null);
 
 			//  create our ViewHolder to cache the views for this row
-			mViewHolder = new ViewHolder();
+			ViewHolder = new ViewHolder();
 
 			//   cache the views for this line
-			mViewHolder.textViewName = (TextView)convertView.findViewById(R.id.textViewFileName);
-			mViewHolder.checkBoxSelect = (CheckBox)convertView.findViewById(R.id.checkBoxFileSelect);
+			ViewHolder.textViewName = (TextView)convertView.findViewById(R.id.textViewFileName);
+			ViewHolder.checkBoxSelect = (CheckBox)convertView.findViewById(R.id.checkBoxFileSelect);
 			
 			//  set the viewHolder as the tag of this object
-			convertView.setTag(mViewHolder);
+			convertView.setTag(ViewHolder);
 		}
 		else
 		{
 			//  subsequent pass, recall it from the view holder
-			mViewHolder = (ViewHolder)convertView.getTag();
+			ViewHolder = (ViewHolder)convertView.getTag();
 		}
 
 		final int indexPosition = position;
 		//  get the directory for this row
-		PyFile directory = (PyFile) mDataList.get(indexPosition);
+		PyFile directory = (PyFile) DataList.get(indexPosition);
 
-		mViewHolder.checkBoxSelect.setChecked(directory.mSet);
+		ViewHolder.checkBoxSelect.setChecked(directory.mSet);
 
 
 		//  create the click listener for this item
-		mViewHolder.checkBoxSelect.setOnClickListener(new View.OnClickListener() {
+		ViewHolder.checkBoxSelect.setOnClickListener(new View.OnClickListener() {
 
 			public void onClick(View v) {
 
-				PyFile dir = (PyFile)mDataList.get(indexPosition);
+				PyFile dir = (PyFile)DataList.get(indexPosition);
 
 				if(((CheckBox)v).isChecked())
 				{
@@ -82,7 +82,7 @@ public class DirectoriesAdapter extends ListViewAdapter {
 
 
 		//  format the data in the text views
-		mViewHolder.textViewName.setText(directory.getPath());
+		ViewHolder.textViewName.setText(directory.GetPath());
 		
 		//  set the check box current state from persistent data
 		return convertView;

@@ -30,14 +30,14 @@ public class GridViewButtonsAdapter extends BaseDynamicGridAdapter {
 		}
 	}
 	
-	final WeakReference<SendButtonsActivity> mParentActivity;
+	final WeakReference<SendButtonsActivity> ParentActivity;
 	
 	
 	public GridViewButtonsAdapter(SendButtonsActivity parentActivity, ArrayList<PyLauncherButton> buttonList)
 	{
 		super(parentActivity, buttonList, 3);
 		
-		mParentActivity = new WeakReference<SendButtonsActivity>(parentActivity);
+		ParentActivity = new WeakReference<SendButtonsActivity>(parentActivity);
 	}
 	
 	
@@ -50,7 +50,7 @@ public class GridViewButtonsAdapter extends BaseDynamicGridAdapter {
         
         if(convertView==null)
         {
-        	LayoutInflater li = (LayoutInflater)mParentActivity.get().getSystemService(Context.LAYOUT_INFLATER_SERVICE);
+        	LayoutInflater li = (LayoutInflater)ParentActivity.get().getSystemService(Context.LAYOUT_INFLATER_SERVICE);
             convertView = li.inflate(R.layout.gridviewbutton, null);
             holder = new ViewHolder(convertView);
             
@@ -69,7 +69,7 @@ public class GridViewButtonsAdapter extends BaseDynamicGridAdapter {
         {
        	 public void onClick(View v) {
 
-       		 mParentActivity.get().GridViewItemClick(indexPosition);
+       		 ParentActivity.get().GridViewItemClick(indexPosition);
        	 }
         });
         
@@ -77,30 +77,29 @@ public class GridViewButtonsAdapter extends BaseDynamicGridAdapter {
         holder.imageButtonIcon.setOnLongClickListener( new OnLongClickListener() {
 		
 			public boolean onLongClick(View v) {
-				mParentActivity.get().GridViewItemLongClick(indexPosition);
+				ParentActivity.get().GridViewItemLongClick(indexPosition);
 				return true;
 			}
 		});
        
         holder.imageButtonIcon.setBackgroundColor(color.transparent);
         
-      //set the layout elements    
-      if ( ! isPostHoneycomb() )
-      {
-      	if ( mParentActivity.get().mGridEditMode )
-      		holder.imageButtonIcon.setBackgroundResource(R.drawable.ic_addbutton);//(color.holo_blue_dark);
-      	else if ( mParentActivity.get().mGridDeleteMode )
-      		holder.imageButtonIcon.setBackgroundResource(R.drawable.ic_addbutton);//(color.holo_blue_dark);
-      	else if ( mParentActivity.get().mGridDragMode && position != mParentActivity.get().mDragIndex )
-      		holder.imageButtonIcon.setBackgroundResource(R.drawable.ic_addbutton);//(color.holo_blue_dark);
+     
+      	if ( ParentActivity.get().GridEditMode )
+      		holder.imageButtonIcon.setImageResource(R.drawable.ic_edit);//(color.holo_blue_dark);
+      	else if ( ParentActivity.get().GridDeleteMode )
+      		holder.imageButtonIcon.setImageResource(R.drawable.ic_delete);//(color.holo_blue_dark);
+      	else if ( ! isPostHoneycomb() && ParentActivity.get().GridDragMode && position != ParentActivity.get().mDragIndex )
+      		holder.imageButtonIcon.setImageResource(R.drawable.ic_moveleft);//(color.holo_blue_dark);
+      	else
+      		holder.imageButtonIcon.setImageResource(R.drawable.ic_blank);
       	
-      }
         
         
         
         PyLauncherButton thisButton = (PyLauncherButton)getItem(position);
         holder.textViewTitle.setText(thisButton.getTitle());
-        holder.imageButtonIcon.setImageDrawable(mParentActivity.get().mService.GetButtonDrawable(thisButton.getIcon()));
+        holder.imageButtonIcon.setBackgroundDrawable(ParentActivity.get().Service.GetButtonDrawable(thisButton.getIcon()));
         
        
         

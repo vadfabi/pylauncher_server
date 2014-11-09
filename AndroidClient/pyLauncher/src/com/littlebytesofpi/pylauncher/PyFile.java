@@ -7,33 +7,33 @@ import android.R.bool;
 public class PyFile {
 	
 	//  Full path to the file or directory
-	String mFullPath;
+	String FullPath;
 	
 	//  flag to keep track of state in list views
 	boolean mSet;
 	  
 	public PyFile(String fullPath){
 			
-		mFullPath = fullPath;
+		FullPath = fullPath;
 		mSet = false;
 	}
 	
 	@Override
 	public String toString(){
 		
-		if ( mFullPath.contains(".py") )
-			return new File(mFullPath).getName();
+		if ( FullPath.contains(".py") )
+			return new File(FullPath).getName();
 		else
-			return mFullPath;
+			return FullPath;
 	}
 	
-	public String getPath(){
-		return mFullPath;
+	public String GetPath(){
+		return FullPath;
 	}
 	
-	public String getDirectoryPath()
+	public String GetDirectoryPath()
 	{
-		File file = new File(mFullPath);
+		File file = new File(FullPath);
 		
 		String test = file.getParentFile().getPath();
 		String path = file.getPath();

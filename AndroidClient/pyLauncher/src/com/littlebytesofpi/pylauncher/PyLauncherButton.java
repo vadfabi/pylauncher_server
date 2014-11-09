@@ -4,46 +4,46 @@ public class PyLauncherButton {
 
 	public PyLauncherButton()
 	{
-		mPyFile = null;
-		mCommandLineArgs = "";
-		mTitle = "";
-		mIcon = -1;
+		PyFile = null;
+		CommandLineArgs = "";
+		Title = "";
+		Icon = -1;
 	}
 	
 	public PyLauncherButton(PyFile pyFile, String commandLineArgs, String title, int icon )
 	{
-		mPyFile = pyFile;
-		mCommandLineArgs = commandLineArgs;
-		mTitle = title;
-		mIcon = icon;
+		PyFile = pyFile;
+		CommandLineArgs = commandLineArgs;
+		Title = title;
+		Icon = icon;
 	}
 	
 	public PyLauncherButton(String path, String commandLineArgs, String title, int icon )
 	{
-		mPyFile = new PyFile(path);
-		mCommandLineArgs = commandLineArgs;
-		mTitle = title;
-		mIcon = icon;
+		PyFile = new PyFile(path);
+		CommandLineArgs = commandLineArgs;
+		Title = title;
+		Icon = icon;
 	}
 	
-	protected PyFile mPyFile;
+	protected PyFile PyFile;
 	public PyFile getPyFile() {
-		return mPyFile;
+		return PyFile;
 	}
 
-	protected String mCommandLineArgs;
+	protected String CommandLineArgs;
 	public String getCommandLineArgs() {
-		return mCommandLineArgs;
+		return CommandLineArgs;
 	}
 
-	protected String mTitle;
+	protected String Title;
 	public String getTitle() {
-		return mTitle;
+		return Title;
 	}
 
-	protected int mIcon;
+	protected int Icon;
 	public int getIcon() {
-		return mIcon;
+		return Icon;
 	}
 	
 }

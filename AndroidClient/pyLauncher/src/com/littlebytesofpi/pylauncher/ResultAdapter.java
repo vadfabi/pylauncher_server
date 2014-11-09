@@ -27,7 +27,7 @@ public class ResultAdapter extends ListViewAdapter {
 		TextView textViewResults;
 	}
 	
-	ViewHolder mViewHolder;
+	ViewHolder ViewHolder;
 	
 	
 	@Override
@@ -37,31 +37,31 @@ public class ResultAdapter extends ListViewAdapter {
 		if (convertView  == null)
 		{
 			//  first time through, map it into a new view holder
-			LayoutInflater vi = (LayoutInflater)mContext.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
+			LayoutInflater vi = (LayoutInflater)Context.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
 			convertView = vi.inflate(R.layout.listadapter_event, null);
 
 			//  create our ViewHolder to cache the views for this row
-			mViewHolder = new ViewHolder();
+			ViewHolder = new ViewHolder();
 
 			//   cache the views for this line
-			mViewHolder.textViewDetails = (TextView)convertView.findViewById(R.id.textViewEventTitle);
-			mViewHolder.textViewDetails.setTypeface(null, Typeface.BOLD);
-			mViewHolder.textViewResults = (TextView)convertView.findViewById(R.id.textViewEventDescription);
+			ViewHolder.textViewDetails = (TextView)convertView.findViewById(R.id.textViewEventTitle);
+			ViewHolder.textViewDetails.setTypeface(null, Typeface.BOLD);
+			ViewHolder.textViewResults = (TextView)convertView.findViewById(R.id.textViewEventDescription);
 			
 			//  set the viewHolder as the tag of this object
-			convertView.setTag(mViewHolder);
+			convertView.setTag(ViewHolder);
 		}
 		else
 		{
 			//  subsequent pass, recall it from the view holder
-			mViewHolder = (ViewHolder)convertView.getTag();
+			ViewHolder = (ViewHolder)convertView.getTag();
 		}
 
 		//  get the directory for this row
-		PyLaunchResult result = (PyLaunchResult) mDataList.get(position);
+		PyLaunchResult result = (PyLaunchResult) DataList.get(position);
 		
 		String formatTitle = result.GetFileName();
-		mViewHolder.textViewDetails.setText(formatTitle);
+		ViewHolder.textViewDetails.setText(formatTitle);
 		
 		
 		String formatResult = "";
@@ -76,14 +76,14 @@ public class ResultAdapter extends ListViewAdapter {
 		if ( result.mExpanded )
 		{	
 			formatResult += "\n\nDetails:";
-			formatResult += "\n - Launched By: " + result.mIpOfRequest;
-			formatResult += "\n - Time Requested: " + result.mTimeRequest;
-			formatResult += "\n - Time Launched: " + result.mTimeLaunch;
-			formatResult += "\n - Time Completed: " + result.mTimeComplete;
+			formatResult += "\n - Launched By: " + result.IpOfRequest;
+			formatResult += "\n - Time Requested: " + result.TimeRequest;
+			formatResult += "\n - Time Launched: " + result.TimeLaunch;
+			formatResult += "\n - Time Completed: " + result.TimeComplete;
 		}
 		
 		
-		mViewHolder.textViewResults.setText(formatResult);
+		ViewHolder.textViewResults.setText(formatResult);
 		
 		if ( position % 2 == 0 )
 		{

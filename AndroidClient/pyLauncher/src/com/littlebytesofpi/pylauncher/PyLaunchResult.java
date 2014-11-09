@@ -5,21 +5,21 @@ import java.util.ArrayList;
 
 public class PyLaunchResult {
 
-	public String mPathToPyFile = "";
-	public String mIpOfRequest = "";
-	public String mTimeRequest = "";
-	public String mTimeLaunch = "";
-	public String mTimeComplete = "";
+	public String PathToPyFile = "";
+	public String IpOfRequest = "";
+	public String TimeRequest = "";
+	public String TimeLaunch = "";
+	public String TimeComplete = "";
 	
 	ArrayList<String> mResults = new ArrayList<String>();
 	
 	public PyLaunchResult(String pathToPyFile, String ipOfRequest, String timeRequest, String timeLaunch, String timeComplete){
 		
-		mPathToPyFile = pathToPyFile;
-		mIpOfRequest = ipOfRequest;
-		mTimeRequest = timeRequest;
-		mTimeLaunch = timeLaunch;
-		mTimeComplete = timeComplete;
+		PathToPyFile = pathToPyFile;
+		IpOfRequest = ipOfRequest;
+		TimeRequest = timeRequest;
+		TimeLaunch = timeLaunch;
+		TimeComplete = timeComplete;
 	}
 	
 	//  user interface flags
@@ -27,7 +27,7 @@ public class PyLaunchResult {
 	
 	public String GetFileName()
 	{
-		return new File(mPathToPyFile).getName();
+		return new File(PathToPyFile).getName();
 	
 	}
 

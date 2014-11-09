@@ -37,28 +37,28 @@ public class ClientsServer extends Thread {
 
 	
 	//  reference to the service
-	private PyLauncherService mService;
+	private PyLauncherService Service;
 
 	
 	//  ClientServerThread
 	//  Constructor
 	//
 	public ClientsServer(PyLauncherService service) {
-		mService = service;
+		Service = service;
 	}
 
 	
 	
 	//  Socket
-	private ServerSocket mServerSocket = null; 
-	private Socket mSocket = null;
+	private ServerSocket ServerSocket = null; 
+	private Socket Socket = null;
 	
 	//  GetClientListeningOnPort
 	//  return port number that client is listening on (client's server port)
 	//
 	public int GetClientListeningOnPort(){  
-		if ( mServerSocket != null )
-			return mServerSocket.getLocalPort();
+		if ( ServerSocket != null )
+			return ServerSocket.getLocalPort();
 		else
 			return -1;
 	}
@@ -67,7 +67,7 @@ public class ClientsServer extends Thread {
 	//  IsConnected
 	//  returns connection to server state
 	public boolean IsConnected(){
-		return (mThreadRunning  && mServerSocket != null );
+		return (ThreadRunning  && ServerSocket != null );
 	}
 
 
@@ -77,12 +77,12 @@ public class ClientsServer extends Thread {
 
 		//  determine our client port
 		int clientsServerPort = 50000;
-		mServerSocket = null;
-		while ( mServerSocket == null )
+		ServerSocket = null;
+		while ( ServerSocket == null )
 		{
 			//  setup a socket connection for the client end of the control connection
 			try {
-				mServerSocket = new ServerSocket(clientsServerPort);
+				ServerSocket = new ServerSocket(clientsServerPort);
 
 			} catch (IOException e) {
 				clientsServerPort++;
@@ -99,27 +99,27 @@ public class ClientsServer extends Thread {
 
 	//  Thread flags
 	//  low tech, but effective to manage state of running thread
-	private boolean mThreadRunning = false;
-	private boolean mThreadExit = false;
+	private boolean ThreadRunning = false;
+	private boolean ThreadExit = false;
 
 	//  Thread run function
 	//
 	public void run() {
 
 		//  we must have a valid socket to start
-		if ( mServerSocket == null )
+		if ( ServerSocket == null )
 			return;
 
 		//  infinite loop while thread is running
-		mThreadRunning = true;
+		ThreadRunning = true;
 		//
-		while (mThreadRunning) {
+		while (ThreadRunning) {
 
 			try {
 				//  wait to accept something on this socket
 				//  this will block until we have something to read
-				mSocket = null;
-				mSocket = mServerSocket.accept();
+				Socket = null;
+				Socket = ServerSocket.accept();
 
 				//  we got something, process it
 				ProcessSocketAccept();
@@ -131,8 +131,8 @@ public class ClientsServer extends Thread {
 			finally{ 
 
 				try{
-					if (mSocket != null)
-						mSocket.close();
+					if (Socket != null)
+						Socket.close();
 				}
 				catch(IOException e){
 					if ( D ) Log.e(TAG, "Exception in Connected Control Thread: " + e.toString());
@@ -140,31 +140,31 @@ public class ClientsServer extends Thread {
 			}
 		}
 
-		mThreadRunning = false;
-		mThreadExit = true;
+		ThreadRunning = false;
+		ThreadExit = true;
 	}
 
 	
 	//  Thread cancel function
 	//
-	public void cancel() {
+	public void Cancel() {
 
-		mThreadRunning = false;
+		ThreadRunning = false;
 
-		if ( mServerSocket != null )
+		if ( ServerSocket != null )
 		{
 			try{
 				//  close the socket
-				mServerSocket.close();
+				ServerSocket.close();
 
 				//  now wait for thread run to exit
-				while ( ! mThreadExit )
+				while ( ! ThreadExit )
 					Sleep(100);
 
 			} catch(IOException e){
 				if ( D ) Log.e(TAG, "Exception in Connected Control Thread: " + e.toString());
 			} finally {
-				mServerSocket = null;
+				ServerSocket = null;
 			}
 		}
 	}
@@ -183,9 +183,9 @@ public class ClientsServer extends Thread {
 		try{
 			
 			//  setup socket read and write streams
-			mSocket.setSoTimeout(5000);
-			dataInputStream = new DataInputStream(mSocket.getInputStream());
-			dataOutputStream = new DataOutputStream(mSocket.getOutputStream());
+			Socket.setSoTimeout(5000);
+			dataInputStream = new DataInputStream(Socket.getInputStream());
+			dataOutputStream = new DataOutputStream(Socket.getOutputStream());
 
 			//  read what was sent on the socket
 			String inputRead = IpFunctions.ReadStringFromInputSocket(dataInputStream);
@@ -232,18 +232,18 @@ public class ClientsServer extends Thread {
 						result = nextMessageParser.GetNextString();
 					}
 
-					mService.AddLaunchResult(lanuchResult);
+					Service.AddLaunchResult(lanuchResult);
 					
 				}
 				else if ( nextMessage.contains(TCP_LISTDIR) )
 				{
-					if ( mService.ParseListDir(nextMessage) )
-						mService.SendMessage(PyLauncherService.MESSAGE_UPDATEDIRECTORIES);
+					if ( Service.ParseListDir(nextMessage) )
+						Service.SendMessage(PyLauncherService.MESSAGE_UPDATEDIRECTORIES);
 				}
 				else if ( nextMessage.contains(TCP_LISTFILES) )
 				{
-					if ( mService.ParseListFiles(nextMessage) )
-						mService.SendMessage(PyLauncherService.MESSAGE_UPDATEDIRECTORIES);
+					if ( Service.ParseListFiles(nextMessage) )
+						Service.SendMessage(PyLauncherService.MESSAGE_UPDATEDIRECTORIES);
 				}
 
 				nextMessage = inputParser.GetNextString();

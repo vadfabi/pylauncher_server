@@ -6,36 +6,36 @@ import java.util.Date;
 
 public class LogEvent {
 	
-	public long mEventSystemTime;
-	public String mEventType;
-	public String mEvent;
-	public String mIpAddressOfSender;
+	public long EventSystemTime;
+	public String EventType;
+	public String Event;
+	public String IpAddressOfSender;
 	
 	public LogEvent(long systemTime){
-		mEventSystemTime = systemTime;
-		mEventType = "";
-		mEvent = "";
-		mIpAddressOfSender = "";
+		EventSystemTime = systemTime;
+		EventType = "";
+		Event = "";
+		IpAddressOfSender = "";
 	}
 	
 	public LogEvent(long systemTime, String eventType, String event){
-		mEventSystemTime = systemTime;
-		mEventType = eventType;
-		mEvent = event;
+		EventSystemTime = systemTime;
+		EventType = eventType;
+		Event = event;
 		
-		mIpAddressOfSender = "";
+		IpAddressOfSender = "";
 	}
 
 	public String toString(){
 		
-		String returnString = String.format("Time: " + formatTime() + "\nType: " + mEventType + "\nFrom: " + mIpAddressOfSender + "\n>  " + mEvent);
+		String returnString = String.format("Time: " + formatTime() + "\nType: " + EventType + "\nFrom: " + IpAddressOfSender + "\n>  " + Event);
 		return returnString;
 	}
 	
 	public String formatTime(){
 		
 		Date date = new Date();
-		date.setTime(mEventSystemTime);
+		date.setTime(EventSystemTime);
 		SimpleDateFormat timeFormatter = new SimpleDateFormat("HH:mm:ss.SSS a");//08:30 am
 		return timeFormatter.format(date);
 	}

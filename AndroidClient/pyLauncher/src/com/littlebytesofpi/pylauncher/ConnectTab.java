@@ -25,45 +25,12 @@ public class ConnectTab extends ActionBarActivity {
 
 	//  User Interface Elements
 	//
-	TextView textViewNetStatus;
-	TextView textViewServerStatus;
-	EditText editTextIpAddress;
-	EditText editTextPort;
-	Button buttonConnect;
-	Button buttonDisconnect;
-
-	//  Button Handler
-	//
-	View.OnClickListener ButtonOnClickListener = new View.OnClickListener() {
-
-		@Override
-		public void onClick(View v) {
-
-			switch ( v.getId() )
-			{
-			case R.id.buttonConnect:
-
-				//  save the current preferences
-				Editor editPref = PreferenceManager.getDefaultSharedPreferences(ConnectTab.this).edit();
-				editPref.putString("pref_serveripaddress", editTextIpAddress.getText().toString());
-				editPref.putString("pref_serverport", editTextPort.getText().toString());
-
-				// Commit the edits
-				editPref.commit();
-				
-				openServerConnectionWithSettings();
-
-				break;
-
-			case R.id.buttonDisconnect:
-				
-				mService.closeConnectionToServer();
-				break;
-
-			}
-		}
-	};
-
+	TextView TextViewNetStatus;
+	TextView TextViewServerStatus;
+	EditText EditTextIpAddress;
+	EditText EditTextPort;
+	Button ButtonConnect;
+	Button ButtonDisconnect;
 
 
 	//  onCreate
@@ -73,16 +40,16 @@ public class ConnectTab extends ActionBarActivity {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_connect_tab);
 
-		textViewNetStatus = (TextView)findViewById(R.id.textView_NetworkStatus);
-		textViewServerStatus = (TextView)findViewById(R.id.textView_ServerStatus);
-		editTextIpAddress = (EditText)findViewById(R.id.editText_IpAddress);
-		editTextPort = (EditText)findViewById(R.id.editText_Port);
+		TextViewNetStatus = (TextView)findViewById(R.id.textView_NetworkStatus);
+		TextViewServerStatus = (TextView)findViewById(R.id.textView_ServerStatus);
+		EditTextIpAddress = (EditText)findViewById(R.id.editText_IpAddress);
+		EditTextPort = (EditText)findViewById(R.id.editText_Port);
 
-		buttonConnect = (Button)findViewById(R.id.buttonConnect);
-		buttonConnect.setOnClickListener(ButtonOnClickListener);
+		ButtonConnect = (Button)findViewById(R.id.buttonConnect);
+		ButtonConnect.setOnClickListener(ButtonOnClickListener);
 
-		buttonDisconnect = (Button)findViewById(R.id.buttonDisconnect);
-		buttonDisconnect.setOnClickListener(ButtonOnClickListener);
+		ButtonDisconnect = (Button)findViewById(R.id.buttonDisconnect);
+		ButtonDisconnect.setOnClickListener(ButtonOnClickListener);
 
 		//  setup default preferences
 		PreferenceManager.setDefaultValues(this,  R.xml.preferences,  false);
@@ -90,8 +57,8 @@ public class ConnectTab extends ActionBarActivity {
 		SharedPreferences sharedPrefs = PreferenceManager.getDefaultSharedPreferences(ConnectTab.this);
 		
 		//  initialize edit fields
-		editTextIpAddress.setText(sharedPrefs.getString("pref_serveripaddress", ""));
-		editTextPort.setText(sharedPrefs.getString("pref_serverport",  "48888"));
+		EditTextIpAddress.setText(sharedPrefs.getString("pref_serveripaddress", ""));
+		EditTextPort.setText(sharedPrefs.getString("pref_serverport",  "48888"));
 
 	}
 
@@ -102,7 +69,7 @@ public class ConnectTab extends ActionBarActivity {
 	public void onStart() {
 		super.onStart();
 
-		if (mService == null) 
+		if (Service == null) 
 			BindToService();	
 	}
 
@@ -127,24 +94,22 @@ public class ConnectTab extends ActionBarActivity {
 	}
 
 
-	/*
-	 * Service Handling
-	 * 
-	 */
+	//  Service
+	//
 	
 	//  reference to the service
-	PyLauncherService mService = null;
+	PyLauncherService Service = null;
 
 	//  ServiceConnection
 	//
-	private ServiceConnection mConnection = new ServiceConnection() {
+	private ServiceConnection Connection = new ServiceConnection() {
 		public void onServiceConnected(ComponentName className,
 				IBinder service) {
 
 			//  this is simple intra process, we can just get the service object
 			LocalBinder binder = (LocalBinder) service;
-			mService = binder.getService();
-			mService.AddHandler(mHandler);
+			Service = binder.getService();
+			Service.AddHandler(mHandler);
 
 			SetNetworkStateUi();
 			SetConnectedStateUi();
@@ -165,19 +130,19 @@ public class ConnectTab extends ActionBarActivity {
 
 		// bind to the service 
 		Intent startIntent = new Intent(ConnectTab.this, PyLauncherService.class);
-		getApplicationContext().bindService(startIntent, mConnection, Context.BIND_AUTO_CREATE);
+		getApplicationContext().bindService(startIntent, Connection, Context.BIND_AUTO_CREATE);
 	}
 
 
 	//  UnbindFromService
 	//
 	void UnbindFromService() {
-		if (mService != null) {
+		if (Service != null) {
 
-			mService.RemoveHandler(mHandler);
+			Service.RemoveHandler(mHandler);
 
 			// Detach our existing connection
-			getApplicationContext().unbindService(mConnection);
+			getApplicationContext().unbindService(Connection);
 		}
 	}
 
@@ -201,11 +166,43 @@ public class ConnectTab extends ActionBarActivity {
 		}
 	};  
 
-	
+
+	//  Button Handler
+	//
+	View.OnClickListener ButtonOnClickListener = new View.OnClickListener() {
+
+		@Override
+		public void onClick(View v) {
+
+			switch ( v.getId() )
+			{
+			case R.id.buttonConnect:
+
+				//  save the current preferences
+				Editor editPref = PreferenceManager.getDefaultSharedPreferences(ConnectTab.this).edit();
+				editPref.putString("pref_serveripaddress", EditTextIpAddress.getText().toString());
+				editPref.putString("pref_serverport", EditTextPort.getText().toString());
+
+				// Commit the edits
+				editPref.commit();
+				
+				OpenServerConnectionWithSettings();
+
+				break;
+
+			case R.id.buttonDisconnect:
+				
+				Service.closeConnectionToServer();
+				break;
+
+			}
+		}
+	};
+
 	
 	//  Open Connection to Server with address:port from settings
 	//
-	protected void openServerConnectionWithSettings()
+	protected void OpenServerConnectionWithSettings()
 	{
 		//  get the IP address to connect to
 		//  TODO:  this should be replaced with zero conf networking ip address discovery
@@ -220,7 +217,7 @@ public class ConnectTab extends ActionBarActivity {
 			{
 				//  open connection with default
 				//  message the user that we have initiated a connection
-					mService.openConnectionToServer();
+					Service.openConnectionToServer();
 			}
 			else
 			{
@@ -248,17 +245,17 @@ public class ConnectTab extends ActionBarActivity {
 	//  SetNetworkStateUi
 	//
 	public void SetNetworkStateUi(){
-		if ( mService != null )
+		if ( Service != null )
 		{
 			String status = "";
-			if ( mService.mIpWiFiInfo != null && mService.mIpWiFiInfo.isConnected() )
+			if ( Service.IpWiFiInfo != null && Service.IpWiFiInfo.isConnected() )
 			{
-				status = "Connected to WiFi at " + mService.mIpWiFiAddress;
+				status = "Connected to WiFi at " + Service.IpWiFiAddress;
 			}
 			else 
 				status = "Not connected to WiFi";
 
-			textViewNetStatus.setText(status);
+			TextViewNetStatus.setText(status);
 		}
 
 	} 
@@ -268,19 +265,19 @@ public class ConnectTab extends ActionBarActivity {
 	//
 	public void SetConnectedStateUi(){
 
-		if ( mService != null )
+		if ( Service != null )
 		{
 			String status = "";
-			if ( mService.IsConnectedToServer() )
+			if ( Service.IsConnectedToServer() )
 			{
-				status = "Connected to Server at: " + mService.getConnectedToServerIp();
-				status += "\n  on server port: " + mService.getConnectedToServerOnPort();
-				status += "\n  listening on port: " +  mService.getClientListeningOnPort();
+				status = "Connected to Server at: " + Service.getConnectedToServerIp();
+				status += "\n  on server port: " + Service.getConnectedToServerOnPort();
+				status += "\n  listening on port: " +  Service.getClientListeningOnPort();
 			}
 			else
 				status = "Not connected to Server";
 
-			textViewServerStatus.setText(status);
+			TextViewServerStatus.setText(status);
 		}
 	}
 
