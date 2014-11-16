@@ -1,1 +1,5 @@
 proguard-project.txt
+!*.jar
+!*.class
+!AndroidClient/appcompat_v7/*
+!AndroidClient/android-support-v7-appcompat/*

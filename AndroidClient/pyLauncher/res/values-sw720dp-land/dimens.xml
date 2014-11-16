@@ -6,4 +6,7 @@
     -->
     <dimen name="activity_horizontal_margin">128dp</dimen>
 
+  <item name="lhsweight" type="dimen" format="float">.3</item>
+<item name="rhsweight" type="dimen" format="float">.7</item>
+
 </resources>

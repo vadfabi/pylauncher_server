@@ -10,6 +10,7 @@
         android:id="@+id/listViewEvents"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
+        android:layout_marginTop="10dp"
         android:layout_above="@+id/textViewSaveButton"
         android:layout_alignParentRight="true"
         android:layout_below="@+id/editTextArgs"
@@ -53,15 +54,6 @@
         android:text="Run" />
 
     <TextView
-        android:id="@+id/textViewStatus"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_alignRight="@+id/buttonRunFile"
-        android:layout_marginLeft="20dp"
-        android:gravity="right"
-        android:text="Not connected. Please tap settings." />
-
-    <TextView
         android:id="@+id/textViewSaveButton"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
@@ -75,8 +67,26 @@
         android:layout_width="fill_parent"
         android:layout_height="wrap_content"
         android:layout_alignLeft="@+id/spinnerFile"
-        android:layout_below="@+id/textViewStatus"
-        android:layout_marginTop="10dp"
+        android:layout_below="@+id/linearLayoutPlaceholder"
+        android:layout_marginTop="5dp"
         android:text="Select a Python file to run:" />
+
+    <LinearLayout
+        android:id="@id/linearLayoutPlaceholder"
+        android:layout_width="fill_parent"
+        android:layout_height="0dp"
+        android:layout_below="@+id/textViewStatus"
+        android:layout_marginLeft="17dp"
+        android:orientation="vertical" >
+    </LinearLayout>
+
+    <TextView
+        android:id="@+id/textViewStatus"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentTop="true"
+        android:layout_alignRight="@+id/textViewInstructions"
+        android:gravity="right"
+        android:text="Not connected. Please tap settings." />
 
 </RelativeLayout>

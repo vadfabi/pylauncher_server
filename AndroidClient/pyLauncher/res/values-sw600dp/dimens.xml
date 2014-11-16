@@ -5,4 +5,8 @@
          screen margins) for sw600dp devices (e.g. 7" tablets) here.
     -->
 
+<item name="lhsweight" type="dimen" format="float">.35</item>
+<item name="rhsweight" type="dimen" format="float">.65</item>
+
+
 </resources>

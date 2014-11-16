@@ -11,6 +11,7 @@ import android.content.SharedPreferences;
 import android.content.SharedPreferences.Editor;
 import android.graphics.Color;
 import android.graphics.Paint;
+import android.opengl.Visibility;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Handler;
@@ -429,10 +430,14 @@ public class SendTab extends ActionBarActivity implements  AdapterView.OnItemSel
 		
 		if ( Service != null && Service.IsConnectedToServer() )
 		{
-			TextViewStatus.setText(String.format("Connected to " + Service.getConnectedToServerIp() + " on port " + Service.getConnectedToServerOnPort()) );
+			//TextViewStatus.setText(String.format("Connected to " + Service.getConnectedToServerIp() + " on port " + Service.getConnectedToServerOnPort()) );
+			TextViewStatus.setVisibility(View.GONE);
 		}
 		else
-			TextViewStatus.setText("Not connected. \nPlease tap connection settings.");
+		{
+			TextViewStatus.setVisibility(View.VISIBLE);
+			TextViewStatus.setText("Tap Settings to connect to pyLauncher on the remote computer.");
+		}
 	}
 	
 	

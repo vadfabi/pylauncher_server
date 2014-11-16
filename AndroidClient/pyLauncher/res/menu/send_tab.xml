@@ -4,19 +4,21 @@
       xmlns:yourapp="http://schemas.android.com/apk/res-auto" >
     
     <item android:id="@+id/action_buttons"
-          android:icon="@drawable/ic_settings"
+          android:icon="@drawable/ic_action_buttons"
           android:title="Buttons"
           yourapp:showAsAction="always"  />
     
-    <item android:id="@+id/action_settings"
-          android:icon="@drawable/ic_settings"
-          android:title="Connect"
-          yourapp:showAsAction="ifRoom"  />
-    
-    <item android:id="@+id/action_directories"
-          android:icon="@drawable/ic_directory"
+      <item android:id="@+id/action_directories"
+          android:icon="@drawable/ic_action_dirs"
           android:title="Directories"
           yourapp:showAsAction="ifRoom"  />
+      
+    <item android:id="@+id/action_settings"
+          android:icon="@drawable/ic_action_connect"
+          android:title="Connect"
+          yourapp:showAsAction="never"  />
+    
+  
     
     
 </menu>

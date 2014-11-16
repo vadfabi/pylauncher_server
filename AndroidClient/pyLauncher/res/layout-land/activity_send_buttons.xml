@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent" >
+
+    <TextView
+        android:id="@+id/textViewStatus"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="TextView" />
+
+    <LinearLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentBottom="true"
+        android:layout_alignParentLeft="true"
+        android:layout_below="@+id/textViewStatus" >
+
+        <org.askerov.dynamicgrid.DynamicGridView
+            android:id="@+id/gridViewButtons"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="@dimen/lhsweight"
+            android:numColumns="3" >
+        </org.askerov.dynamicgrid.DynamicGridView>
+
+        <ListView
+            android:id="@+id/listViewEvents"
+            android:layout_width="0dp"
+            android:layout_marginLeft="5dp"
+            android:layout_height="match_parent"
+            android:layout_weight="@dimen/rhsweight"
+            android:divider="#660000"
+            android:dividerHeight="2px" >
+        </ListView>
+
+    </LinearLayout>
+
+</RelativeLayout>

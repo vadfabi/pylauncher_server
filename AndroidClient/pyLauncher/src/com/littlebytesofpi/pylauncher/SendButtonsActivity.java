@@ -67,6 +67,16 @@ public class SendButtonsActivity extends ActionBarActivity {
 		mListViewResults.setAdapter(mResultsAdapter);
 		mListViewResults.setClickable(true);
 		mListViewResults.setFastScrollEnabled(true);
+		
+		mListViewResults.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+			@Override
+			public void onItemClick(AdapterView<?> arg0, View arg1, int position, long arg3) {
+
+				PyLaunchResult thisResult = mResultsList.get(position);
+				thisResult.mExpanded = ! thisResult.mExpanded;
+				mResultsAdapter.notifyDataSetChanged();
+			}
+		});
 
 		// force the overflow icon to show even if we have physical settings
 		// button
@@ -108,7 +118,7 @@ public class SendButtonsActivity extends ActionBarActivity {
 		if ( Service != null )
 		{
 			ResetGridView();
-
+		
 			Service.GetLaunchResults(mResultsList);
 			mResultsAdapter.notifyDataSetChanged();
 		}
@@ -156,6 +166,7 @@ public class SendButtonsActivity extends ActionBarActivity {
 			Service.AddHandler(Handler);
 			
 			ResetGridView();
+			FormatStatus();
 
 			Service.GetLaunchResults(mResultsList);
 			mResultsAdapter.notifyDataSetChanged();
@@ -595,6 +606,8 @@ public class SendButtonsActivity extends ActionBarActivity {
 	//
 	public void FormatStatus()
 	{
+		mTextViewStatus.setVisibility(View.VISIBLE);
+		
 		if ( GridDeleteMode )
 		{
 			mTextViewStatus.setText("Tap a button to delete");
@@ -615,11 +628,12 @@ public class SendButtonsActivity extends ActionBarActivity {
 			//  no special mode in play, format connection status string
 			if ( Service != null && Service.IsConnectedToServer() )
 			{
-				mTextViewStatus.setText(String.format("Connected to " + Service.getConnectedToServerIp() + " : " + Service.getConnectedToServerOnPort()) );
+				mTextViewStatus.setVisibility(View.GONE);
+				//mTextViewStatus.setText(String.format("Connected to " + Service.getConnectedToServerIp() + " : " + Service.getConnectedToServerOnPort()) );
 			}
 			else
 			{
-				mTextViewStatus.setText("Please tap settings to connect.");
+				mTextViewStatus.setText("Tap Settings to connect to pyLauncher on the remote computer.");
 			}
 		}
 	}

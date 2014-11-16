@@ -4,33 +4,33 @@
       xmlns:yourapp="http://schemas.android.com/apk/res-auto" >
     
     <item android:id="@+id/action_launcher"
-          android:icon="@drawable/ic_settings"
+          android:icon="@drawable/ic_action_main"
           android:title="Launcher"
           yourapp:showAsAction="always"  />
-    
-    <item android:id="@+id/action_settings"
-          android:icon="@drawable/ic_settings"
-          android:title="Connect"
-          yourapp:showAsAction="ifRoom"  />
-    
+     
     <item android:id="@+id/action_directories"
-          android:icon="@drawable/ic_directory"
+          android:icon="@drawable/ic_action_dirs"
           android:title="Directories"
           yourapp:showAsAction="ifRoom"  />
     
     <item android:id="@+id/action_newButton"
-          android:icon="@drawable/ic_directory"
+          android:icon="@drawable/ic_action_newbutton"
           android:title="New Button"
-          yourapp:showAsAction="never"  />
+          yourapp:showAsAction="ifRoom"  />
     
      <item android:id="@+id/action_editButtons"
-          android:icon="@drawable/ic_directory"
+          android:icon="@drawable/ic_action_editbutton"
           android:title="Edit Buttons"
-          yourapp:showAsAction="never"  />
+          yourapp:showAsAction="ifRoom"  />
     
     <item android:id="@+id/action_delButtons"
-          android:icon="@drawable/ic_directory"
+          android:icon="@drawable/ic_action_deletebutton"
           android:title="Delete Buttons"
+          yourapp:showAsAction="ifRoom"  />
+    
+     <item android:id="@+id/action_settings"
+          android:icon="@drawable/ic_action_connect"
+          android:title="Connect"
           yourapp:showAsAction="never"  />
     
 </menu>
