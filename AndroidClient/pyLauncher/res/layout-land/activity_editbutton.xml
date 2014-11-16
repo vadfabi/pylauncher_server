@@ -1,0 +1,128 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent" >
+
+    <LinearLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content" >
+
+        <LinearLayout
+            android:id="@+id/linearLayout1"
+            android:layout_width="0dp"
+            android:layout_marginLeft="5dp"
+            android:layout_height="fill_parent"
+            android:layout_weight="@dimen/lhsweight"
+            android:orientation="vertical" >
+
+            <RelativeLayout
+                android:id="@+id/RelativeLayout1"
+                android:layout_width="fill_parent"
+                android:layout_height="wrap_content" >
+
+                <TextView
+                    android:id="@+id/textView2"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_alignParentLeft="true"
+                    android:layout_centerVertical="true"
+                    android:layout_toLeftOf="@+id/imageButtonIcon"
+                    android:layout_weight="13.20"
+                    android:text="Select an icon for the button:" />
+
+                <ImageButton
+                    android:id="@+id/imageButtonIcon"
+                    android:layout_width="65dp"
+                    android:layout_height="65dp"
+                    android:layout_alignParentRight="true"
+                    android:layout_alignParentTop="true"
+                    android:background="@android:color/transparent"
+                    android:src="@drawable/ic_unknown" />
+            </RelativeLayout>
+
+            <TextView
+                android:id="@+id/textView3"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Enter a name for the button:" />
+
+            <EditText
+                android:id="@+id/editTextName"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:ems="10" />
+
+            <TextView
+                android:id="@+id/textViewInstructions"
+                android:layout_width="fill_parent"
+                android:layout_height="wrap_content"
+                android:text="Python file to run:" />
+
+            <Spinner
+                android:id="@+id/spinnerFile"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="2dp" />
+
+            <TextView
+                android:id="@+id/textViewCmdLineTag"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="5dp"
+                android:text="Command line arguments:" />
+
+            <RelativeLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content" >
+
+                <EditText
+                    android:id="@+id/editTextArgs"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_alignParentLeft="true"
+                    android:layout_centerVertical="true"
+                    android:ems="10" />
+            </RelativeLayout>
+        </LinearLayout>
+
+        <RelativeLayout
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_marginLeft="5dp"
+            android:layout_weight="@dimen/rhsweight"
+            android:orientation="vertical" >
+
+            <ListView
+                android:id="@+id/listViewEvents"
+                android:layout_width="match_parent"
+                android:layout_height="5dp"
+                android:layout_above="@+id/buttonRunFile"
+                android:layout_alignParentLeft="true"
+                android:layout_alignParentRight="true"
+                android:layout_alignParentTop="true"
+                android:divider="#660000"
+                android:dividerHeight="2px" >
+
+            </ListView>
+
+            <Button
+                android:id="@+id/buttonSave"
+                android:layout_width="140dp"
+                android:layout_height="40dp"
+                android:layout_alignParentBottom="true"
+                android:layout_centerHorizontal="true"
+                android:text="Save Button" />
+
+            <Button
+                android:id="@+id/buttonRunFile"
+                android:layout_width="140dp"
+                android:layout_height="40dp"
+                android:layout_above="@+id/buttonSave"
+                android:layout_alignLeft="@+id/buttonSave"
+                android:text="Test" />
+
+        </RelativeLayout>
+
+    </LinearLayout>
+
+</RelativeLayout>
