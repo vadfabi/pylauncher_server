@@ -12,29 +12,12 @@
         android:id="@+id/listViewDirectories"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_above="@+id/buttonRemove"
-        android:layout_marginTop="5dp"
+        android:layout_above="@+id/buttonAdd"
         android:layout_alignParentLeft="true"
-        android:layout_below="@+id/textViewTag" >
+        android:layout_below="@+id/textViewTag"
+        android:layout_marginTop="5dp" >
 
     </ListView>
-
-    <Button
-        android:id="@+id/buttonRemove"
-        android:layout_width="120dp"
-        android:layout_height="wrap_content"
-        android:layout_alignBaseline="@+id/buttonAdd"
-        android:layout_alignBottom="@+id/buttonAdd"
-        android:layout_alignRight="@+id/listViewDirectories"
-        android:text="Remove" />
-
-    <Button
-        android:id="@+id/buttonAdd"
-        android:layout_width="120dp"
-        android:layout_height="wrap_content"
-        android:layout_alignLeft="@+id/listViewDirectories"
-        android:layout_alignParentBottom="true"
-        android:text="Add" />
 
     <TextView
         android:id="@+id/textViewTag"
@@ -43,5 +26,21 @@
         android:layout_alignLeft="@+id/listViewDirectories"
         android:layout_alignParentTop="true"
         android:text="Directories registered in 'directoryList.txt':" />
+
+    <Button
+        android:id="@+id/buttonRemove"
+        android:layout_width="120dp"
+        android:layout_height="wrap_content"
+        android:layout_alignLeft="@+id/buttonAdd"
+        android:layout_alignParentBottom="true"
+        android:text="Remove" />
+
+    <Button
+        android:id="@+id/buttonAdd"
+        android:layout_width="120dp"
+        android:layout_height="wrap_content"
+        android:layout_above="@+id/buttonRemove"
+        android:layout_centerHorizontal="true"
+        android:text="Add" />
 
 </RelativeLayout>

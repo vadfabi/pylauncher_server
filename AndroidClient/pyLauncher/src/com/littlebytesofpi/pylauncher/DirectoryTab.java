@@ -167,9 +167,6 @@ View.OnClickListener ButtonOnClickListener = new View.OnClickListener() {
 			{
 			case R.id.buttonAdd:
 			{
-				DirectoryList.clear();
-				DirectoryAdapter.notifyDataSetChanged();
-				
 				final AlertDialog.Builder alert = new AlertDialog.Builder(DirectoryTab.this);
 				alert.setTitle("Enter Directory Name");
 				final EditText input = new EditText(DirectoryTab.this);

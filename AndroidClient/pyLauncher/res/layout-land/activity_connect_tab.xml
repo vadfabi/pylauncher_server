@@ -50,11 +50,10 @@
 
             <EditText
                 android:id="@+id/editText_IpAddress"
-                android:layout_width="wrap_content"
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="1dp"
-                android:ems="10"
-                android:inputType="phone" >
+                android:ems="10" >
 
                 <requestFocus />
             </EditText>
@@ -68,11 +67,10 @@
 
             <EditText
                 android:id="@+id/editText_Port"
-                android:layout_width="wrap_content"
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="1dp"
-                android:ems="10"
-                android:inputType="number" />
+                android:ems="10" />
 
         </LinearLayout>
     </LinearLayout>

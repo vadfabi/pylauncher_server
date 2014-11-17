@@ -7,8 +7,6 @@
         android:id="@+id/textViewStatus"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginBottom="@dimen/bottommargin"
-        android:layout_marginLeft="@dimen/sidemargin"
         android:layout_marginTop="@dimen/topmargin"
         android:text="TextView" />
 
@@ -17,6 +15,10 @@
         android:layout_height="fill_parent"
         android:layout_alignParentBottom="true"
         android:layout_alignParentLeft="true"
+        android:layout_marginBottom="@dimen/bottommargin"
+        android:layout_marginLeft="@dimen/sidemargin"
+        android:layout_marginRight="@dimen/sidemargin"
+        android:layout_marginTop="@dimen/topmargin"
         android:layout_below="@+id/textViewStatus" >
 
         <org.askerov.dynamicgrid.DynamicGridView

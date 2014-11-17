@@ -13,6 +13,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_alignLeft="@+id/textView_NetworkStatus"
+        android:layout_alignRight="@+id/textView_NetworkStatus"
         android:layout_below="@+id/textView_NetworkStatus"
         android:layout_marginTop="5dp"
         android:text="Server Status" />
@@ -22,16 +23,17 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_alignLeft="@+id/textView_PortTag"
+        android:layout_alignParentRight="true"
         android:layout_below="@+id/textView_PortTag"
         android:layout_marginTop="1dp"
-        android:ems="10"
-        android:inputType="number" />
+        android:ems="10" />
 
     <TextView
         android:id="@+id/textView_NetworkStatus"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_alignParentLeft="true"
+        android:layout_alignParentRight="true"
         android:layout_alignParentTop="true"
         android:text="Network Status" />
 
@@ -40,6 +42,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_alignLeft="@+id/textView_ServerStatus"
+        android:layout_alignRight="@+id/textView_ServerStatus"
         android:layout_below="@+id/textView_ServerStatus"
         android:layout_marginTop="10dp"
         android:text="IP Address of Server:" />
@@ -49,10 +52,10 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_alignLeft="@+id/textView_IpAddressTag"
+        android:layout_alignParentRight="true"
         android:layout_below="@+id/textView_IpAddressTag"
         android:layout_marginTop="1dp"
-        android:ems="10" 
-        android:inputType="phone"/>
+        android:ems="10" />
 
     <TextView
         android:id="@+id/textView_PortTag"
