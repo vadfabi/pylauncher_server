@@ -2,7 +2,6 @@ package com.littlebytesofpi.pylauncher;
 
 import java.lang.reflect.Field;
 import java.util.ArrayList;
-import java.util.List;
 
 import org.askerov.dynamicgrid.DynamicGridView;
 
@@ -10,11 +9,11 @@ import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.ServiceConnection;
-import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.IBinder;
 import android.os.Message;
+import android.os.Vibrator;
 import android.support.v7.app.ActionBarActivity;
 import android.util.Log;
 import android.view.Menu;
@@ -388,6 +387,8 @@ public class SendButtonsActivity extends ActionBarActivity {
 		@Override
 		public void onActionDrop() {
 			
+			Log.d("GridView", String.format("Drop item "));
+			
 			//  update the button list
 			Service.UpdateButtonsList(mGridViewAdapter.getItems());
 
@@ -434,7 +435,7 @@ public class SendButtonsActivity extends ActionBarActivity {
 		else if ( GridDragMode )
 		{
 			//  click during drag mode is only handled by android 2.x
-			if ( ! isPostHoneycomb() )
+			if ( ! isUsingDynamicGrid() )
 			{
 				//  get this button, and the dragging button
 				PyLauncherButton dragButton = mVisibleButtonsList.get(mDragIndex);
@@ -516,7 +517,7 @@ public class SendButtonsActivity extends ActionBarActivity {
     	GridEditMode = true;
     	mGridViewButtons.startWobbleAnimation();
     	
-    	if ( ! isPostHoneycomb() )
+    	if ( ! isUsingDynamicGrid() )
     	{
     		mGridViewAdapter.notifyDataSetChanged();
     	}
@@ -538,7 +539,7 @@ public class SendButtonsActivity extends ActionBarActivity {
     	GridDeleteMode = true;
     	mGridViewButtons.startWobbleAnimation();
     	
-    	if ( ! isPostHoneycomb() )
+    	if ( ! isUsingDynamicGrid() )
     	{
     		mGridViewAdapter.notifyDataSetChanged();
     	}
@@ -559,8 +560,11 @@ public class SendButtonsActivity extends ActionBarActivity {
     	
     	GridDragMode = true;
     	
-    	if ( ! isPostHoneycomb() )
+    	if ( ! isUsingDynamicGrid() )
     	{
+    		Vibrator myVib = (Vibrator) getApplicationContext().getSystemService(VIBRATOR_SERVICE);
+    		myVib.vibrate(100);
+    		
     		mDragIndex = position;
     		mGridViewAdapter.notifyDataSetChanged();
     	}
@@ -618,7 +622,7 @@ public class SendButtonsActivity extends ActionBarActivity {
 		}
 		else if ( GridDragMode )
 		{
-			if ( isPostHoneycomb() )
+			if ( isUsingDynamicGrid() )
 				mTextViewStatus.setText("Drag and drop the button to a new location.");
 			else
 				mTextViewStatus.setText("Select new location for the button.");
@@ -639,8 +643,10 @@ public class SendButtonsActivity extends ActionBarActivity {
 	}
 	
 	//  API Version required for grid view behavior
-    private boolean isPostHoneycomb() {
-        return Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB;
+    private boolean isUsingDynamicGrid() {
+        return false; 
+        //  TODO - hook up use of dynamic grid for post honeycomb if the library gets fixed
+        //return Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB;
     }
     
     

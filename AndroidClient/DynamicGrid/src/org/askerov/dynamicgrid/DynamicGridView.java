@@ -640,7 +640,10 @@ public class DynamicGridView extends GridView {
      * @return
      */
     private boolean isPostHoneycomb() {
-        return Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB;
+        return false;  
+        //  TODO - for now treat everything like android 2
+        //  wobble effects and drag handling is somewhat broken anyway
+        //return Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB;
     }
 
     private void touchEventsCancelled() {

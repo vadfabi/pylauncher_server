@@ -52,7 +52,6 @@
     </style>
     
        <style name="CustomDialogTheme" parent="@android:style/Theme.Dialog">
-        <item name="@android:textColor">#FF0000</item>  
         <item name="android:background">#000000</item>
   </style>
 

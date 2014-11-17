@@ -221,6 +221,9 @@ public class EditButtonActivity extends ActionBarActivity implements  AdapterVie
 				EditingButton = new PyLauncherButton();
 			}
 			
+			//  set the icon for this button
+			IconIndex = EditingButton.getIcon();
+			
 
 			IconButton.setImageDrawable(Service.GetButtonDrawable(IconIndex));
 			EditTextName.setText(EditingButton.getTitle());

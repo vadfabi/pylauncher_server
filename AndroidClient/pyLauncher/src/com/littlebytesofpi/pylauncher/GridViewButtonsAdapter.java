@@ -89,41 +89,23 @@ public class GridViewButtonsAdapter extends BaseDynamicGridAdapter {
       		holder.imageButtonIcon.setImageResource(R.drawable.ic_edit);//(color.holo_blue_dark);
       	else if ( ParentActivity.get().GridDeleteMode )
       		holder.imageButtonIcon.setImageResource(R.drawable.ic_delete);//(color.holo_blue_dark);
-      	else if ( ! isPostHoneycomb() && ParentActivity.get().GridDragMode && position != ParentActivity.get().mDragIndex )
+      	else if ( ! isUsingDynamicGrid() && ParentActivity.get().GridDragMode && position != ParentActivity.get().mDragIndex )
       		holder.imageButtonIcon.setImageResource(R.drawable.ic_moveleft);//(color.holo_blue_dark);
       	else
       		holder.imageButtonIcon.setImageResource(R.drawable.ic_blank);
       	
-        
-        
-        
         PyLauncherButton thisButton = (PyLauncherButton)getItem(position);
         holder.textViewTitle.setText(thisButton.getTitle());
         holder.imageButtonIcon.setBackgroundDrawable(ParentActivity.get().Service.GetButtonDrawable(thisButton.getIcon()));
-        
-       
-        
-        //  set the layout elements    
-//        if ( ! isPostHoneycomb() )
-//        {
-//        	if ( mParentActivity.get().mEditButtonsMode )
-//        		holder.imageButtonIcon.setAlpha(1);
-//        	else if ( mParentActivity.get().mDeleteButtonsMode )
-//        		holder.imageButtonIcon.setAlpha(1);
-//        	else if ( mParentActivity.get().mDragMode && position != mParentActivity.get().mDragIndex )
-//        		holder.imageButtonIcon.setAlpha(1);
-//        	else
-//        		holder.imageButtonIcon.setAlpha(0);
-//        }
-
-       
-		 
+        		 
         return convertView;
     }
 	
-	//  API Version required for grid view behavior
-    private boolean isPostHoneycomb() {
-        return Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB;
+//  API Version required for grid view behavior
+    private boolean isUsingDynamicGrid() {
+        return false; 
+        //  TODO - hook up use of dynamic grid for post honeycomb if the library gets fixed
+        //return Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB;
     }
 
 }
