@@ -76,5 +76,9 @@
         <item name="popupMenuStyle">@style/PopupMenu.Actionbar_appcompatdark_red</item>
         <item name="dropDownListViewStyle">@style/DropDownListView.Actionbar_appcompatdark_red</item>
     </style>
+    
+    <style name="CustomDialogTheme" parent="@android:style/Theme.Dialog">
+        <item name="@android:textColor">#ffffff</item>  
+  </style>
 
 </resources>

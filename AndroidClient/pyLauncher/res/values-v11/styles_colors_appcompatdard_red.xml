@@ -50,5 +50,7 @@
   <style name="Togglecolors_appcompatdard_red" parent="android:Widget.Holo.Button.Toggle">
       <item name="android:background">@drawable/colors_appcompatdard_red_btn_toggle_holo_dark</item>
   </style>
+  
+  
 
 </resources>

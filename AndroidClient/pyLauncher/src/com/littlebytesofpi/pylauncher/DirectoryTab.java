@@ -15,12 +15,12 @@ import android.os.Message;
 import android.support.v7.app.ActionBarActivity;
 import android.text.InputType;
 import android.util.Log;
+import android.view.ContextThemeWrapper;
 import android.view.View;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ListView;
-import android.widget.Toast;
 
 import com.littlebytesofpi.pylauncher.PyLauncherService.LocalBinder;
 
@@ -167,7 +167,7 @@ View.OnClickListener ButtonOnClickListener = new View.OnClickListener() {
 			{
 			case R.id.buttonAdd:
 			{
-				final AlertDialog.Builder alert = new AlertDialog.Builder(DirectoryTab.this);
+				final AlertDialog.Builder alert = new AlertDialog.Builder(new ContextThemeWrapper(DirectoryTab.this, R.style.CustomDialogTheme));
 				alert.setTitle("Enter Directory Name");
 				final EditText input = new EditText(DirectoryTab.this);
 				
@@ -196,8 +196,9 @@ View.OnClickListener ButtonOnClickListener = new View.OnClickListener() {
 				
 			case R.id.buttonRemove:
 			{
-				AlertDialog.Builder builder = new AlertDialog.Builder(DirectoryTab.this);  
+				AlertDialog.Builder builder = new AlertDialog.Builder(new ContextThemeWrapper(DirectoryTab.this, R.style.CustomDialogTheme));  
 		           builder.setTitle("Remove Directory");  
+		           
 		           final ArrayAdapter<PyFile> arrayAdapter = new ArrayAdapter<PyFile>(DirectoryTab.this,  
 		                     android.R.layout.select_dialog_singlechoice);  
 

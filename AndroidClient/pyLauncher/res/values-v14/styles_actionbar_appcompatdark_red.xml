@@ -17,7 +17,7 @@
      limitations under the License.
 -->
 
-<resources>
+<resources xmlns:android="http://schemas.android.com/apk/res/android">
 
     <style name="Theme.Actionbar_appcompatdark_red" parent="@style/colors_appcompatdard_red">
         <item name="android:actionBarItemBackground">@drawable/selectable_background_actionbar_appcompatdark_red</item>
@@ -50,5 +50,10 @@
         <item name="android:popupMenuStyle">@style/PopupMenu.Actionbar_appcompatdark_red</item>
         <item name="android:dropDownListViewStyle">@style/DropDownListView.Actionbar_appcompatdark_red</item>
     </style>
+    
+       <style name="CustomDialogTheme" parent="@android:style/Theme.Dialog">
+        <item name="@android:textColor">#FF0000</item>  
+        <item name="android:background">#000000</item>
+  </style>
 
 </resources>
