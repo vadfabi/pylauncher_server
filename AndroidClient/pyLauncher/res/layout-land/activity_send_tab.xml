@@ -10,6 +10,9 @@
     <LinearLayout
         android:layout_width="0dp"
         android:layout_weight="@dimen/lhsweight"
+         android:layout_marginTop="@dimen/topmargin"
+            android:layout_marginBottom="@dimen/bottommargin"
+            android:layout_marginLeft="@dimen/sidemargin"
         android:layout_height="match_parent"
         android:orientation="vertical" >
 

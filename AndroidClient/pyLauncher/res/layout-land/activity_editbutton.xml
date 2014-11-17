@@ -10,9 +10,11 @@
         <LinearLayout
             android:id="@+id/linearLayout1"
             android:layout_width="0dp"
-            android:layout_marginLeft="5dp"
             android:layout_height="fill_parent"
             android:layout_weight="@dimen/lhsweight"
+             android:layout_marginTop="@dimen/topmargin"
+            android:layout_marginBottom="@dimen/bottommargin"
+            android:layout_marginLeft="@dimen/sidemargin"
             android:orientation="vertical" >
 
             <RelativeLayout
@@ -88,8 +90,10 @@
         <RelativeLayout
             android:layout_width="0dp"
             android:layout_height="match_parent"
-            android:layout_marginLeft="5dp"
             android:layout_weight="@dimen/rhsweight"
+            android:layout_marginTop="@dimen/topmargin"
+            android:layout_marginBottom="@dimen/bottommargin"
+            android:layout_marginLeft="@dimen/sidemargin"
             android:orientation="vertical" >
 
             <ListView
@@ -107,16 +111,16 @@
 
             <Button
                 android:id="@+id/buttonSave"
-                android:layout_width="140dp"
-                android:layout_height="40dp"
+                 android:layout_width="@dimen/button_width"
+                android:layout_height="@dimen/button_height"
                 android:layout_alignParentBottom="true"
                 android:layout_centerHorizontal="true"
                 android:text="Save Button" />
 
             <Button
                 android:id="@+id/buttonRunFile"
-                android:layout_width="140dp"
-                android:layout_height="40dp"
+                android:layout_width="@dimen/button_width"
+                android:layout_height="@dimen/button_height"
                 android:layout_above="@+id/buttonSave"
                 android:layout_alignLeft="@+id/buttonSave"
                 android:text="Test" />

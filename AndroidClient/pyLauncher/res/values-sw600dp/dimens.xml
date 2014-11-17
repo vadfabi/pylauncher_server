@@ -5,8 +5,14 @@
          screen margins) for sw600dp devices (e.g. 7" tablets) here.
     -->
 
-<item name="lhsweight" type="dimen" format="float">.35</item>
-<item name="rhsweight" type="dimen" format="float">.65</item>
+	<item name="lhsweight" type="dimen" format="float">.35</item>
+	<item name="rhsweight" type="dimen" format="float">.65</item>
 
+	<dimen name="button_width">240dp</dimen>
+	<dimen name="button_height">40dp</dimen>
+	
+	<dimen name="topmargin">25dp</dimen>
+	<dimen name="sidemargin">25dp</dimen>
+	<dimen name="bottommargin">25dp</dimen>
 
 </resources>

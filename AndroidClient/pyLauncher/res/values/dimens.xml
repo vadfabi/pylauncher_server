@@ -6,5 +6,13 @@
     
     <item name="lhsweight" type="dimen" format="float">.45</item>
 	<item name="rhsweight" type="dimen" format="float">.55</item>
+	
+	<dimen name="button_width">140dp</dimen>
+	<dimen name="button_height">40dp</dimen>
+	
+	<dimen name="topmargin">5dp</dimen>
+	<dimen name="sidemargin">5dp</dimen>
+	<dimen name="bottommargin">5dp</dimen>
+	
 
 </resources>

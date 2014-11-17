@@ -6,7 +6,14 @@
     -->
     <dimen name="activity_horizontal_margin">128dp</dimen>
 
-  <item name="lhsweight" type="dimen" format="float">.3</item>
-<item name="rhsweight" type="dimen" format="float">.7</item>
+  	<item name="lhsweight" type="dimen" format="float">.3</item>
+	<item name="rhsweight" type="dimen" format="float">.7</item>
 
+	<dimen name="button_width">240dp</dimen>
+	<dimen name="button_height">40dp</dimen>
+	
+	<dimen name="topmargin">40dp</dimen>
+	<dimen name="sidemargin">40dp</dimen>
+	<dimen name="bottommargin">40dp</dimen>
+	
 </resources>
