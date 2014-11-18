@@ -77,6 +77,7 @@ bool TheApp::InitializeInstance()
 	hostName.Execute();
 	mHostname = hostName.GetCommandResponseLine(0);
 
+	LoadHeaderFile();
 	LoadPythonFileDirectoryFile();
 	LoadPythonFilesList();
 
@@ -135,6 +136,51 @@ void TheApp::ShutDown()
 	mEventLog.remove_if(deleteLogEvent);
 }
 
+
+void TheApp::LoadHeaderFile()
+{
+	mHeaderList.clear();
+
+	ifstream headerFile;
+	headerFile.open(HEADERFILE);
+	if ( ! headerFile.is_open() )
+	{
+		mHeaderList.push_back("pyLauncher:    by LittleBytesOfPi.com");
+		mHeaderList.push_back(format("version: %s", mVersionString.c_str()));
+
+		mHeaderList.push_back("  - modify header.txt to put your text here ... ");
+
+		ofstream writeHeaderFile;
+		writeHeaderFile.open(HEADERFILE);
+		if (writeHeaderFile.is_open())
+		{
+			list<string>::iterator nextString;
+			for (nextString = mHeaderList.begin(); nextString != mHeaderList.end(); ++nextString)
+			{
+				writeHeaderFile << *nextString + "\n";
+			}
+
+			writeHeaderFile.close();
+
+			CMD cmd(format("chmod 666 %s", HEADERFILE));
+			cmd.Execute();
+		}
+	}
+	else
+	{
+		string readLine;
+		while (!headerFile.eof())
+		{
+			getline(headerFile, readLine);
+			if (readLine.size() != 0)
+				mHeaderList.push_back(readLine);
+		}
+
+		headerFile.close();
+	}
+}
+
+
 void TheApp::LoadPythonFileDirectoryFile()
 {
 	LockMutex lockFiles(mFilesListMutex);
@@ -148,11 +194,14 @@ void TheApp::LoadPythonFileDirectoryFile()
 	if (  dirFile.is_open() )
 	{
 		string readLine;
-		while ( ! dirFile.eof() )
+		while (!dirFile.eof())
 		{
 			getline(dirFile, readLine);
-			if ( readLine.size() != 0 )
+			if (readLine.size() != 0)
+			{
+				//  TODO - make sure this dir exists before putting it on the list
 				mDirectoryList.push_back(readLine);
+			}
 		}
 
 		dirFile.close();
@@ -166,29 +215,37 @@ void TheApp::LoadPythonFileDirectoryFile()
 		//  remove pyLauncher from path
 		string path = string(result, count > 0 ? count : 0);
 		path = path.substr(0, path.find_last_of("/"));
-		//  open file
-		FILE* outputFile = fopen ( DIRLISTFILE, "w" );
-		if ( outputFile == 0 )
-			return;
-
-		fprintf( outputFile, "%s\n", path.c_str());
 		
-		mDirectoryList.push_back(path);
-	
-		fclose(outputFile);
+		//  open file
+		ofstream outputFile;
+		outputFile.open(DIRLISTFILE);
+		
+		if (outputFile.is_open())
+		{
+			outputFile << format("%s\n", path.c_str());
+			mDirectoryList.push_back(path);
+			outputFile.close();
+
+			CMD cmd(format("chmod 666 %s", DIRLISTFILE));
+			cmd.Execute();
+		}
 
 		//  create the help file
-		outputFile = fopen ( "programHelp.py", "w" );
-		if ( outputFile == 0 )
-			return;
+		outputFile.open("programHelp.py");
+		if (outputFile.is_open())
+		{
 
-		fprintf( outputFile, "print \"pyLauncher Program Help\"\n", path.c_str());
-		fprintf( outputFile, "print \"1) Register python file locations on the Directory tab.\"\n", path.c_str());
-		fprintf( outputFile, "print \"2) Select a python file to launch.\"\n", path.c_str());
-		fprintf( outputFile, "print \"3) Input command line arguments (optional).\"\n", path.c_str());
-		fprintf( outputFile, "print \"4) Tap [Run] to launch file\"\n", path.c_str());
-	
-		fclose(outputFile);
+			outputFile << "print \"pyLauncher Program Help\"\n";
+			outputFile << "print \"1) Register python file locations on the Directory.\"\n";
+			outputFile << "print \"2) Select a python file to launch.\"\n";
+			outputFile << "print \"3) Input command line arguments (optional).\"\n";
+			outputFile << "print \"4) Tap [Run] to launch file.\"\n";
+
+			outputFile.close();
+
+			CMD cmd(format("chmod 666 %s", "programHelp.py"));
+			cmd.Execute();
+		}
 	}
 }
 
@@ -438,11 +495,11 @@ bool TheApp::HandleAddDirectory(timeval eventTime, std::string eventSender, std:
 	//  make sure this directory exists
 	struct stat sb;
 
-	if ( stat(dirName.c_str(), &sb) == 0 && S_ISDIR(sb.st_mode) )
+	if (stat(dirName.c_str(), &sb) == 0 && S_ISDIR(sb.st_mode))
 	{
 		LockMutex lockFiles(mFilesListMutex);
 
-		if ( find(mDirectoryList.begin(), mDirectoryList.end(), dirName) != mDirectoryList.end() )
+		if (find(mDirectoryList.begin(), mDirectoryList.end(), dirName) != mDirectoryList.end())
 		{
 			//  already in the list
 			return true;
@@ -452,24 +509,28 @@ bool TheApp::HandleAddDirectory(timeval eventTime, std::string eventSender, std:
 
 		//  save out the new dir file
 		//  open file
-		FILE* outputFile = fopen ( DIRLISTFILE, "w" );
-		if ( outputFile == 0 )
+		FILE* outputFile = fopen(DIRLISTFILE, "w");
+		if (outputFile == 0)
 			return false;
 
 		//  print list out to file
 		list<string>::iterator nextString;
-		for( nextString = mDirectoryList.begin(); nextString != mDirectoryList.end(); ++nextString )
+		for (nextString = mDirectoryList.begin(); nextString != mDirectoryList.end(); ++nextString)
 		{
-			fprintf( outputFile, "%s\n", nextString->c_str());
+			fprintf(outputFile, "%s\n", nextString->c_str());
 		}
 
 		fclose(outputFile);
+
+		LiveUpdatePythonFiles();
+
+		return true;
 	}
-
-	LiveUpdatePythonFiles();
-
-	return true;
-
+	else
+	{
+		//  This directory does not exist
+		return false;
+	}
 }
 
 //  function to remove directory from the collection
@@ -786,13 +847,22 @@ void TheApp::DisplayWriteHeader()
 	mTerminalDisplay.InitDimensions();
 	mTerminalDisplay.SetBackground(BLACK);
 
+	//  Print the header
+	//
 	mTerminalDisplay.PrintAcross ("**", BLACK,RED);
-
 	mTerminalDisplay.PrintLine("**", BLACK,RED, "",RED,BLACK);
-	mTerminalDisplay.PrintLine("**", BLACK,RED, "  pyLauncher, by LittleBytesOfPi.com",RED,BLACK);
-	mTerminalDisplay.PrintLine("**", BLACK,RED, format("  version: %s", mVersionString.c_str()), RED,BLACK);
+	//  all lines from header file
+	list<string>::iterator nextString;
+	for (nextString = mHeaderList.begin(); nextString != mHeaderList.end(); ++nextString)
+	{
+		mTerminalDisplay.PrintLine("**", BLACK, RED, format("  %s", nextString->c_str()), RED, BLACK);
+	}
+
+	//
 	mTerminalDisplay.PrintLine("**", BLACK,RED, "",RED,BLACK);
 	mTerminalDisplay.PrintAcross("**", BLACK,RED, "*",RED,BLACK);
+
+	//  Print connection status
 	mTerminalDisplay.PrintLine("**", BLACK,RED, "",RED,BLACK);
 	mTerminalDisplay.PrintLine("**", BLACK,RED, "  Network Connection Status", RED,BLACK);
 	mTerminalDisplay.PrintLine("**", BLACK,RED, format("   - Connected on eth0: %s",mCMDifconfig.mEth0Info.mInet4Address.size() == 0 ? "not enabled " : mCMDifconfig.mEth0Info.mInet4Address.c_str()), RED,BLACK);

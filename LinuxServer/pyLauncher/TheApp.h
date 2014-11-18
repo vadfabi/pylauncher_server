@@ -24,6 +24,7 @@
 
 
 #define DIRLISTFILE "directoryList.txt"
+#define HEADERFILE "header.txt"
 
 // TheApp
 // This class is the main application
@@ -122,6 +123,10 @@ protected:
 
 	//  mutex to lock access to connected clients map
 	std::mutex mConnectedClientsMutex;
+
+	//  header
+	std::list<std::string> mHeaderList;
+	void LoadHeaderFile();
 
 	//  Directory and Files List
 	//

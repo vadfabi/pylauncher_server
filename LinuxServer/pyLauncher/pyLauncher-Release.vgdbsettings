@@ -7,16 +7,16 @@
       <PathStyle>RemoteUnix</PathStyle>
     </CustomSourceDirectories>
     <BuildHost>
-      <HostName>192.168.1.128</HostName>
+      <HostName>rpi</HostName>
       <Transport>SSH</Transport>
-      <UserName>pi</UserName>
+      <UserName>grahambriggs</UserName>
     </BuildHost>
     <MainSourceTransferCommand>
       <SkipWhenRunningCommandList>false</SkipWhenRunningCommandList>
       <RemoteHost>
-        <HostName>192.168.1.128</HostName>
+        <HostName>rpi</HostName>
         <Transport>SSH</Transport>
-        <UserName>pi</UserName>
+        <UserName>grahambriggs</UserName>
       </RemoteHost>
       <LocalDirectory>$(ProjectDir)</LocalDirectory>
       <RemoteDirectory>/home/grahambriggs/Source/LBP_tcpipsockets/pyLauncher</RemoteDirectory>

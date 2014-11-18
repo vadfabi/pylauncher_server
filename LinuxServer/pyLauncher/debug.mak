@@ -23,7 +23,7 @@ CFLAGS := -ggdb -ffunction-sections -O0 -std=c++0x
 CXXFLAGS := -ggdb -ffunction-sections -O0 -std=c++0x
 ASFLAGS :=
 LDFLAGS := -Wl,-gc-sections
-COMMONFLAGS := 
+COMMONFLAGS :=
 
 START_GROUP := -Wl,--start-group
 END_GROUP := -Wl,--end-group

@@ -7,27 +7,19 @@
       <PathStyle>RemoteUnix</PathStyle>
     </CustomSourceDirectories>
     <BuildHost>
-<<<<<<< HEAD
       <HostName>getac9</HostName>
-=======
-      <HostName>192.168.1.128</HostName>
->>>>>>> origin/Version1.1
       <Transport>SSH</Transport>
-      <UserName>pi</UserName>
+      <UserName>grahambriggs</UserName>
     </BuildHost>
     <MainSourceTransferCommand>
       <SkipWhenRunningCommandList>false</SkipWhenRunningCommandList>
       <RemoteHost>
-<<<<<<< HEAD
         <HostName>getac9</HostName>
-=======
-        <HostName>192.168.1.128</HostName>
->>>>>>> origin/Version1.1
         <Transport>SSH</Transport>
-        <UserName>pi</UserName>
+        <UserName>grahambriggs</UserName>
       </RemoteHost>
       <LocalDirectory>$(ProjectDir)</LocalDirectory>
-      <RemoteDirectory>/home/pi/Source/LBP_tcpipsockets/tcPIp_Sockets</RemoteDirectory>
+      <RemoteDirectory>/home/grahambriggs/Source/LBP_tcpipsockets/tcPIp_Sockets</RemoteDirectory>
       <FileMasks>
         <string>*.cpp</string>
         <string>*.h</string>
