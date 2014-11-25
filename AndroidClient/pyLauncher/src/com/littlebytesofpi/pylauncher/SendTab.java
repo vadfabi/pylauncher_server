@@ -418,9 +418,17 @@ public class SendTab extends ActionBarActivity implements  AdapterView.OnItemSel
 		}
 		return true;
 		
+
+		case R.id.action_envsettings:
+		{
+			Intent intent = new Intent(SendTab.this, SettingsActivity.class);
+			startActivity(intent);
+		}
+		
 		default:
 			return super.onOptionsItemSelected(item);
 		}
+		
 	}
 	
 	

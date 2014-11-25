@@ -8,10 +8,13 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.ServiceConnection;
+import android.content.SharedPreferences;
+import android.content.SharedPreferences.Editor;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.IBinder;
 import android.os.Message;
+import android.preference.PreferenceManager;
 import android.support.v7.app.ActionBarActivity;
 import android.text.InputType;
 import android.util.Log;
@@ -171,8 +174,9 @@ View.OnClickListener ButtonOnClickListener = new View.OnClickListener() {
 				alert.setTitle("Enter Directory Name");
 				final EditText input = new EditText(DirectoryTab.this);
 				
-				//  set default file name based on date / time
-				input.setText("");
+				//  set the last used dir name as a start
+				SharedPreferences sharedPrefs = PreferenceManager.getDefaultSharedPreferences(DirectoryTab.this);
+				input.setText(sharedPrefs.getString("pref_addDir", ""));
 				input.setInputType(InputType.TYPE_TEXT_FLAG_NO_SUGGESTIONS);
 				alert.setView(input);
 				
@@ -182,6 +186,12 @@ View.OnClickListener ButtonOnClickListener = new View.OnClickListener() {
 						String value = input.getText().toString().trim();
 						
 						mService.AddDirectory(value);
+						
+						//  save the current preferences
+						Editor editPref = PreferenceManager.getDefaultSharedPreferences(DirectoryTab.this).edit();
+						editPref.putString("pref_addDir", input.getText().toString());
+						// Commit the edits
+						editPref.commit();
 					}
 				});
 

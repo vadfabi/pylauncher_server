@@ -178,6 +178,13 @@ public class ConnectTab extends ActionBarActivity {
 			{
 			case R.id.buttonConnect:
 
+				//  check for connected to wifi
+				//
+				if ( Service.IpWiFiInfo == null || ! Service.IpWiFiInfo.isConnected() )
+				{
+					Toast.makeText(ConnectTab.this,  "You are not connected to Wi-Fi. You must establish a network connection before connecting to the pyLauncher server. .", Toast.LENGTH_LONG).show();
+				}
+				
 				//  save the current preferences
 				Editor editPref = PreferenceManager.getDefaultSharedPreferences(ConnectTab.this).edit();
 				editPref.putString("pref_serveripaddress", EditTextIpAddress.getText().toString());
