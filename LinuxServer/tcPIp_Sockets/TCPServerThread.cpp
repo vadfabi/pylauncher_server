@@ -115,6 +115,15 @@ int TCPServerThread::OpenServerSocket(int portToOpen, bool exactPort)
 		return -1;
 	}
 
+	//  set the socket options
+	int yes = 1;
+	if (setsockopt(mSocketFileDescriptor, SOL_SOCKET, SO_REUSEADDR, &yes, sizeof(int)) == -1)
+	{
+		return -1;
+	}
+
+
+
 	//  set the socket timeouts  
 	struct timeval timeout;
 	timeout.tv_usec = 0;

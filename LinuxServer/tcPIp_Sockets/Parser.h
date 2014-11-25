@@ -17,6 +17,8 @@ public:
 	void SetBuffer(std::string buffer);
 	void SetBuffer(std::string buffer, std::string delimiters);
 
+	void SetDelimiter(std::string delimiter) { mDelimiters = delimiter;	}
+
 	//  returns the next item as a string
 	std::string GetNextString();
 

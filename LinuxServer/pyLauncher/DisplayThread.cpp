@@ -26,7 +26,7 @@ void DisplayThread::RunFunction()
 		unique_lock<mutex> lockNotify(mNotifyMutex);
 
 		//  avoid spurious wakeups
-		if ( ! mNotified )
+		while ( ! mNotified )
 			mNotifyEventCondition.wait(lockNotify);
 
 		//  check to see if we were woken up because of shutdown
@@ -77,12 +77,21 @@ void DisplayThread::Cancel()
 {
 	mThreadRunning = false;
 
-	//  notify run function to break before we call Thread::Cancel
-	mNotifyEventCondition.notify_one();
+	Notify();
 
 	Thread::Cancel();
 }
 
+
+
+//  Notify
+//  sets the notification flag and notifies the condition variable
+//
+void DisplayThread::Notify()
+{
+	mNotified = true;
+	mNotifyEventCondition.notify_one();
+}
 
 
 //  UpdateEverything
@@ -92,8 +101,7 @@ void DisplayThread::UpdateEverything()
 	mUpdateHeader = true;
 	mUpdateConnections = true;
 
-	mNotified = true;
-	mNotifyEventCondition.notify_one();
+	Notify();
 }
 
 
@@ -103,8 +111,7 @@ void DisplayThread::UpdateConnections()
 {
 	mUpdateConnections = true;
 
-	mNotified = true;
-	mNotifyEventCondition.notify_one();
+	Notify();
 }
 
 
@@ -118,6 +125,5 @@ void DisplayThread::AddEvent(LogEvent* logEvent)
 		mEventQueue.push(logEvent);
 	}
 
-	mNotified = true;
-	mNotifyEventCondition.notify_one();
+	Notify();
 }

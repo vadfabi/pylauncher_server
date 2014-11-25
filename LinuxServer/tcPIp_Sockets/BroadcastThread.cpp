@@ -39,6 +39,10 @@ BroadcastThread::~BroadcastThread()
 	}
 }
 
+
+//  AddMessage
+//  puts a message in the queue, and notifies the thread
+//
 void BroadcastThread::AddMessage(timeval eventTime, string eventSender, string message)
 {
 	LogEvent* newMessage = new LogEvent(eventTime, eventSender, message);
@@ -48,21 +52,36 @@ void BroadcastThread::AddMessage(timeval eventTime, string eventSender, string m
 		mMessageQueue.push(newMessage);
 	}
 
-	mNotified = true;
-	mNotifyMessagesCondition.notify_one();
+	Notify();
 }
 
 
+//  Cancel
+//
 void BroadcastThread::Cancel()
 {
 	mThreadRunning = false;
-
-	mNotifyMessagesCondition.notify_one();
+	
+	Notify();
 
 	Thread::Cancel();
 }
 
 
+//  Notify
+//  sets the notification flag and notifies the condition variable
+//
+void BroadcastThread::Notify()
+{
+	mNotified = true;
+	mNotifyMessagesCondition.notify_one();
+}
+
+
+//  RunFunction
+//  the thread run function, will wait on condition
+//  and then send messages to all clients when notified
+//
 void BroadcastThread::RunFunction()
 {
 	
@@ -72,7 +91,7 @@ void BroadcastThread::RunFunction()
 		std::unique_lock<std::mutex> lockNotify(mNotifyMutex);
 
 		//  avoid spurious wakeups
-		if ( ! mNotified )
+		while ( ! mNotified )
 			mNotifyMessagesCondition.wait(lockNotify);
 
 		//  check to see if we were woken up because of shutdown
@@ -93,8 +112,10 @@ void BroadcastThread::RunFunction()
 		}
 	}
 
+	//  send these messages to clients
 	mTheApp.SendMessageToAllClients(eventsToSend);
 
+	//  clean up, this will also delete memory
 	eventsToSend.remove_if(deleteLogEvent);
 	
 	mNotified = false;

@@ -56,6 +56,8 @@ protected:
 	std::condition_variable mNotifyEventCondition;
 	std::mutex mNotifyMutex;
 
+	void Notify();
+
 	//  notify flag, this is required to avoid spurious wakeups
 	//  see http://en.wikipedia.org/wiki/Spurious_wakeup and http://www.codeproject.com/Articles/598695/Cplusplus11-threads-locks-and-condition-variables
 	bool mNotified;

@@ -73,12 +73,14 @@ protected:
 	std::mutex mMessageQueueMutex;
 	std::queue<LogEvent*> mMessageQueue;
 
+
 	//  condition variable is used for notification of thread to wake up
 	bool mNotified;
 	std::condition_variable mNotifyMessagesCondition;
 	std::mutex mNotifyMutex;
 
-	
+	void Notify();
+
 	//  reference to TheApp
 	TheApp& mTheApp;
 };

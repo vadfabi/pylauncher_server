@@ -7,8 +7,6 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "tcPIp_Sockets", "tcPIp_Sock
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "pyLauncher", "pyLauncher\pyLauncher.vcxproj", "{4625CB32-6C3B-4082-985F-E99E339AF4B7}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "LinuxProject1", "LinuxProject1\LinuxProject1.vcxproj", "{E60E91E8-F727-4C2D-9FD1-DD008AD4CB4D}"
-EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Win32 = Debug|Win32
@@ -23,10 +21,6 @@ Global
 		{4625CB32-6C3B-4082-985F-E99E339AF4B7}.Debug|Win32.Build.0 = Debug|Win32
 		{4625CB32-6C3B-4082-985F-E99E339AF4B7}.Release|Win32.ActiveCfg = Release|Win32
 		{4625CB32-6C3B-4082-985F-E99E339AF4B7}.Release|Win32.Build.0 = Release|Win32
-		{E60E91E8-F727-4C2D-9FD1-DD008AD4CB4D}.Debug|Win32.ActiveCfg = Debug|Win32
-		{E60E91E8-F727-4C2D-9FD1-DD008AD4CB4D}.Debug|Win32.Build.0 = Debug|Win32
-		{E60E91E8-F727-4C2D-9FD1-DD008AD4CB4D}.Release|Win32.ActiveCfg = Release|Win32
-		{E60E91E8-F727-4C2D-9FD1-DD008AD4CB4D}.Release|Win32.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

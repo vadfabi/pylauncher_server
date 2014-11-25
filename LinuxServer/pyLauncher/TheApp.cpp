@@ -137,14 +137,20 @@ void TheApp::ShutDown()
 }
 
 
+//  LoadHeaderFile
+//  opens up the file "header.txt" and reads the contents, this is used for the console display 
+//  if no file exists, it makes one with default contents
+//
 void TheApp::LoadHeaderFile()
 {
 	mHeaderList.clear();
 
+	//  open the header file
 	ifstream headerFile;
 	headerFile.open(HEADERFILE);
 	if ( ! headerFile.is_open() )
 	{
+		//  no header file, create one
 		mHeaderList.push_back("pyLauncher:    by LittleBytesOfPi.com");
 		mHeaderList.push_back(format("version: %s", mVersionString.c_str()));
 
@@ -168,6 +174,7 @@ void TheApp::LoadHeaderFile()
 	}
 	else
 	{
+		//  read the contents of the header file
 		string readLine;
 		while (!headerFile.eof())
 		{
@@ -181,6 +188,10 @@ void TheApp::LoadHeaderFile()
 }
 
 
+//  LoadPythonFileDirectoryFile
+//  opens the file "directoryList.txt" and reads the registered paths
+//  if no file exists, it will create one, pluse a programHelp.py file
+//
 void TheApp::LoadPythonFileDirectoryFile()
 {
 	LockMutex lockFiles(mFilesListMutex);
@@ -193,14 +204,17 @@ void TheApp::LoadPythonFileDirectoryFile()
 
 	if (  dirFile.is_open() )
 	{
+		//  read the directory list
 		string readLine;
 		while (!dirFile.eof())
 		{
 			getline(dirFile, readLine);
 			if (readLine.size() != 0)
 			{
-				//  TODO - make sure this dir exists before putting it on the list
-				mDirectoryList.push_back(readLine);
+				//  check to see if this directory exists, and if so add it to the list
+				struct stat sb;
+				if (stat(readLine.c_str(), &sb) == 0 && S_ISDIR(sb.st_mode))
+					mDirectoryList.push_back(readLine);
 			}
 		}
 
@@ -236,13 +250,15 @@ void TheApp::LoadPythonFileDirectoryFile()
 		{
 
 			outputFile << "print \"pyLauncher Program Help\"\n";
-			outputFile << "print \"1) Register python file locations on the Directory.\"\n";
-			outputFile << "print \"2) Select a python file to launch.\"\n";
-			outputFile << "print \"3) Input command line arguments (optional).\"\n";
-			outputFile << "print \"4) Tap [Run] to launch file.\"\n";
+			outputFile << "print \"Register Python file locations by tapping the Directories settings button. You can also edit the directoryList.txt file on the server.\"\n";
+			outputFile << "print \"Using the Directories settings, you can filter which Python files are visible by checking or unchecking directories.\"\n";
+			outputFile << "print \"From the main view, select a Python file to run, specify optional command line arguments, and tap [Run].\"\n";
+			outputFile << "print \"From the buttons view, you can create buttons associated with a Python file including optional command line argument\"\n";
+			outputFile << "print \"Tap and hold on a button to rearrange the order on the buttons view\"\n";
 
 			outputFile.close();
 
+			//  set permissions on the file
 			CMD cmd(format("chmod 666 %s", "programHelp.py"));
 			cmd.Execute();
 		}
@@ -497,31 +513,34 @@ bool TheApp::HandleAddDirectory(timeval eventTime, std::string eventSender, std:
 
 	if (stat(dirName.c_str(), &sb) == 0 && S_ISDIR(sb.st_mode))
 	{
-		LockMutex lockFiles(mFilesListMutex);
-
-		if (find(mDirectoryList.begin(), mDirectoryList.end(), dirName) != mDirectoryList.end())
 		{
-			//  already in the list
-			return true;
+			LockMutex lockFiles(mFilesListMutex);
+
+			if (find(mDirectoryList.begin(), mDirectoryList.end(), dirName) != mDirectoryList.end())
+			{
+				//  already in the list
+				return true;
+			}
+
+			mDirectoryList.push_back(dirName);
+
+			//  save out the new dir file
+			//  open file
+			FILE* outputFile = fopen(DIRLISTFILE, "w");
+			if (outputFile == 0)
+				return false;
+
+			//  print list out to file
+			list<string>::iterator nextString;
+			for (nextString = mDirectoryList.begin(); nextString != mDirectoryList.end(); ++nextString)
+			{
+				fprintf(outputFile, "%s\n", nextString->c_str());
+			}
+
+			fclose(outputFile);
 		}
 
-		mDirectoryList.push_back(dirName);
-
-		//  save out the new dir file
-		//  open file
-		FILE* outputFile = fopen(DIRLISTFILE, "w");
-		if (outputFile == 0)
-			return false;
-
-		//  print list out to file
-		list<string>::iterator nextString;
-		for (nextString = mDirectoryList.begin(); nextString != mDirectoryList.end(); ++nextString)
-		{
-			fprintf(outputFile, "%s\n", nextString->c_str());
-		}
-
-		fclose(outputFile);
-
+		//  update the files
 		LiveUpdatePythonFiles();
 
 		return true;
@@ -531,6 +550,8 @@ bool TheApp::HandleAddDirectory(timeval eventTime, std::string eventSender, std:
 		//  This directory does not exist
 		return false;
 	}
+
+	
 }
 
 //  function to remove directory from the collection
@@ -942,10 +963,11 @@ void TheApp::DisplayWriteEvent(LogEvent event)
 			mTerminalDisplay.PrintLine("**", BLACK,GREEN, format("   - Launched by: %s", ipRequestor.c_str()), GREEN,BLACK);
 			mTerminalDisplay.PrintLine("**", BLACK,GREEN, format("   - Launched at: %s", timeLaunch.c_str()), GREEN,BLACK);
 
+			resultParser.SetDelimiter("\n");
 			string nextResult =  resultParser.GetNextString();
 			while ( nextResult.size() != 0 )
 			{
-				mTerminalDisplay.PrintLine(nextResult.c_str(), BLACK,WHITE);
+				mTerminalDisplay.PrintLine(nextResult.c_str(), WHITE,BLACK);
 
 				nextResult = resultParser.GetNextString();
 			}

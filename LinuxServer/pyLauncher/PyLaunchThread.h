@@ -26,6 +26,7 @@ public:
 
 	timeval mEventTime;
 	std::string mEventAddress;
+	std::string mEnvironment;
 	std::string mFileName;
 	std::string mArguments;
 
@@ -74,6 +75,7 @@ protected:
 	std::condition_variable mNotifyEventCondition;
 	std::mutex mNotifyMutex;
 
+	void Notify();
 	
 	//  reference to TheApp
 	TheApp& mTheApp;

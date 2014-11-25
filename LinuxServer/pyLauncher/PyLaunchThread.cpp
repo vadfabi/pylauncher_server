@@ -8,15 +8,16 @@ using namespace std;
 
 
 
-	PyLaunch::PyLaunch(timeval eventTime, std::string eventAddress, std::string args)
-	{ 
-		mEventTime = eventTime;
-		mEventAddress = eventAddress;
+PyLaunch::PyLaunch(timeval eventTime, std::string eventAddress, std::string args)
+{
+	mEventTime = eventTime;
+	mEventAddress = eventAddress;
 
-		Parser argParser(args,",");
-		mFileName = argParser.GetNextString();
-		mArguments = argParser.GetNextString();
-	}
+	Parser argParser(args, ",");
+	mEnvironment = argParser.GetNextString();
+	mFileName = argParser.GetNextString();
+	mArguments = argParser.GetNextString();
+}
 
 /////////////////////////////////////////////////////////////////////////////
 //  PyLaunchThread
@@ -61,8 +62,7 @@ void PyLaunchThread::AddLaunchEvent(timeval eventTime, string eventSender, strin
 		mLaunchQueue.push(newEvent);
 	}
 
-	mNotified = true;
-	mNotifyEventCondition.notify_one();
+	Notify();
 }
 
 
@@ -72,9 +72,19 @@ void PyLaunchThread::Cancel()
 {
 	mThreadRunning = false;
 
-	mNotifyEventCondition.notify_one();
+	Notify();
 
 	Thread::Cancel();
+}
+
+
+//  Notify
+//  sets the notification flag and notifies the condition variable
+//
+void PyLaunchThread::Notify()
+{
+	mNotified = true;
+	mNotifyEventCondition.notify_one();
 }
 
 
@@ -89,7 +99,7 @@ void PyLaunchThread::RunFunction()
 		std::unique_lock<std::mutex> lockNotify(mNotifyMutex);
 
 		//  avoid spurious wakeups
-		if ( ! mNotified )
+		while ( ! mNotified )
 			mNotifyEventCondition.wait(lockNotify);
 
 		//  check to see if we were woken up because of shutdown
@@ -108,7 +118,7 @@ void PyLaunchThread::RunFunction()
 		}
 
 		gettimeofday(&nextEvent->mStartLaunch, 0);
-		string launchCommand = "python " + nextEvent->mFileName;
+		string launchCommand = nextEvent->mEnvironment + " " + nextEvent->mFileName;
 		if ( nextEvent->mArguments.size() > 0 )
 			launchCommand += (" " + nextEvent->mArguments);
 
@@ -130,8 +140,10 @@ void PyLaunchThread::RunFunction()
 			results += command.GetCommandResponseLine(i);
 
 			if ( i != command.GetCommandResponseSize() -1 )
-				results += ",";
+				results += "\n";
 		}
+
+		results += "\n\n";
 
 		launchResult += results;
 
