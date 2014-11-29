@@ -150,17 +150,6 @@ public class SendButtonsActivity extends ActionBarActivity {
 	@Override
 	public void onDestroy(){
 		
-		//  if we are connected to server, start the service so it stays connected
-		if ( Service.IsConnectedToServer() )
-		{
-			Intent startIntent = new Intent(this, PyLauncherService.class);
-			this.startService(startIntent);
-		}
-		else
-		{
-			Service.ShutDown();
-		}
-		
 		UnbindFromService();
 		
 		super.onDestroy();
@@ -557,7 +546,7 @@ public class SendButtonsActivity extends ActionBarActivity {
 			//  run this function
 			PyLauncherButton thisButton = (PyLauncherButton)mGridViewButtons.getItemAtPosition(position);
 			
-			Service.RunPyFile(thisButton.getPyFile(),  thisButton.getCommandLineArgs() );
+			Service.RunPyFile(thisButton.getEnvironment(), thisButton.getPyFile(),  thisButton.getCommandLineArgs() );
 		}
 	}
 	

@@ -14,31 +14,43 @@
         android:layout_height="wrap_content"
         android:layout_alignLeft="@+id/listViewDirectories"
         android:layout_alignParentTop="true"
-        android:text="Directories registered in 'directoryList.txt':" />
+        android:text="Directories registered in &apos;directoryList.txt&apos;:" />
 
     <ListView
         android:id="@+id/listViewDirectories"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_below="@+id/textViewTag"
-        android:layout_toLeftOf="@+id/buttonAdd" >
+        android:layout_above="@+id/linearLayout1"
+        android:layout_alignParentLeft="true"
+        android:layout_below="@+id/textViewTag" >
 
     </ListView>
 
-    <Button
-        android:id="@+id/buttonRemove"
-        android:layout_width="120dp"
+    <LinearLayout
+        android:id="@+id/linearLayout1"
+        android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_alignParentRight="true"
-        android:layout_below="@+id/buttonAdd"
-        android:text="Remove" />
+        android:layout_alignParentBottom="true"
+        android:layout_alignParentLeft="true"
+        android:layout_alignRight="@+id/listViewDirectories" >
 
-    <Button
-        android:id="@+id/buttonAdd"
-        android:layout_width="120dp"
-        android:layout_height="wrap_content"
-        android:layout_alignLeft="@+id/buttonRemove"
-        android:layout_below="@+id/textViewTag"
-        android:text="Add" />
+        <Button
+            android:id="@+id/buttonAdd"
+            android:layout_width="0.0dip" android:layout_height="fill_parent"
+            android:text="Add"
+            android:layout_weight="1.0"
+            android:layout_marginRight="40dp"
+            android:layout_marginLeft="40dp"
+             />
+
+        <Button
+            android:id="@+id/buttonRemove"
+           android:layout_width="0.0dip" android:layout_height="fill_parent"
+            android:text="Remove"
+            android:layout_weight="1.0"
+            android:layout_marginRight="40dp"
+            android:layout_marginLeft="40dp"
+             />
+    </LinearLayout>
 
 </RelativeLayout>

@@ -16,4 +16,8 @@
 	<dimen name="sidemargin">40dp</dimen>
 	<dimen name="bottommargin">40dp</dimen>
 	
+	<dimen name="topmargintight">25dp</dimen>
+	<dimen name="sidemargintight">25dp</dimen>
+	<dimen name="bottommargintight">25dp</dimen>
+	
 </resources>

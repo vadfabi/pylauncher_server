@@ -698,9 +698,10 @@ public class PyLauncherService extends Service {
 	synchronized boolean ParseListDir(String input)
 	{
 		//  $TPC_LISTDIR,ACK,dir1,dir2,...
-		Parser parser = new Parser(input, ",");
+		Parser parser = new Parser(input.trim(), ",");
 
 		// parse $TPC_LISTDIR
+		//  TODO - there is an extra \n now
 		if ( parser.GetNextString().compareTo(ClientsServer.TCP_LISTDIR) != 0 )
 			return false;		
 		
@@ -731,7 +732,7 @@ public class PyLauncherService extends Service {
 	synchronized boolean ParseListFiles(String input)
 	{
 		//  $TPC_LISTFILES,ACK,file1,file2,...
-		Parser parser = new Parser(input, ",");
+		Parser parser = new Parser(input.trim(), ",");
 
 	//  parse out $TPC_LISTFILES
 		if ( parser.GetNextString().compareTo(ClientsServer.TCP_LISTFILES) != 0 )
@@ -817,6 +818,7 @@ public class PyLauncherService extends Service {
 	//  Buttons
 	//
 	private static final String BNAME = "Name";
+	private static final String BENV = "Environment";
 	private static final String BPATH = "Path";
 	private static final String BARGS = "Args";
 	private static final String BICON = "Icon";
@@ -847,13 +849,14 @@ public class PyLauncherService extends Service {
 				try
 				{
 					JSONObject nextButton = jsonArray.getJSONObject(i);
+					String environment = nextButton.getString(BENV);
 					String name = nextButton.getString(BNAME);
 					String path = nextButton.getString(BPATH);
 					String args = nextButton.getString(BARGS);
 					Integer icon = nextButton.getInt(BICON);
 					
 					//  make the button
-					ButtonsList.add(new PyLauncherButton(new PyFile(path), args, name, icon));
+					ButtonsList.add(new PyLauncherButton(environment, new PyFile(path), args, name, icon));
 				}
 				catch (Exception e)
 				{
@@ -879,6 +882,7 @@ public class PyLauncherService extends Service {
 			{
 				// save this to json object
 				JSONObject buttonObject = new JSONObject();
+				buttonObject.put(BENV, nextButton.getEnvironment());
 				buttonObject.put(BNAME, nextButton.getTitle());
 				buttonObject.put(BPATH, nextButton.getPyFile().GetPath());
 				buttonObject.put(BARGS, nextButton.getCommandLineArgs());

@@ -1,5 +1,6 @@
 package com.littlebytesofpi.pylauncher;
 
+import java.lang.reflect.Field;
 import java.util.ArrayList;
 
 import android.content.ComponentName;
@@ -18,8 +19,10 @@ import android.support.v7.app.ActionBarActivity;
 import android.text.InputType;
 import android.util.Log;
 import android.view.Menu;
+import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
+import android.view.ViewConfiguration;
 import android.view.WindowManager;
 import android.webkit.MimeTypeMap;
 import android.widget.AdapterView;
@@ -53,6 +56,8 @@ public class EditButtonActivity extends ActionBarActivity implements  AdapterVie
 	Spinner SpinnerFileSelector;
 	ArrayAdapter<PyFile> FileAdapter;
 
+	Spinner SpinnerEnvironment;
+	
 	//  launch button
 	Button ButtonRunFile;
 	
@@ -81,6 +86,9 @@ public class EditButtonActivity extends ActionBarActivity implements  AdapterVie
 		
 		EditTextName = (EditText)findViewById(R.id.editTextName);
 		EditTextName.setInputType(InputType.TYPE_TEXT_FLAG_NO_SUGGESTIONS);
+		
+		SpinnerEnvironment = (Spinner)findViewById(R.id.spinnerEnvironment);
+		SpinnerEnvironment.setOnItemSelectedListener(EditButtonActivity.this);
 		
 		SpinnerFileSelector = (Spinner)findViewById(R.id.spinnerFile);
 		FileAdapter = new ArrayAdapter(this, android.R.layout.simple_spinner_item,  FilesList);
@@ -111,7 +119,7 @@ public class EditButtonActivity extends ActionBarActivity implements  AdapterVie
 
 		ButtonSave = (Button)findViewById(R.id.buttonSave);
 		ButtonSave.setOnClickListener(ButtonOnClickListener);
-		
+
 		//  setup default preferences
 		PreferenceManager.setDefaultValues(this,  R.xml.preferences,  false);
 		
@@ -198,6 +206,10 @@ public class EditButtonActivity extends ActionBarActivity implements  AdapterVie
 				//  get button from list
 				EditingButton = visibleButtonList.get(editButtonIndex);
 				
+				//  setup the environment spinner
+				if ( EditingButton.Environment.compareTo("python3") == 0 )
+					SpinnerEnvironment.setSelection(1);
+				
 				//  find the matching py file
 				int i = 0;
 				for ( i = 0; i < FilesList.size(); i++ )
@@ -219,8 +231,14 @@ public class EditButtonActivity extends ActionBarActivity implements  AdapterVie
 			else
 			{
 				EditingButton = new PyLauncherButton();
+
+				//  get the python environment
+				SharedPreferences sharedPrefs = PreferenceManager.getDefaultSharedPreferences(EditButtonActivity.this);
+				String env = sharedPrefs.getString("pref_environment", "python");
+
+				EditingButton.Environment = env;
 			}
-			
+
 			//  set the icon for this button
 			IconIndex = EditingButton.getIcon();
 			
@@ -228,6 +246,8 @@ public class EditButtonActivity extends ActionBarActivity implements  AdapterVie
 			IconButton.setImageDrawable(Service.GetButtonDrawable(IconIndex));
 			EditTextName.setText(EditingButton.getTitle());
 			EditTextArgs.setText(EditingButton.getCommandLineArgs());
+			
+			EditButtonActivity.this.UpdateButtonUi();
 		}
 
 
@@ -321,6 +341,14 @@ public class EditButtonActivity extends ActionBarActivity implements  AdapterVie
 	};  
 
 	
+	private void UpdateButtonUi()
+	{
+		if ( EditingButton != null )
+			ButtonRunFile.setText(EditingButton.getEnvironment());
+
+	}
+	
+	
 	//  Buttons On CLick Listener
 	//
 	View.OnClickListener ButtonOnClickListener = new View.OnClickListener() {
@@ -357,7 +385,7 @@ public class EditButtonActivity extends ActionBarActivity implements  AdapterVie
 				// Commit the edits
 				editPref.commit();
 
-				Service.RunPyFile(selectedFile, args);
+				Service.RunPyFile(EditButtonActivity.this.EditingButton.getEnvironment(),  selectedFile, args);
 			}
 			break;
 			
@@ -369,6 +397,7 @@ public class EditButtonActivity extends ActionBarActivity implements  AdapterVie
 				if ( selectedFile == null )
 					selectedFile = new PyFile("");
 				
+				EditingButton.Environment = SpinnerEnvironment.getSelectedItem().toString();
 				EditingButton.PyFile = selectedFile;
 				EditingButton.Icon = IconIndex;
 				EditingButton.Title = EditTextName.getText().toString();
@@ -426,9 +455,18 @@ public class EditButtonActivity extends ActionBarActivity implements  AdapterVie
 	public void onItemSelected(AdapterView<?> parent, View view, 
 			int pos, long id) {
 
-		if ( parent.getId() == R.id.spinnerFile )
+		switch ( parent.getId() )
 		{
+		case R.id.spinnerFile:
 			PyFile selectedFile = FilesList.get(pos);
+			break;
+			
+		case R.id.spinnerEnvironment:
+			if ( EditingButton != null )
+			{
+				EditingButton.Environment = SpinnerEnvironment.getSelectedItem().toString();
+				UpdateButtonUi();
+			}
 		}
 	}
 	
@@ -446,13 +484,14 @@ public class EditButtonActivity extends ActionBarActivity implements  AdapterVie
 	public boolean onCreateOptionsMenu(Menu menu)
 	{
 		// Inflate the menu items for use in the action bar
-	   // MenuInflater inflater = getMenuInflater();
-	   // inflater.inflate(R.menu.send_tab, menu);
-	    return super.onCreateOptionsMenu(menu);
+//		MenuInflater inflater = getMenuInflater();
+//		inflater.inflate(R.menu.editbuttonactivity, menu);
+		return super.onCreateOptionsMenu(menu);
 	}
 	
+
 	
-	//  Select options menu item
+	//  Options Menu Selected
 	//
 	@Override
 	public boolean onOptionsItemSelected(MenuItem item) 
@@ -460,11 +499,19 @@ public class EditButtonActivity extends ActionBarActivity implements  AdapterVie
 		switch (item.getItemId()) 
 		{
 		
+//		case R.id.action_envsettings:
+//		{
+//			Intent intent = new Intent(this, SettingsActivity.class);
+//			startActivity(intent);
+//		}
+		
 		default:
 			return super.onOptionsItemSelected(item);
 		}
-
+		
 	}
+	
+	
 	
 	
 

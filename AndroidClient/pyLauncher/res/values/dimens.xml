@@ -15,4 +15,8 @@
 	<dimen name="bottommargin">5dp</dimen>
 	
 
+	<dimen name="topmargintight">2dp</dimen>
+	<dimen name="sidemargintight">2dp</dimen>
+	<dimen name="bottommargintight">2dp</dimen>
+	
 </resources>

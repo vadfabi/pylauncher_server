@@ -10,7 +10,7 @@
         android:id="@+id/listViewEvents"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:layout_marginTop="10dp"
+        android:layout_marginTop="@dimen/topmargin"
         android:layout_above="@+id/textViewSaveButton"
         android:layout_alignParentRight="true"
         android:layout_below="@+id/editTextArgs"
@@ -18,21 +18,13 @@
         android:dividerHeight="2px" >
     </ListView>
 
-    <Spinner
-        android:id="@+id/spinnerFile"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_alignLeft="@+id/listViewEvents"
-        android:layout_below="@+id/textViewInstructions"
-        android:layout_marginTop="2dp"
-        android:layout_toLeftOf="@+id/buttonRunFile" />
-
     <EditText
         android:id="@+id/editTextArgs"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_alignLeft="@+id/listViewEvents"
         android:layout_alignRight="@+id/listViewEvents"
+        android:layout_marginTop="@dimen/topmargintight"
         android:layout_below="@+id/textViewCmdLineTag"
         android:ems="10" />
 
@@ -42,16 +34,8 @@
         android:layout_height="wrap_content"
         android:layout_alignLeft="@+id/editTextArgs"
         android:layout_below="@+id/spinnerFile"
-        android:layout_marginTop="5dp"
-        android:text="Additional Arguments:" />
-
-    <Button
-        android:id="@+id/buttonRunFile"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_alignBottom="@+id/spinnerFile"
-        android:layout_alignRight="@+id/editTextArgs"
-        android:text="Run" />
+        android:layout_marginTop="@dimen/topmargintight"
+        android:text="Arguments:" />
 
     <TextView
         android:id="@+id/textViewSaveButton"
@@ -62,31 +46,31 @@
         android:text="Support Us"
         android:textAppearance="?android:attr/textAppearanceMedium" />
 
-    <TextView
-        android:id="@+id/textViewInstructions"
-        android:layout_width="fill_parent"
-        android:layout_height="wrap_content"
-        android:layout_alignLeft="@+id/spinnerFile"
-        android:layout_below="@+id/linearLayoutPlaceholder"
-        android:layout_marginTop="5dp"
-        android:text="Select a Python file to run:" />
-
-    <LinearLayout
-        android:id="@id/linearLayoutPlaceholder"
-        android:layout_width="fill_parent"
-        android:layout_height="0dp"
-        android:layout_below="@+id/textViewStatus"
-        android:layout_marginLeft="17dp"
-        android:orientation="vertical" >
-    </LinearLayout>
+  
 
     <TextView
         android:id="@+id/textViewStatus"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_alignParentTop="true"
-        android:layout_alignRight="@+id/textViewInstructions"
         android:gravity="right"
         android:text="Not connected. Please tap settings." />
+
+    <Spinner
+        android:id="@+id/spinnerFile"
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:layout_alignBottom="@+id/buttonRunFile"
+         android:layout_alignTop="@+id/buttonRunFile"
+        android:layout_below="@+id/textViewStatus"
+        android:layout_toRightOf="@+id/buttonRunFile" />
+
+    <Button
+        android:id="@+id/buttonRunFile"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="@dimen/topmargintight"
+    android:layout_below="@+id/textViewStatus"
+        android:text="python" />
 
 </RelativeLayout>

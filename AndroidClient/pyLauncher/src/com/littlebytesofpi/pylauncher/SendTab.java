@@ -3,8 +3,10 @@ package com.littlebytesofpi.pylauncher;
 import java.lang.reflect.Field;
 import java.util.ArrayList;
 
+import android.app.AlertDialog;
 import android.content.ComponentName;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.ServiceConnection;
 import android.content.SharedPreferences;
@@ -21,6 +23,7 @@ import android.preference.PreferenceManager;
 import android.support.v7.app.ActionBarActivity;
 import android.text.InputType;
 import android.util.Log;
+import android.view.ContextThemeWrapper;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
@@ -66,7 +69,7 @@ public class SendTab extends ActionBarActivity implements  AdapterView.OnItemSel
 	private TextView TextViewSupportUs;
 	
 	//  Properties
-	private boolean PaidVersion = true;
+	private boolean PaidVersion = false;
 	
 	//  onCreate
 	//
@@ -166,6 +169,7 @@ public class SendTab extends ActionBarActivity implements  AdapterView.OnItemSel
 		}
 		
 		FormatConnectionStatus();
+		UpdateButtonUi();
 
 	}
 
@@ -309,6 +313,18 @@ public class SendTab extends ActionBarActivity implements  AdapterView.OnItemSel
 
 //  Button Handlers
 	//
+	
+	private void UpdateButtonUi()
+	{
+		//  get the python environment
+		SharedPreferences sharedPrefs = PreferenceManager.getDefaultSharedPreferences(this);
+		String env = sharedPrefs.getString("pref_environment", "python");
+
+		ButtonRunFile.setText(env);
+
+	}
+	
+	//
 	//
 	View.OnClickListener ButtonOnClickListener = new View.OnClickListener() 
 	{
@@ -421,8 +437,46 @@ public class SendTab extends ActionBarActivity implements  AdapterView.OnItemSel
 
 		case R.id.action_envsettings:
 		{
-			Intent intent = new Intent(SendTab.this, SettingsActivity.class);
-			startActivity(intent);
+			AlertDialog.Builder builder = new AlertDialog.Builder(new ContextThemeWrapper(this, R.style.CustomDialogTheme));  
+	           builder.setTitle("Python Environment");  
+	           
+	           final ArrayAdapter<String> arrayAdapter = new ArrayAdapter<String>(this, android.R.layout.select_dialog_singlechoice, getResources().getStringArray(R.array.enviro_array));  
+	           
+	           // get current selection
+	           int selection = 0;
+	           SharedPreferences sharedPrefs = PreferenceManager.getDefaultSharedPreferences(this);
+	           String env = sharedPrefs.getString("pref_environment", "python");
+	           if ( env.compareTo("python3") == 0 )
+	        	   selection = 1;
+
+	           builder.setSingleChoiceItems(arrayAdapter, selection, new DialogInterface.OnClickListener() {  
+	                @Override  
+	                public void onClick(DialogInterface dialog, int which) {  
+	                    //  update the settings
+	                
+	    				Editor editPref = PreferenceManager.getDefaultSharedPreferences(SendTab.this).edit();
+	    				editPref.putString("pref_environment", getResources().getStringArray(R.array.enviro_array)[which]);
+	    				// Commit the edits
+	    				editPref.commit();
+	    				
+	    				SendTab.this.UpdateButtonUi();
+	    				
+	    				dialog.dismiss(); 
+	    				
+	                }  
+	           });  
+	           builder.setPositiveButton("Cancel",  
+	                     new DialogInterface.OnClickListener() {  
+	                          @Override  
+	                          public void onClick(DialogInterface dialog, int which) {  
+	                               dialog.dismiss();  
+	                          }  
+	                     });  
+	           AlertDialog alert = builder.create(); 
+	           alert.show();  
+	           
+			//Intent intent = new Intent(SendTab.this, SettingsActivity.class);
+			//startActivity(intent);
 		}
 		
 		default:

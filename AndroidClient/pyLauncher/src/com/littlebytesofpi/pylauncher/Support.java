@@ -35,7 +35,7 @@ public class Support extends Activity {
 		
 		//  preamble
 		TextViewAbout1.setText("Little Bytes of Pi is a Corvallis, Oregon company inspired by the Raspberry Pi. Our mission is to create useful products and resources for educators and innovators alike.\n\n" +
-				"Please check out our projects page, to see details about our current activities:");
+				"Please check out our website, to see details about our current projects:");
 		
 		
 		//  link to our web page
@@ -70,8 +70,8 @@ public class Support extends Activity {
 	@Override
 	public boolean onCreateOptionsMenu(Menu menu) {
 		// Inflate the menu; this adds items to the action bar if it is present.
-		getMenuInflater().inflate(R.menu.support, menu);
-		return true;
+		//getMenuInflater().inflate(R.menu.support, menu);
+		return super.onCreateOptionsMenu(menu);
 	}
 
 }

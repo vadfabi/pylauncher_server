@@ -18,8 +18,9 @@
 
         <RelativeLayout
             android:id="@+id/RelativeLayout1"
-            android:layout_width="294dp"
-            android:layout_height="wrap_content" >
+            android:layout_width="fill_parent"
+            android:layout_height="60dp" 
+            android:layout_marginTop="2dp">
 
             <TextView
                 android:id="@+id/textView2"
@@ -38,14 +39,14 @@
                 android:layout_alignParentTop="true"
                 android:background="@android:color/transparent"
                 android:src="@drawable/ic_unknown" />
-
         </RelativeLayout>
 
         <TextView
             android:id="@+id/textView3"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Enter a name for the button:" />
+            android:text="Enter a name for the button:" 
+            android:layout_marginTop="@dimen/topmargintight"/>
 
         <EditText
             android:id="@+id/editTextName"
@@ -53,44 +54,68 @@
             android:layout_height="wrap_content"
             android:ems="10" />
 
-        <TextView
-            android:id="@+id/textViewInstructions"
-            android:layout_width="fill_parent"
-            android:layout_height="wrap_content"
-            android:text="Python file to run:" />
-
-        <Spinner
-            android:id="@+id/spinnerFile"
+        <RelativeLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="2dp" />
+            android:layout_marginTop="@dimen/topmargintight" >
 
-        <TextView
-            android:id="@+id/textViewCmdLineTag"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="5dp"
-            android:text="Command line arguments:" />
+            <Spinner
+                android:id="@+id/spinnerEnvironment"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_toRightOf="@+id/textView1"
+                android:entries="@array/enviro_array" />
+
+            <TextView
+                android:id="@+id/textView1"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_alignParentLeft="true"
+                android:layout_centerVertical="true"
+                android:text="Environment: " />
+
+        </RelativeLayout>
 
         <RelativeLayout
             android:layout_width="match_parent"
-            android:layout_height="wrap_content" >
+            android:layout_height="wrap_content"
+            android:layout_marginTop="@dimen/topmargintight" >
+
+            <Spinner
+                android:id="@+id/spinnerFile"
+                android:layout_width="fill_parent"
+                android:layout_height="wrap_content"
+                  android:layout_alignTop="@+id/buttonRunFile"
+                    android:layout_alignBottom="@+id/buttonRunFile"
+                android:layout_toRightOf="@+id/buttonRunFile" />
 
             <Button
                 android:id="@+id/buttonRunFile"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_alignParentRight="true"
-                android:layout_alignParentTop="true"
-                android:text="Test" />
+                android:layout_alignParentLeft="true"
+                android:text="python" />
+
+        </RelativeLayout>
+
+        <TextView
+            android:id="@+id/textViewCmdLineTag"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="@dimen/topmargintight"
+            android:text="Arguments:" />
+
+        <RelativeLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content" >
 
             <EditText
                 android:id="@+id/editTextArgs"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_alignParentLeft="true"
+                android:layout_alignParentRight="true"
                 android:layout_centerVertical="true"
-                android:layout_toLeftOf="@+id/buttonRunFile"
                 android:ems="10" />
 
         </RelativeLayout>
@@ -100,7 +125,8 @@
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:divider="#660000"
-            android:dividerHeight="2px" >
+            android:dividerHeight="2px" 
+            android:layout_marginTop="@dimen/topmargintight">
         </ListView>
     </LinearLayout>
 

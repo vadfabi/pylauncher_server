@@ -35,7 +35,6 @@ public class PyFile {
 	{
 		File file = new File(FullPath);
 		
-		String test = file.getParentFile().getPath();
 		String path = file.getPath();
 		if ( path.contains(".py") )
 			return file.getParentFile().getPath();
