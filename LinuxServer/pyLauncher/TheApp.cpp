@@ -37,7 +37,7 @@ TheApp::TheApp() :
 	mPyLaunchThread(*this), 
 	mDisplayThread(*this)
 {
-	mVersionString = "1.1.0";
+	mVersionString = "1.1.1";
 
 	mMaxEventsToLog = 9999;
 	mLogSysEvents = true;
@@ -315,13 +315,15 @@ void TheApp::LiveUpdatePythonFiles()
 	timeval eventTime;
 	gettimeofday(&eventTime, 0);
 
+	//  format the response to the client
+	//  use single newline, because broadcast message path will take care of double newline at the end
 	string listOfDir = BuildDirList();
-	string dirMessage = format("$TCP_LISTDIR,ACK,%s", listOfDir.c_str());
+	string dirMessage = format("$TCP_LISTDIR,ACK,%s\n", listOfDir.c_str());
 
 	BroadcastMessage(eventTime, GetIpAddress(), dirMessage);
 
 	listOfDir = BuildFileList();
-	dirMessage = format("$TCP_LISTFILES,ACK,%s", listOfDir.c_str());
+	dirMessage = format("$TCP_LISTFILES,ACK,%s\n", listOfDir.c_str());
 
 	
 	BroadcastMessage(eventTime, GetIpAddress(), dirMessage);

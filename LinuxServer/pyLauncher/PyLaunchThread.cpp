@@ -133,16 +133,18 @@ void PyLaunchThread::RunFunction()
 		string launchResult = format("$TCP_PYRESULT,%s,%s,%s,%s,%s,", nextEvent->mFileName.c_str(),
 			nextEvent->mEventAddress.c_str(), FormatTime(nextEvent->mEventTime).c_str(), FormatTime(nextEvent->mStartLaunch).c_str(), FormatTime(nextEvent->mEndLaunch).c_str());
 
-		//  format the results into comma delimited string
+		//  format the results into newline delimited string
 		string results = "";
 		for( int i = 0; i < command.GetCommandResponseSize(); i++ )
 		{
 			results += command.GetCommandResponseLine(i);
 
+			//  add the newline if this is not the last item in the list
 			if ( i != command.GetCommandResponseSize() -1 )
 				results += "\n";
 		}
 
+		//  add double newline at end
 		results += "\n\n";
 
 		launchResult += results;

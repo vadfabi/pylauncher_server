@@ -254,14 +254,14 @@ void ConnectedClient::RunFunction()
 	if ( command.compare("$TCP_LISTDIR") == 0 )
 	{
 		string listOfDir = mTheApp.BuildDirList();
-		string returnMessage = format("$TCP_LISTDIR,ACK,%s", listOfDir.c_str());
+		string returnMessage = format("$TCP_LISTDIR,ACK,%s\n\n", listOfDir.c_str());
 
 		write(acceptFileDescriptor, returnMessage.c_str(), returnMessage.size());
 	}
 	else if ( command.compare("$TCP_LISTFILES") == 0 )
 	{
 		string listOfFiles = mTheApp.BuildFileList();
-		string returnMessage = format("$TCP_LISTFILES,ACK,%s", listOfFiles.c_str());
+		string returnMessage = format("$TCP_LISTFILES,ACK,%s\n\n", listOfFiles.c_str());
 
 		write(acceptFileDescriptor, returnMessage.c_str(), returnMessage.size());
 	}
@@ -273,9 +273,9 @@ void ConnectedClient::RunFunction()
 		string returnMessage; 
 
 		if ( mTheApp.HandleAddDirectory(eventTime, eventSender, arg) ) 
-			returnMessage = format("$TCP_ADDDIR,ACK,%s", arg.c_str());
+			returnMessage = format("$TCP_ADDDIR,ACK,%s\n\n", arg.c_str());
 		else
-			returnMessage = "$TCP_ADDDIR,NAK,failed to write to directory file";
+			returnMessage = "$TCP_ADDDIR,NAK,failed to write to directory file.\n\n";
 
 		write(acceptFileDescriptor, returnMessage.c_str(), returnMessage.size());		
 	}
@@ -287,9 +287,9 @@ void ConnectedClient::RunFunction()
 		string returnMessage;
 
 		if ( mTheApp.HandleRemoveDirectory(eventTime, eventSender, arg) )
-			returnMessage = format("$TCP_REMOVEDIR,ACK,%s", arg.c_str());
+			returnMessage = format("$TCP_REMOVEDIR,ACK,%s\n\n", arg.c_str());
 		else
-			returnMessage = "$TCP_ADDDIR,NAK,failed to write to directory file";
+			returnMessage = "$TCP_ADDDIR,NAK,failed to write to directory file.\n\n";
 
 		write(acceptFileDescriptor, returnMessage.c_str(), returnMessage.size());
 	}
@@ -297,7 +297,7 @@ void ConnectedClient::RunFunction()
 	{
 		//  message from client command
 		string arg = readParser.GetRemainingBuffer();
-		string returnMessage = format("$TCP_PYLAUNCH,ACK,%s", arg.c_str());
+		string returnMessage = format("$TCP_PYLAUNCH,ACK,%s\n\n", arg.c_str());
 		write(acceptFileDescriptor, returnMessage.c_str(), returnMessage.size());
 
 		mTheApp.HandlePythonLaunch(eventTime, eventSender, arg);
@@ -305,18 +305,14 @@ void ConnectedClient::RunFunction()
 	else
 	{
 		//  unknown command
-		string returnMessage = format("$TCP_NAK,unknown command: %s", readFromSocket.c_str());
+		string returnMessage = format("$TCP_NAK,unknown command: %s\n\n", readFromSocket.c_str());
 		write(acceptFileDescriptor, returnMessage.c_str(), returnMessage.size());
 
 		//  log event
-		string eventToLog = format("  ! Unknown command received:  %s", readFromSocket.c_str());
+		string eventToLog = format("  ! Unknown command received:  %s\n\n", readFromSocket.c_str());
 		mTheApp.AddEvent(eventTime, eventSender, eventToLog);
 	}
-	
-	
 
-
-	
 	return;
 }
 
