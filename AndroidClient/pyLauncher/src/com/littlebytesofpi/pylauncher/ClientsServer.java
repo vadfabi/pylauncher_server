@@ -205,7 +205,7 @@ public class ClientsServer extends Thread {
 			long timeOfEvent = System.currentTimeMillis();
 			
 			//  parse the read string into individual event strings, separated by newline
-			Parser inputParser = new Parser(inputRead, "\n");
+			Parser inputParser = new Parser(inputRead, "\n\n");
 			String nextMessage = inputParser.GetNextString();
 			while ( nextMessage.length() > 0 )
 			{
@@ -225,6 +225,7 @@ public class ClientsServer extends Thread {
 					PyLaunchResult lanuchResult = new PyLaunchResult(fileName, ipOfRequest, timeRequest, timeLaunch, timeComplete);
 
 					//  now get outputLine1 to outputLine_n
+					nextMessageParser.mDelimiter = "\n";
 					String result = nextMessageParser.GetNextString();
 					while ( result.length() != 0 )
 					{

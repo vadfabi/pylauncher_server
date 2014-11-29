@@ -21,17 +21,16 @@
     <org.askerov.dynamicgrid.DynamicGridView
         android:id="@+id/gridViewButtons"
         android:layout_width="match_parent"
-        android:layout_height="265dp"
+        android:layout_height="match_parent"
+        android:layout_above="@+id/listViewEvents"
         android:layout_below="@+id/textViewStatus"
-        android:numColumns="3" 
-		/>
+        android:numColumns="3" />
 
     <ListView
         android:id="@+id/listViewEvents"
         android:layout_width="match_parent"
-        android:layout_height="100dp"
+        android:layout_height="75dp"
         android:layout_alignParentBottom="true"
-        android:layout_below="@+id/gridViewButtons"
         android:divider="#660000"
         android:dividerHeight="2px" >
 

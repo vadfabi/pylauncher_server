@@ -551,6 +551,17 @@ public class PyLauncherService extends Service {
 		}
 	}
 	
+	public PyFile GetHelpFile()
+	{
+		for ( PyFile nextFile : mFilesList )
+		{
+			if ( nextFile.toString().compareTo("programHelp.py") == 0 )
+				return nextFile;
+		}
+		
+		return null;
+	}
+	
 	
 	//  GetDirectoryListTask
 	//
@@ -755,7 +766,18 @@ public class PyLauncherService extends Service {
 	//
 	public void RunPyFile(PyFile fileToRun, String args)
 	{
-		new RunPyFileTask().execute(fileToRun.FullPath, args);
+		//  get the python environment
+		SharedPreferences sharedPrefs = PreferenceManager.getDefaultSharedPreferences(this);
+		String env = sharedPrefs.getString("pref_environment", "python");
+		
+		new RunPyFileTask().execute(env,fileToRun.FullPath, args);
+	}
+	
+	//  RunPyFile
+	//
+	public void RunPyFile(String environment, PyFile fileToRun, String args)
+	{
+		new RunPyFileTask().execute(environment,fileToRun.FullPath, args);
 	}
 	
 	//
@@ -767,7 +789,7 @@ public class PyLauncherService extends Service {
 
 			if ( IsConnectedToServer() )
 			{
-				readResponse = IpFunctions.SendStringToPort(ConnectedToServerIp, ConnectedToServerOnPort, "$TCP_PYLAUNCH," + param[0] + "," + param[1]);
+				readResponse = IpFunctions.SendStringToPort(ConnectedToServerIp, ConnectedToServerOnPort, "$TCP_PYLAUNCH," + param[0] + "," + param[1] + "," + param[2]);
 
 				if ( ! readResponse.contains("$TCP_PYLAUNCH,ACK") )
 					return 0;

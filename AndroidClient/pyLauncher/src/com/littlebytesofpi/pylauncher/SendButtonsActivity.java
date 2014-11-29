@@ -9,6 +9,7 @@ import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.ServiceConnection;
+import android.content.res.Configuration;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.IBinder;
@@ -20,8 +21,10 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewConfiguration;
+import android.view.ViewGroup.LayoutParams;
 import android.widget.AdapterView;
 import android.widget.ListView;
+import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -66,7 +69,8 @@ public class SendButtonsActivity extends ActionBarActivity {
 		mListViewResults.setAdapter(mResultsAdapter);
 		mListViewResults.setClickable(true);
 		mListViewResults.setFastScrollEnabled(true);
-		
+		mListViewResults.setOnItemLongClickListener(ListLongClickListener);
+		mListViewResults.setLongClickable(true);
 		mListViewResults.setOnItemClickListener(new AdapterView.OnItemClickListener() {
 			@Override
 			public void onItemClick(AdapterView<?> arg0, View arg1, int position, long arg3) {
@@ -116,6 +120,20 @@ public class SendButtonsActivity extends ActionBarActivity {
 
 		if ( Service != null )
 		{
+			//  create the first button if they have none
+			if ( Service.ButtonsList.size() == 0 )
+			{
+				PyFile selectedFile = Service.GetHelpFile();
+				if ( selectedFile != null )
+				{
+					PyLauncherButton newButton = new PyLauncherButton();
+					newButton.PyFile = selectedFile;
+					newButton.Icon = 0;
+					newButton.Title = "Help";
+					Service.UpdateButton(newButton);
+				}
+			}
+					
 			ResetGridView();
 		
 			Service.GetLaunchResults(mResultsList);
@@ -163,6 +181,20 @@ public class SendButtonsActivity extends ActionBarActivity {
 			LocalBinder binder = (LocalBinder) service;
 			Service = binder.getService();
 			Service.AddHandler(Handler);
+			
+			//  create the first button if they have none
+			if ( Service.ButtonsList.size() == 0 )
+			{
+				PyFile selectedFile = Service.GetHelpFile();
+				if ( selectedFile != null )
+				{
+					PyLauncherButton newButton = new PyLauncherButton();
+					newButton.PyFile = selectedFile;
+					newButton.Icon = 0;
+					newButton.Title = "Help";
+					Service.UpdateButton(newButton);
+				}
+			}
 			
 			ResetGridView();
 			FormatStatus();
@@ -348,6 +380,10 @@ public class SendButtonsActivity extends ActionBarActivity {
 		{
 			StopEditingMode(true);
 		}
+		else if ( HideButtons )
+		{
+			HideButtons();
+		}
 		else
 		{
 			super.onBackPressed();
@@ -356,7 +392,42 @@ public class SendButtonsActivity extends ActionBarActivity {
 		return;
 	}
 	
+	boolean HideButtons = false;
+	
+	AdapterView.OnItemLongClickListener ListLongClickListener = new AdapterView.OnItemLongClickListener() {
+		
+		 public boolean onItemLongClick(AdapterView<?> arg0, View v, int index, long arg3) 
+		 {
+			 HideButtons();
+			
+			return true;
+		 }
+	};
+	
+	
+	protected void HideButtons()
+	{
+		if(getResources().getConfiguration().orientation == Configuration.ORIENTATION_PORTRAIT){
+			if ( HideButtons )
+			{
+				RelativeLayout.LayoutParams lp = (RelativeLayout.LayoutParams)mListViewResults.getLayoutParams();
+				lp.height = 75;
+				mGridViewButtons.setVisibility(View.VISIBLE);
+				mListViewResults.setLayoutParams(lp);
+				HideButtons = false;
+			}
+			else
+			{
+				mGridViewButtons.setVisibility(View.GONE);
+				RelativeLayout.LayoutParams lp = (RelativeLayout.LayoutParams)mListViewResults.getLayoutParams();
+				lp.height = RelativeLayout.LayoutParams.MATCH_PARENT;
+				mListViewResults.setLayoutParams(lp);
+				HideButtons = true;
+			}
+		}
 
+	}
+	
 	//  Grid View Handling
 	//
 	boolean GridEditMode = false;

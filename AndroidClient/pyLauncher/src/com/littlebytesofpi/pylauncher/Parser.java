@@ -4,7 +4,7 @@ public class Parser {
 
 	private String OriginalString = "";
 	private String StringBuffer = "";
-	private String mDelimiter = "";
+	public String mDelimiter = "";
 	
 	public Parser(String string, String delimiter){
 	
@@ -16,7 +16,7 @@ public class Parser {
 	String GetNextString(){
 		
 		String returnString = "";
-		int index = StringBuffer.indexOf(mDelimiter);
+		int index = StringBuffer.indexOf(mDelimiter) + mDelimiter.length()-1;
 		
 		if ( index < 1 )
 		{

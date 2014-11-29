@@ -13,6 +13,11 @@
           android:title="Directories"
           yourapp:showAsAction="ifRoom"  />
       
+       <item android:id="@+id/action_envsettings"
+          android:icon="@drawable/ic_action_connect"
+          android:title="Environment"
+          yourapp:showAsAction="never"  />
+       
     <item android:id="@+id/action_settings"
           android:icon="@drawable/ic_action_connect"
           android:title="Connect"

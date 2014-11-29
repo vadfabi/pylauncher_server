@@ -11,7 +11,8 @@
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
     <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
-    <uses-permission android:name="android.permission.VIBRATE"></uses-permission>
+    <uses-permission android:name="android.permission.VIBRATE" >
+    </uses-permission>
 
     <application
         android:allowBackup="true"
@@ -51,8 +52,7 @@
         </activity>
         <activity
             android:name=".EditButtonActivity"
-            android:label="@string/title_activity_edit_buttons"
-             >
+            android:label="@string/title_activity_edit_buttons" >
         </activity>
         <activity
             android:name=".Support"
@@ -61,6 +61,10 @@
         <activity
             android:name=".SelectButton"
             android:label="@string/title_activity_select_button" >
+        </activity>
+        <activity
+            android:name=".SettingsActivity"
+            android:label="Settings" >
         </activity>
     </application>
 
