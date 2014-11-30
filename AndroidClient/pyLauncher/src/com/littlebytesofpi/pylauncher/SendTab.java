@@ -69,7 +69,7 @@ public class SendTab extends ActionBarActivity implements  AdapterView.OnItemSel
 	private TextView TextViewSupportUs;
 	
 	//  Properties
-	private boolean PaidVersion = false;
+	private boolean PaidVersion = true;
 	
 	//  onCreate
 	//
