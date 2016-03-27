@@ -70,7 +70,13 @@
     </Toolchain>
     <MakeCommandTemplate>
       <SkipWhenRunningCommandList>false</SkipWhenRunningCommandList>
+      <RemoteHost>
+        <HostName>rpi</HostName>
+        <Transport>SSH</Transport>
+        <UserName>grahambriggs</UserName>
+      </RemoteHost>
       <Command>make</Command>
+      <WorkingDirectory>$(BuildDir)</WorkingDirectory>
       <Environment>
         <Records>
           <Record>
