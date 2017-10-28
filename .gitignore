@@ -10,3 +10,10 @@ AndroidClient/pyLauncher/gen
 AndroidClient/tcPIp_Sockets/bin
 AndroidClient/tcPIp_Sockets/gen
 LinuxServer/tcPIp_Sockets/VisualGDBCache/tcPIp_Sockets-Debug/SourceCache.dat
+jarlist.cache
+AndroidClient/.metadata/.plugins
+AndroidClient/.metadata/.lock
+AndroidClient/.metadata/.log
+AndroidClient/.metadata/version.ini
+AndroidClient/pyLauncher/.metadata/.plugins
+AndroidClient/pyLauncher/.metadata
